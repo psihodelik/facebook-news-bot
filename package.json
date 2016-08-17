@@ -1,0 +1,24 @@
+{
+  "name": "facebook-news-bot",
+  "version": "1.0.0",
+  "description": "news-bot",
+  "main": "index.js",
+  "cloudformation": "cloudformation/cloudformation.yml",
+  "projectName": "Content Platforms::facebook-news-bot::circleci",
+  "dependencies": {
+    "body-parser": "^1.15.1",
+    "dateformat": "^1.0.12",
+    "express": "^4.13.4",
+    "gulp": "^3.9.1",
+    "gulp-yaml": "^1.0.1",
+    "node-riffraff-artefact": "^1.7.2",
+    "request": "^2.72.0",
+    "simple-get-promise": "^1.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "deploy": "export ARTEFACT_PATH=`pwd` && node deploy.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

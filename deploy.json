@@ -1,0 +1,37 @@
+{
+	"defaultStacks": ["content-api"],
+	"packages": {
+		"facebook-news-bot" : {
+			"type": "autoscaling",
+			"data": {
+				"bucket": "content-api-dist",
+				"publicReadAcl": false
+			}
+		},
+        "facebook-news-bot-ami-update" : {
+            "type": "ami-cloudformation-parameter",
+            "data": {
+                "amiTags" : { "Recipe": "ubuntu-wily-node-6", "AmigoStage" : "PROD" },
+                "amiParameter" : "AMI",
+                "cloudFormationStackName": "facebook-news-bot",
+                "prependStackToCloudFormationStackName" : false,
+                "appendStageToCloudFormationStackName" : true
+            }
+        }
+
+	},
+	"recipes": {
+		"default": {
+			"depends": ["artifactUpload", "deploy"]
+		},
+		"deploy": {
+			"actionsBeforeApp": ["facebook-news-bot.deploy"]
+		},
+		"artifactUpload": {
+			"actionsBeforeApp": ["facebook-news-bot.uploadArtifacts"]
+		},
+        "ami-cloudformation-parameter" : {
+            "actions": [ "facebook-news-bot-ami-update.update" ]
+        }
+	}
+}
