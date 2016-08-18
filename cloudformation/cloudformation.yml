@@ -59,13 +59,16 @@ Parameters:
         Description: Url of facebook messenger endpoint
         Type: String
         Default: https://graph.facebook.com/v2.6/me/messages
+    DynamodbTableName:
+        Description: Name of dynamodb table used to store user data
+        Type: String
 
 Mappings:
     StageMap:
         PROD:
-            MinSize: 3
-            MaxSize: 6
-            DesiredCapacity: 3
+            MinSize: 1
+            MaxSize: 2
+            DesiredCapacity: 1
             InstanceType: t2.micro
         CODE:
             MinSize: 1
@@ -116,6 +119,32 @@ Resources:
                         - ec2:DescribeInstances
                     Resource:
                         - "*"
+            Roles:
+                - Ref: FacebookNewsBotRole
+
+    DynamoPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:GetItem
+                        - dynamodb:PutItem
+                        - dynamodb:UpdateItem
+                        - dynamodb:Query
+                    Resource:
+                        "Fn::Join":
+                            - ""
+                            -
+                                - "arn:aws:dynamodb:"
+                                - Ref: AWS::Region
+                                - ":"
+                                - Ref: AWS::AccountId
+                                - ":table/"
+                                - Ref: DynamodbTableName
+                                - "*"
             Roles:
                 - Ref: FacebookNewsBotRole
 
@@ -384,4 +413,6 @@ Resources:
                                     - Ref: FacebookUrl
                                     - " DEFAULT_IMAGE_URL="
                                     - Ref: DefaultImageUrl
+                                    - " DYNAMODB_TABLE_NAME="
+                                    - Ref: DynamodbTableName
                                     - " pm2 start application.pm2.json"
