@@ -15,6 +15,8 @@ const DEFAULT_IMAGE_URL = process.env.DEFAULT_IMAGE_URL
 const FACEBOOK_URL = process.env.FACEBOOK_URL === "" ? "https://graph.facebook.com/v2.6" : process.env.FACEBOOK_URL
 const CAMPAIGN_CODE_PARAM = "CMP=fb_newsbot"
 
+const LINK_COUNT = 5
+
 const app = Express()
 app.use(BodyParser.urlencoded({extended: false}))
 
@@ -26,7 +28,7 @@ const Events = {
       id,
       buildButtonsAttachment(
         "Sorry, I don't know what you mean.",
-        [buildButton("postback", "So, what can you do?", "help")]
+        [buildButton("postback", "So, what can you do?", buildPayload("help"))]
       )
     )
   },
@@ -69,9 +71,9 @@ const Events = {
       buildButtonsAttachment(
         "Great. When would you like your morning briefing delivered?",
         [
-          buildButton("postback", "6am", "subscribe_6"),
-          buildButton("postback", "7am", "subscribe_7"),
-          buildButton("postback", "8am", "subscribe_8")
+          buildButton("postback", "6am", buildPayload("subscribe", {"time":6})),
+          buildButton("postback", "7am", buildPayload("subscribe", {"time":7})),
+          buildButton("postback", "8am", buildPayload("subscribe", {"time":8}))
         ]
       )
     )
@@ -82,7 +84,8 @@ const Events = {
       "Ok, maybe later then. You can subscribe to the morning briefing at anytime from the menu.\n\nWould you like the headlines or trending news?"
     )
   },
-  subscribe(id, time) {
+  subscribe(id, payload) {
+    const time = Moment(payload.time, "HH")
     //Get timezone from FB then update user's dynamo record
     Facebook.getFacebookUser(id, (error, response, body) => {
       const timeString = time.format("HH:mm")
@@ -108,8 +111,8 @@ const Events = {
       buildButtonsAttachment(
         "What would you like to change?",
         [
-          buildButton("postback", "Change time", "subscribe_yes"),
-          buildButton("postback", "Unsubscribe", "unsubscribe"),
+          buildButton("postback", "Change time", buildPayload("subscribe_yes")),
+          buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
         ]
       )
     )
@@ -124,17 +127,20 @@ const Events = {
     })
   },
   morningBriefing(id) {
+    //TODO - create a true morning briefing, not just editors-picks
     Facebook.sendTextMessage(
       id,
-      "Good morning from the Guardian. Here is the morning briefing:",
+      "Good morning. Here is the morning briefing:",
       Events.headlines(id)
     )
   },
-  headlines(id) {
-    getCapiResults(id, Capi.getEditorsPicks)
+  headlines(id, payload) {
+    const page = (payload && payload.page) ? payload.page : 0
+    getAndSendCapiResults(id, "headlines", page)
   },
-  trending(id) {
-    getCapiResults(id, Capi.getMostViewed)
+  trending(id, payload) {
+    const page = (payload && payload.page) ? payload.page : 0
+    getAndSendCapiResults(id, "trending", page)
   }
 }
 
@@ -148,8 +154,8 @@ function greetNewUser(id, name) {
         buildButtonsAttachment(
           "Hi there "+ name+ ", I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nCan I deliver you a daily morning briefing?",
           [
-            buildButton("postback", "Yes please", "subscribe_yes"),
-            buildButton("postback", "No thanks", "subscribe_no")
+            buildButton("postback", "Yes please", buildPayload("subscribe_yes")),
+            buildButton("postback", "No thanks", buildPayload("subscribe_no"))
           ]
         )
       )
@@ -187,9 +193,9 @@ function sendMenu(id, message) {
     } else {
       const getSubButton = (isSubscribed) => {
         if (isSubscribed) {
-          return buildButton("postback", "Manage subscription", "manage_subscription")
+          return buildButton("postback", "Manage subscription", buildPayload("manage_subscription"))
         } else {
-          return buildButton("postback", "Subscribe", "subscribe_yes")
+          return buildButton("postback", "Subscribe", buildPayload("subscribe_yes"))
         }
       }
 
@@ -198,14 +204,23 @@ function sendMenu(id, message) {
         buildButtonsAttachment(
           message,
           [
-            buildButton("postback", "Headlines", "headlines"),
-            buildButton("postback", "Trending", "trending"),
+            buildButton("postback", "Headlines", buildPayload("headlines",{"page":0})),
+            buildButton("postback", "Trending", buildPayload("trending",{"page":0})),
             getSubButton(data.Item.notificationTime !== "-")
           ]
         )
       )
     }
   })
+}
+
+function buildPayload(event, data) {
+  if (typeof data !== "undefined") {
+    data.event = event
+    return JSON.stringify(data)
+  } else {
+    return JSON.stringify({"event":event})
+  }
 }
 
 function buildButton(type, title, payload) {
@@ -220,6 +235,13 @@ function buildLinkButton(url) {
     "type":"web_url",
     "url":url + "?" + CAMPAIGN_CODE_PARAM,
     "title":"Read article"
+  }
+}
+function buildQuickReply(title, payload) {
+  return {
+    "content_type": "text",
+    "title": title,
+    "payload": payload
   }
 }
 
@@ -257,28 +279,40 @@ function buildGenericAttachment(elements) {
   }
 }
 
-function getCapiResults(id, callback) {
+function getAndSendCapiResults(id, type, page) {
+  const sendCapiResults = (id, results) => {
+    const elements = results.slice(page,page+LINK_COUNT).map(item => {
+      return buildElement(
+        item.webTitle,
+        item.fields.standfirst.replace(/<.*?>/g, ""),
+        getImageUrl(item),
+        [buildLinkButton(item.webUrl)]
+      )
+    })
+
+    let att = buildGenericAttachment(elements)
+    att.quick_replies = [
+      buildQuickReply(
+        "More stories",
+        buildPayload(type, {"page":page + LINK_COUNT})
+      )
+    ]
+
+    Facebook.sendMessage(id, att)
+  }
+
   Facebook.getFacebookUser(id, (error, response, body) => {
     if (error) {
       console.log("Error getting facebook user "+ id +": "+ JSON.stringify(error))
     } else {
       const front = localeToFront(JSON.parse(body)["locale"])
-      callback(id, front, sendCapiResults)
+      if (type === "headlines") {
+        Capi.getEditorsPicks(id, front, sendCapiResults)
+      } else {
+        Capi.getMostViewed(id, front, sendCapiResults)
+      }
     }
   })
-}
-
-function sendCapiResults(id, results) {
-  const elements = results.slice(0,5).map(item => {
-    return buildElement(
-      item.webTitle,
-      item.fields.standfirst.replace(/<.*?>/g, ""),
-      getImageUrl(item),
-      [buildLinkButton(item.webUrl)]
-    )
-  })
-
-  Facebook.sendMessage(id, buildGenericAttachment(elements))
 }
 
 // Look for image with width 1000, otherwise the next widest
@@ -398,24 +432,25 @@ app.post("/webhook/", (req, res) => {
         Events.headlines(id)
       } else if (text.includes("trending")) {
         Events.trending(id)
+      } else if (text === "more stories") {
+        //Facebook's Quick Reply buttons come back as text messages, but with a payload.
+        if (typeof event.message.quick_reply !== "undefined") {
+          const payload = JSON.parse(event.message.quick_reply.payload)
+          Events[payload.event](id, payload)
+        }
       } else {
         Events.unknown(id)
       }
 
     } else if (event.postback) {
-      const data = event.postback.payload
-      console.log("Received payload: '"+ data +"', from user "+ id)
+      
+      const payload = JSON.parse(event.postback.payload)
+      console.log("Received payload: '"+ JSON.stringify(payload) +"', from user "+ id)
 
-      if (Events[data]) {
-        Events[data](id)
+      if (Events[payload.event]) {
+        Events[payload.event](id, payload)
       } else {
-        //Have we received a subscription?
-        const matches = data.match(/^subscribe_([0-9])$/)
-        if (matches.length > 1) {
-          Events.subscribe(id, Moment(matches[1], "HH"))
-        } else {
-          Events.unknown(id)
-        }
+        Events.unknown(id)
       }
     }
   })
