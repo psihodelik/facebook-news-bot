@@ -35,7 +35,7 @@ const Events = {
   help(id) {
     sendMenu(
       id,
-      "I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nI can give you the headlines, trending news or deliver a morning briefing to you.\nHow can I help you?"
+      "I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nI can give you the headlines, most popular stories or deliver a morning briefing to you.\nHow can I help you?"
     )
   },
   menu(id) {
@@ -81,7 +81,7 @@ const Events = {
   subscribe_no(id) {
     sendMenu(
       id,
-      "Ok, maybe later then. You can subscribe to the morning briefing at anytime from the menu.\n\nWould you like the headlines or trending news?"
+      "Ok, maybe later then. You can subscribe to the morning briefing at anytime from the menu.\n\nWould you like the headlines or most popular stories?"
     )
   },
   subscribe(id, payload) {
@@ -99,23 +99,34 @@ const Events = {
         } else {
           sendMenu(
             id,
-            "Fantastic. You can change your subscription at anytime by asking for 'help' or 'menu'.\n\nWould you like the headlines or trending news?"
+            "Fantastic. You can change your subscription at anytime by asking for 'help' or 'menu'.\n\nWould you like the headlines or most popular stories?"
           )
         }
       })
     })
   },
   manage_subscription(id) {
-    Facebook.sendMessage(
-      id,
-      buildButtonsAttachment(
-        "What would you like to change?",
-        [
-          buildButton("postback", "Change time", buildPayload("subscribe_yes")),
-          buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
-        ]
-      )
-    )
+    UserStore.getUser(id, (err, data) => {
+      if (err) {
+        console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
+      } else {
+        if (data.Item.notificationTime !== "-") {
+          //Already subscribed
+          Facebook.sendMessage(
+            id,
+            buildButtonsAttachment(
+              "What would you like to change?",
+              [
+                buildButton("postback", "Change time", buildPayload("subscribe_yes")),
+                buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
+              ]
+            )
+          )
+        } else {
+          sendSubscribeQuestion(id, "Would you like to subscribe to a daily morning briefing?")
+        }
+      }
+    })
   },
   unsubscribe(id) {
     UserStore.unsubscribe(id, (err, data) => {
@@ -138,9 +149,9 @@ const Events = {
     const page = (payload && payload.page) ? payload.page : 0
     getAndSendCapiResults(id, "headlines", page)
   },
-  trending(id, payload) {
+  most_popular(id, payload) {
     const page = (payload && payload.page) ? payload.page : 0
-    getAndSendCapiResults(id, "trending", page)
+    getAndSendCapiResults(id, "most_popular", page)
   }
 }
 
@@ -149,18 +160,25 @@ function greetNewUser(id, name) {
     if (err) {
       console.log("Error adding user "+ id +": "+ JSON.stringify(err))
     } else {
-      Facebook.sendMessage(
+      sendSubscribeQuestion(
         id,
-        buildButtonsAttachment(
-          "Hi there "+ name+ ", I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nCan I deliver you a daily morning briefing?",
-          [
-            buildButton("postback", "Yes please", buildPayload("subscribe_yes")),
-            buildButton("postback", "No thanks", buildPayload("subscribe_no"))
-          ]
-        )
+        "Hi there "+ name+ ", I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?"
       )
     }
   })
+}
+
+function sendSubscribeQuestion(id, message) {
+  Facebook.sendMessage(
+    id,
+    buildButtonsAttachment(
+      message,
+      [
+        buildButton("postback", "Yes please", buildPayload("subscribe_yes")),
+        buildButton("postback", "No thanks", buildPayload("subscribe_no"))
+      ]
+    )
+  )
 }
 
 function localeToFront(locale) {
@@ -205,7 +223,7 @@ function sendMenu(id, message) {
           message,
           [
             buildButton("postback", "Headlines", buildPayload("headlines",{"page":0})),
-            buildButton("postback", "Trending", buildPayload("trending",{"page":0})),
+            buildButton("postback", "Most popular", buildPayload("most_popular",{"page":0})),
             getSubButton(data.Item.notificationTime !== "-")
           ]
         )
@@ -234,7 +252,7 @@ function buildLinkButton(url) {
   return {
     "type":"web_url",
     "url":url + "?" + CAMPAIGN_CODE_PARAM,
-    "title":"Read article"
+    "title":"Read story"
   }
 }
 function buildQuickReply(title, payload) {
@@ -308,7 +326,7 @@ function getAndSendCapiResults(id, type, page) {
       const front = localeToFront(JSON.parse(body)["locale"])
       if (type === "headlines") {
         Capi.getEditorsPicks(id, front, sendCapiResults)
-      } else {
+      } else if (type === "most_popular") {
         Capi.getMostViewed(id, front, sendCapiResults)
       }
     }
@@ -430,8 +448,8 @@ app.post("/webhook/", (req, res) => {
         Events.unsubscribe(id)
       } else if (text.includes("headlines")) {
         Events.headlines(id)
-      } else if (text.includes("trending")) {
-        Events.trending(id)
+      } else if (text.includes("popular")) {
+        Events.most_popular(id)
       } else if (text === "more stories") {
         //Facebook's Quick Reply buttons come back as text messages, but with a payload.
         if (typeof event.message.quick_reply !== "undefined") {
