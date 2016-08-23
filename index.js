@@ -198,7 +198,7 @@ function localeToFront(locale) {
 //Returns the time adjusted by the offset as a string
 function getUTCTime(time, offset) {
   //facebook timezone offset is a float in [-24, 24]
-  const reg = offset.toString().match(/^([0-9]*)(\.[0-9]*)?$/)
+  const reg = offset.toString().match(/^(-?[0-9]*)(\.[0-9]*)?$/)
   const hours = reg[1]
   const mins = (typeof reg[2] !== "undefined") ? parseFloat(reg[2]) * 60 : 0
   const timeUTC = time.subtract(hours, "hours").subtract(mins, "minutes")
