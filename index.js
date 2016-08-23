@@ -29,7 +29,7 @@ const Events = {
       id,
       buildButtonsAttachment(
         Messages.unknown(),
-        [buildButton("postback", Messages.help_prompt(), buildPayload("help"))]
+        [buildButton("postback", Messages.unknown_prompt(), buildPayload("help"))]
       )
     )
   },
