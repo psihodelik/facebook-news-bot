@@ -6,6 +6,7 @@ const Moment = require("moment")
 const UserStore = new (require("./lib/user-store"))
 const Capi = require("./lib/capi")
 const Facebook = require("./lib/facebook")
+const Messages = require("./lib/messages").Messages
 const Schedule = require("node-schedule")
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN
@@ -27,7 +28,7 @@ const Events = {
     Facebook.sendMessage(
       id,
       buildButtonsAttachment(
-        "Sorry, I don't know what you mean.",
+        Messages.unknown(),
         [buildButton("postback", "So, what can you do?", buildPayload("help"))]
       )
     )
@@ -35,13 +36,13 @@ const Events = {
   help(id) {
     sendMenu(
       id,
-      "I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nI can give you the headlines, most popular stories or deliver a morning briefing to you.\nHow can I help you?"
+      Messages.help()
     )
   },
   menu(id) {
     sendMenu(
       id,
-      "How can I help?"
+      Messages.menu()
     )
   },
   start(id) {
@@ -56,7 +57,7 @@ const Events = {
           } else {
             const name = JSON.parse(body)["first_name"]
             if (data.Item) {
-              sendMenu(id, "Hi there "+ name +", how can I help you?")
+              sendMenu(id, Messages.greeting() + " " + name + ". " + Messages.menu())
             } else {
               greetNewUser(id, name)
             }
@@ -69,7 +70,7 @@ const Events = {
     Facebook.sendMessage(
       id,
       buildButtonsAttachment(
-        "Great. When would you like your morning briefing delivered?",
+        Messages.subscribe_yes(),
         [
           buildButton("postback", "6am", buildPayload("subscribe", {"time":6})),
           buildButton("postback", "7am", buildPayload("subscribe", {"time":7})),
@@ -81,7 +82,7 @@ const Events = {
   subscribe_no(id) {
     sendMenu(
       id,
-      "Ok, maybe later then. You can subscribe to the morning briefing at anytime from the menu.\n\nWould you like the headlines or most popular stories?"
+      Messages.subscribe_no()
     )
   },
   subscribe(id, payload) {
@@ -99,7 +100,7 @@ const Events = {
         } else {
           sendMenu(
             id,
-            "Fantastic. You can change your subscription at anytime by asking for 'help' or 'menu'.\n\nWould you like the headlines or most popular stories?"
+            Messages.subscribed()
           )
         }
       })
@@ -133,7 +134,7 @@ const Events = {
       if (err) {
         console.log("Error unsubscribing for "+ id +": "+ JSON.stringify(err))
       } else {
-        Facebook.sendTextMessage(id, "You will no longer receive the daily morning briefing.\n\nIf you ever want to re-subscribe, you can do so from the menu")
+        Facebook.sendTextMessage(id, Messages.unsubscribed())
       }
     })
   },
@@ -141,7 +142,7 @@ const Events = {
     //TODO - create a true morning briefing, not just editors-picks
     Facebook.sendTextMessage(
       id,
-      "Good morning. Here is the morning briefing:",
+      Messages.morning_briefing(),
       Events.headlines(id)
     )
   },
@@ -162,7 +163,7 @@ function greetNewUser(id, name) {
     } else {
       sendSubscribeQuestion(
         id,
-        "Hi there "+ name+ ", I'm a virtual assistant created by the Guardian to keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?"
+        Messages.greeting() + " " + name + "! " + Messages.welcome()
       )
     }
   })
