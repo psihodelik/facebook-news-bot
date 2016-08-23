@@ -47,7 +47,7 @@ const Events = {
   },
   start(id) {
     //Is this an existing user?
-    UserStore.getUser(id, (err, data) => {
+    UserStore.getUser(id, (err, dynamoData) => {
       if (err) {
         console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
       } else {
@@ -55,11 +55,11 @@ const Events = {
           if (err) {
             console.log("Error retrieving user "+ id +"from facebook: "+ JSON.stringify(err))
           } else {
-            const name = JSON.parse(body)["first_name"]
-            if (data.Item) {
-              sendMenu(id, Messages.greeting() + " " + name + ". " + Messages.menu())
+            const fbData = JSON.parse(body)
+            if (dynamoData.Item) {
+              sendMenu(id, Messages.greeting() + " " + fbData.first_name + ". " + Messages.menu())
             } else {
-              greetNewUser(id, name)
+              greetNewUser(id, localeToFront(fbData.locale), fbData.first_name)
             }
           }
         })
@@ -116,9 +116,12 @@ const Events = {
           Facebook.sendMessage(
             id,
             buildButtonsAttachment(
-              "What would you like to change?",
+              "Your edition is currently set to "+ frontToUserFriendly(data.Item.front) +
+              " and your morning briefing time is "+ data.Item.notificationTime +
+              ".\n\nWhat would you like to change?",
               [
                 buildButton("postback", "Change time", buildPayload("subscribe_yes")),
+                buildButton("postback", "Change edition", buildPayload("change_front_menu")),
                 buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
               ]
             )
@@ -126,6 +129,26 @@ const Events = {
         } else {
           sendSubscribeQuestion(id, Messages.subscribe_question())
         }
+      }
+    })
+  },
+  change_front_menu(id) {
+    Facebook.sendMessage(
+      id,
+      buildGenericAttachment([
+        buildElement("UK edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"uk"}))]),
+        buildElement("US edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"us"}))]),
+        buildElement("Australian edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"au"}))]),
+        buildElement("International edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"international"}))])
+      ])
+    )
+  },
+  change_front(id, payload) {
+    UserStore.setFront(id, payload.front, (err, data) => {
+      if (err) {
+        console.log("Error changing front for "+ id +": "+ JSON.stringify(err))
+      } else {
+        Facebook.sendTextMessage(id, "Your edition has been updated to "+ frontToUserFriendly(payload.front))
       }
     })
   },
@@ -156,8 +179,8 @@ const Events = {
   }
 }
 
-function greetNewUser(id, name) {
-  UserStore.addUser(id, (err, data) => {
+function greetNewUser(id, front, name) {
+  UserStore.addUser(id, front, (err, data) => {
     if (err) {
       console.log("Error adding user "+ id +": "+ JSON.stringify(err))
     } else {
@@ -192,6 +215,16 @@ function localeToFront(locale) {
     return "au"
   } else {
     return "international"
+  }
+}
+
+function frontToUserFriendly(front) {
+  if (front === "au") {
+    return "Australia"
+  } else if (front === "international") {
+    return "International"
+  } else {
+    return front.toUpperCase()
   }
 }
 
@@ -264,13 +297,20 @@ function buildQuickReply(title, payload) {
   }
 }
 
-function buildElement(title, subtitle, imageUrl, buttons) {
-  return {
-    "image_url":imageUrl,
-    "title":title,
-    "subtitle":subtitle,
-    "buttons": buttons
+function buildElement(title, buttons, subtitle, imageUrl) {
+  let element = {
+    "title": title
   }
+  if (typeof buttons !== "undefined") {
+    element.buttons = buttons
+  }
+  if (typeof subtitle !== "undefined") {
+    element.subtitle = subtitle
+  }
+  if (typeof imageUrl !== "undefined") {
+    element.image_url = imageUrl
+  }
+  return element
 }
 
 function buildButtonsAttachment(text, buttons) {
@@ -303,9 +343,9 @@ function getAndSendCapiResults(id, type, page) {
     const elements = results.slice(page,page+LINK_COUNT).map(item => {
       return buildElement(
         item.webTitle,
+        [buildLinkButton(item.webUrl)],
         item.fields.standfirst.replace(/<.*?>/g, ""),
-        getImageUrl(item),
-        [buildLinkButton(item.webUrl)]
+        getImageUrl(item)
       )
     })
 
@@ -320,15 +360,14 @@ function getAndSendCapiResults(id, type, page) {
     Facebook.sendMessage(id, att)
   }
 
-  Facebook.getFacebookUser(id, (error, response, body) => {
+  UserStore.getUser(id, (error, data) => {
     if (error) {
       console.log("Error getting facebook user "+ id +": "+ JSON.stringify(error))
     } else {
-      const front = localeToFront(JSON.parse(body)["locale"])
       if (type === "headlines") {
-        Capi.getEditorsPicks(id, front, sendCapiResults)
+        Capi.getEditorsPicks(id, data.Item.front, sendCapiResults)
       } else if (type === "most_popular") {
-        Capi.getMostViewed(id, front, sendCapiResults)
+        Capi.getMostViewed(id, data.Item.front, sendCapiResults)
       }
     }
   })
@@ -446,17 +485,15 @@ app.post("/webhook/", (req, res) => {
     if (event.message && event.message.text) {
       const text = event.message.text.trim().toLowerCase()
 
-      if (text === "more stories") {
+      if (typeof event.message.quick_reply !== "undefined") {
         //Facebook's Quick Reply buttons come back as text messages, but with a payload.
-        if (typeof event.message.quick_reply !== "undefined") {
-          const payload = JSON.parse(event.message.quick_reply.payload)
+        const payload = JSON.parse(event.message.quick_reply.payload)
 
-          log(id, "text", payload.event, {
-            "text": event.message.text,
-            "payload": payload
-          })
-          Events[payload.event](id, payload)
-        }
+        log(id, "text", payload.event, {
+          "text": event.message.text,
+          "payload": payload
+        })
+        Events[payload.event](id, payload)
       } else {
         const ev = getEventForTextMessage(text)
         log(id, "text", ev, {"text": event.message.text})
