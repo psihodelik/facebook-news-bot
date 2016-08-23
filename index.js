@@ -29,7 +29,7 @@ const Events = {
       id,
       buildButtonsAttachment(
         Messages.unknown(),
-        [buildButton("postback", "So, what can you do?", buildPayload("help"))]
+        [buildButton("postback", Messages.help_prompt(), buildPayload("help"))]
       )
     )
   },
@@ -124,7 +124,7 @@ const Events = {
             )
           )
         } else {
-          sendSubscribeQuestion(id, "Would you like to subscribe to a daily morning briefing?")
+          sendSubscribeQuestion(id, Messages.subscribe_question())
         }
       }
     })
