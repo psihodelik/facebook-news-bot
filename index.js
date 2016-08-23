@@ -412,6 +412,16 @@ Schedule.scheduleJob(recRule, () => {
   })
 })
 
+function log(id, type, event, data) {
+  console.log(JSON.stringify({
+    "id": id,
+    "event": event,
+    "messageType": type,
+    "timestamp": Moment.utc().toISOString(),
+    "data": data
+  }))
+}
+
 // Verification GET
 app.get("/webhook/", (req, res) => {
   if (req.query["hub.verify_token"] === VERIFY_TOKEN) {
@@ -435,36 +445,28 @@ app.post("/webhook/", (req, res) => {
 
     if (event.message && event.message.text) {
       const text = event.message.text.trim().toLowerCase()
-      console.log("Received message: '"+ text +"', from user "+ id)
 
-      if (text.match(/^(hi|hello|ola|hey|salut)\s*[!?.]*$/)) {
-        Events.start(id)
-      } else if (text.match(/^help|^what can you do/)) {
-        Events.help(id)
-      } else if (text.match(/^menu/)) {
-        Events.menu(id)
-      } else if (text.match(/^subscribe/)) {
-        Events.subscribe_yes(id)
-      } else if (text.match(/^unsubscribe/)) {
-        Events.unsubscribe(id)
-      } else if (text.includes("headlines")) {
-        Events.headlines(id)
-      } else if (text.includes("popular")) {
-        Events.most_popular(id)
-      } else if (text === "more stories") {
+      if (text === "more stories") {
         //Facebook's Quick Reply buttons come back as text messages, but with a payload.
         if (typeof event.message.quick_reply !== "undefined") {
           const payload = JSON.parse(event.message.quick_reply.payload)
+
+          log(id, "text", payload.event, {
+            "text": event.message.text,
+            "payload": payload
+          })
           Events[payload.event](id, payload)
         }
       } else {
-        Events.unknown(id)
+        const ev = getEventForTextMessage(text)
+        log(id, "text", ev, {"text": event.message.text})
+        Events[ev](id)
       }
 
     } else if (event.postback) {
       
       const payload = JSON.parse(event.postback.payload)
-      console.log("Received payload: '"+ JSON.stringify(payload) +"', from user "+ id)
+      log(id, "postback", payload.event, {"payload": payload})
 
       if (Events[payload.event]) {
         Events[payload.event](id, payload)
@@ -475,6 +477,26 @@ app.post("/webhook/", (req, res) => {
   })
   res.sendStatus(200)
 })
+
+function getEventForTextMessage(text) {
+  if (text.match(/^(hi|hello|ola|hey|salut)\s*[!?.]*$/)) {
+    return "start"
+  } else if (text.match(/^help|^what can you do/)) {
+    return "help"
+  } else if (text.match(/^menu/)) {
+    return "menu"
+  } else if (text.match(/^subscribe/)) {
+    return "subscribe_yes"
+  } else if (text.match(/^unsubscribe/)) {
+    return "unsubscribe"
+  } else if (text.includes("headlines")) {
+    return "headlines"
+  } else if (text.includes("popular")) {
+    return "most_popular"
+  } else {
+    return "unknown"
+  }
+}
 
 const listen = app.listen((process.env.PORT || 5000), () => {
   console.log("running on port", listen.address().port)
