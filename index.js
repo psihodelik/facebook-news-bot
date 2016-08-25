@@ -432,36 +432,39 @@ Schedule.scheduleJob(recRule, () => {
           if (error) {
             console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(error))
           } else {
-
-            const latestOffset = JSON.parse(body)["timezone"]
-            if (typeof latestOffset !== "undefined") {
-              if (latestOffset === user.offsetHours) {
-                Events.morningBriefing(user.ID)
-              } else {
-                //User's timezone has changed
-                if (latestOffset < user.offsetHours) {
-                  //We've missed the notification time for this new timezone, so push now
-                  Events.morningBriefing(user.ID)
-                }
-
-                const timeStringUTC = getUTCTime(Moment(user.notificationTime, "HH:mm"), latestOffset)
-                UserStore.setNotificationTime(user.ID, latestOffset, user.notificationTime, timeStringUTC, (err, data) => {
-                  if (err) {
-                    console.log("Error setting notification time for "+ user.ID +": "+ JSON.stringify(err))
-                  } else {
-                    console.log("Updated user's settings: "+ user.ID)
-                  }
-                })
-              }
-            } else {
-              console.log("No timezone found in facebook response: "+ JSON.stringify(response))
-            }
+            notifyUser(user, JSON.parse(body))
           }
         })
       })
     }
   })
 })
+
+function notifyUser(dynamoData, fbData) {
+  const latestOffset = fbData.timezone
+  if (typeof latestOffset !== "undefined") {
+    if (latestOffset === dynamoData.offsetHours) {
+      Events.morningBriefing(dynamoData.ID)
+    } else {
+      //User's timezone has changed
+      if (latestOffset < dynamoData.offsetHours) {
+        //We've missed the notification time for this new timezone, so push now
+        Events.morningBriefing(dynamoData.ID)
+      }
+
+      const timeStringUTC = getUTCTime(Moment(dynamoData.notificationTime, "HH:mm"), latestOffset)
+      UserStore.setNotificationTime(dynamoData.ID, latestOffset, dynamoData.notificationTime, timeStringUTC, (err, data) => {
+        if (err) {
+          console.log("Error setting notification time for "+ dynamoData.ID +": "+ JSON.stringify(err))
+        } else {
+          console.log("Updated user's settings: "+ dynamoData.ID)
+        }
+      })
+    }
+  } else {
+    console.log("No timezone found in facebook response: "+ JSON.stringify(response))
+  }
+}
 
 function log(id, type, event, data) {
   console.log(JSON.stringify({
