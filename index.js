@@ -100,6 +100,7 @@ const Events = {
           if (err) {
             console.log("Error setting notification time for "+ user.ID +": "+ JSON.stringify(err))
           } else {
+            user.notificationTime = timeString
             sendMenu(
               user,
               Messages.subscribed()
@@ -493,6 +494,7 @@ app.post("/webhook/", (req, res) => {
            * unreliable. Either way, let's give them the initial greeting and add them to
            * dynamodb.
            */
+          log(id, "postback", "start", {})
           Events.start({"ID": id})
         }
       }
