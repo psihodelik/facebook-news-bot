@@ -526,7 +526,16 @@ function handleExistingUser(id, event, userData) {
     log(id, "postback", payload.event, {"payload": payload})
 
     if (Events[payload.event]) {
-      Events[payload.event](userData, payload)
+      if (payload.event === "start") {
+        /*
+         * This shouldn't generally happen, but it's possible for an existing
+         * user to get the 'Get started' button in a web browser if they
+         * delete the conversation first.
+         */
+        Events.greeting(userData)
+      } else {
+        Events[payload.event](userData, payload)
+      }
     } else {
       Events.unknown(userData)
     }
