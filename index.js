@@ -24,51 +24,50 @@ app.use(BodyParser.urlencoded({extended: false}))
 app.use(BodyParser.json())
 
 const Events = {
-  unknown(id) {
+  unknown(user) {
     Facebook.sendMessage(
-      id,
+      user.ID,
       buildButtonsAttachment(
         Messages.unknown(),
         [buildButton("postback", Messages.unknown_prompt(), buildPayload("help"))]
       )
     )
   },
-  help(id) {
+  help(user) {
     sendMenu(
-      id,
+      user,
       Messages.help()
     )
   },
-  menu(id) {
+  menu(user) {
     sendMenu(
-      id,
+      user,
       Messages.menu()
     )
   },
-  start(id) {
-    //Is this an existing user?
-    UserStore.getUser(id, (err, dynamoData) => {
+  greeting(user) {
+    Facebook.getFacebookUser(user.ID, (err, response, body) => {
       if (err) {
-        console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
+        console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(err))
       } else {
-        Facebook.getFacebookUser(id, (err, response, body) => {
-          if (err) {
-            console.log("Error retrieving user "+ id +"from facebook: "+ JSON.stringify(err))
-          } else {
-            const fbData = JSON.parse(body)
-            if (dynamoData.Item) {
-              sendMenu(id, Messages.greeting() + " " + fbData.first_name + ". " + Messages.menu())
-            } else {
-              greetNewUser(id, localeToFront(fbData.locale), fbData.first_name)
-            }
-          }
-        })
+        const fbData = JSON.parse(body)
+        sendMenu(user, Messages.greeting() + " " + fbData.first_name + ". " + Messages.menu())
       }
     })
   },
-  subscribe_yes(id) {
+  start(user) {
+    Facebook.getFacebookUser(user.ID, (err, response, body) => {
+      if (err) {
+        console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(err))
+      } else {
+        const fbData = JSON.parse(body)
+        greetNewUser(user.ID, localeToFront(fbData.locale), fbData.first_name)
+      }
+    })
+  },
+  subscribe_yes(user) {
     Facebook.sendMessage(
-      id,
+      user.ID,
       buildButtonsAttachment(
         Messages.subscribe_yes(),
         [
@@ -79,30 +78,30 @@ const Events = {
       )
     )
   },
-  subscribe_no(id) {
+  subscribe_no(user) {
     sendMenu(
-      id,
+      user,
       Messages.subscribe_no()
     )
   },
-  subscribe(id, payload) {
+  subscribe(user, payload) {
     const time = Moment(payload.time, "HH")
     //Get timezone from FB then update user's dynamo record
-    Facebook.getFacebookUser(id, (error, response, body) => {
+    Facebook.getFacebookUser(user.ID, (error, response, body) => {
       if (error) {
-        console.log("Error retrieving user "+ id +"from facebook: "+ JSON.stringify(error))
+        console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(error))
       } else {
         const timeString = time.format("HH:mm")
 
         const offset = JSON.parse(body)["timezone"]
         const timeStringUTC = getUTCTime(time, offset)
 
-        UserStore.setNotificationTime(id, offset, timeString, timeStringUTC, (err, data) => {
+        UserStore.setNotificationTime(user.ID, offset, timeString, timeStringUTC, (err, data) => {
           if (err) {
-            console.log("Error setting notification time for "+ id +": "+ JSON.stringify(err))
+            console.log("Error setting notification time for "+ user.ID +": "+ JSON.stringify(err))
           } else {
             sendMenu(
-              id,
+              user,
               Messages.subscribed()
             )
           }
@@ -110,35 +109,29 @@ const Events = {
       }
     })
   },
-  manage_subscription(id) {
-    UserStore.getUser(id, (err, data) => {
-      if (err) {
-        console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
-      } else {
-        if (data.Item.notificationTime !== "-") {
-          //Already subscribed
-          Facebook.sendMessage(
-            id,
-            buildButtonsAttachment(
-              "Your edition is currently set to "+ frontToUserFriendly(data.Item.front) +
-              " and your morning briefing time is "+ data.Item.notificationTime +
-              ".\n\nWhat would you like to change?",
-              [
-                buildButton("postback", "Change time", buildPayload("subscribe_yes")),
-                buildButton("postback", "Change edition", buildPayload("change_front_menu")),
-                buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
-              ]
-            )
-          )
-        } else {
-          sendSubscribeQuestion(id, Messages.subscribe_question())
-        }
-      }
-    })
+  manage_subscription(user) {
+    if (user.notificationTime !== "-") {
+      //Already subscribed
+      Facebook.sendMessage(
+        user.ID,
+        buildButtonsAttachment(
+          "Your edition is currently set to "+ frontToUserFriendly(user.front) +
+          " and your morning briefing time is "+ user.notificationTime +
+          ".\n\nWhat would you like to change?",
+          [
+            buildButton("postback", "Change time", buildPayload("subscribe_yes")),
+            buildButton("postback", "Change edition", buildPayload("change_front_menu")),
+            buildButton("postback", "Unsubscribe", buildPayload("unsubscribe")),
+          ]
+        )
+      )
+    } else {
+      sendSubscribeQuestion(user.ID, Messages.subscribe_question())
+    }
   },
-  change_front_menu(id) {
+  change_front_menu(user) {
     Facebook.sendMessage(
-      id,
+      user.ID,
       buildGenericAttachment([
         buildElement("UK edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"uk"}))]),
         buildElement("US edition", [buildButton("postback", "Set edition", buildPayload("change_front", {"front":"us"}))]),
@@ -147,39 +140,39 @@ const Events = {
       ])
     )
   },
-  change_front(id, payload) {
-    UserStore.setFront(id, payload.front, (err, data) => {
+  change_front(user, payload) {
+    UserStore.setFront(user.ID, payload.front, (err, data) => {
       if (err) {
-        console.log("Error changing front for "+ id +": "+ JSON.stringify(err))
+        console.log("Error changing front for "+ user.ID +": "+ JSON.stringify(err))
       } else {
-        Facebook.sendTextMessage(id, "Your edition has been updated to "+ frontToUserFriendly(payload.front))
+        Facebook.sendTextMessage(user.ID, "Your edition has been updated to "+ frontToUserFriendly(payload.front))
       }
     })
   },
-  unsubscribe(id) {
-    UserStore.unsubscribe(id, (err, data) => {
+  unsubscribe(user) {
+    UserStore.unsubscribe(user.ID, (err, data) => {
       if (err) {
-        console.log("Error unsubscribing for "+ id +": "+ JSON.stringify(err))
+        console.log("Error unsubscribing for "+ user.ID +": "+ JSON.stringify(err))
       } else {
-        Facebook.sendTextMessage(id, Messages.unsubscribed())
+        Facebook.sendTextMessage(user.ID, Messages.unsubscribed())
       }
     })
   },
-  morningBriefing(id) {
+  morningBriefing(user) {
     //TODO - create a true morning briefing, not just editors-picks
     Facebook.sendTextMessage(
-      id,
+      user.ID,
       Messages.morning_briefing(),
-      Events.headlines(id)
+      Events.headlines(user.ID)
     )
   },
-  headlines(id, payload) {
+  headlines(user, payload) {
     const page = (payload && payload.page) ? payload.page : 0
-    getAndSendCapiResults(id, "headlines", page)
+    getAndSendCapiResults(user, "headlines", page)
   },
-  most_popular(id, payload) {
+  most_popular(user, payload) {
     const page = (payload && payload.page) ? payload.page : 0
-    getAndSendCapiResults(id, "most_popular", page)
+    getAndSendCapiResults(user, "most_popular", page)
   }
 }
 
@@ -242,32 +235,26 @@ function getUTCTime(time, offset) {
   return timeUTC.format("HH:mm")
 }
 
-function sendMenu(id, message) {
-  UserStore.getUser(id, (err, data) => {
-    if (err) {
-      console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
+function sendMenu(user, message) {
+  const getSubButton = (isSubscribed) => {
+    if (isSubscribed) {
+      return buildButton("postback", "Manage subscription", buildPayload("manage_subscription"))
     } else {
-      const getSubButton = (isSubscribed) => {
-        if (isSubscribed) {
-          return buildButton("postback", "Manage subscription", buildPayload("manage_subscription"))
-        } else {
-          return buildButton("postback", "Subscribe", buildPayload("subscribe_yes"))
-        }
-      }
-
-      Facebook.sendMessage(
-        id,
-        buildButtonsAttachment(
-          message,
-          [
-            buildButton("postback", "Headlines", buildPayload("headlines",{"page":0})),
-            buildButton("postback", "Most popular", buildPayload("most_popular",{"page":0})),
-            getSubButton(data.Item.notificationTime !== "-")
-          ]
-        )
-      )
+      return buildButton("postback", "Subscribe", buildPayload("subscribe_yes"))
     }
-  })
+  }
+
+  Facebook.sendMessage(
+    user.ID,
+    buildButtonsAttachment(
+      message,
+      [
+        buildButton("postback", "Headlines", buildPayload("headlines",{"page":0})),
+        buildButton("postback", "Most popular", buildPayload("most_popular",{"page":0})),
+        getSubButton(user.notificationTime !== "-")
+      ]
+    )
+  )
 }
 
 function buildPayload(event, data) {
@@ -342,7 +329,7 @@ function buildGenericAttachment(elements) {
   }
 }
 
-function getAndSendCapiResults(id, type, page) {
+function getAndSendCapiResults(user, type, page) {
   const sendCapiResults = (id, results) => {
     const elements = results.slice(page,page+LINK_COUNT).map(item => {
       return buildElement(
@@ -364,17 +351,11 @@ function getAndSendCapiResults(id, type, page) {
     Facebook.sendMessage(id, att)
   }
 
-  UserStore.getUser(id, (error, data) => {
-    if (error) {
-      console.log("Error getting facebook user "+ id +": "+ JSON.stringify(error))
-    } else {
-      if (type === "headlines") {
-        Capi.getEditorsPicks(id, data.Item.front, sendCapiResults)
-      } else if (type === "most_popular") {
-        Capi.getMostViewed(id, data.Item.front, sendCapiResults)
-      }
-    }
-  })
+  if (type === "headlines") {
+    Capi.getEditorsPicks(user.ID, user.front, sendCapiResults)
+  } else if (type === "most_popular") {
+    Capi.getMostViewed(user.ID, user.front, sendCapiResults)
+  }
 }
 
 // Look for image with width 1000, otherwise the next widest
@@ -497,42 +478,64 @@ app.post("/webhook/", (req, res) => {
   events.map(event => {
     const id = event.sender.id
 
-    if (event.message && event.message.text) {
-      const text = event.message.text.trim().toLowerCase()
-
-      if (typeof event.message.quick_reply !== "undefined") {
-        //Facebook's Quick Reply buttons come back as text messages, but with a payload.
-        const payload = JSON.parse(event.message.quick_reply.payload)
-
-        log(id, "text", payload.event, {
-          "text": event.message.text,
-          "payload": payload
-        })
-        Events[payload.event](id, payload)
+    //Is this an existing user?
+    UserStore.getUser(id, (err, dynamoData) => {
+      if (err) {
+        console.log("Error looking up user "+ id +": "+ JSON.stringify(err))
       } else {
-        const ev = getEventForTextMessage(text)
-        log(id, "text", ev, {"text": event.message.text})
-        Events[ev](id)
-      }
 
-    } else if (event.postback) {
-      
-      const payload = JSON.parse(event.postback.payload)
-      log(id, "postback", payload.event, {"payload": payload})
-
-      if (Events[payload.event]) {
-        Events[payload.event](id, payload)
-      } else {
-        Events.unknown(id)
+        if (dynamoData.Item) {
+          handleExistingUser(id, event, dynamoData.Item)
+        } else {
+          /*
+           * New user - in theory they should always arrive via the 'Get started' button,
+           * and therefore on the 'start' event. But facebook messenger is a little
+           * unreliable. Either way, let's give them the initial greeting and add them to
+           * dynamodb.
+           */
+          Events.start({"ID": id})
+        }
       }
-    }
+    })
   })
   res.sendStatus(200)
 })
 
+function handleExistingUser(id, event, userData) {
+  if (event.message && event.message.text) {
+    const text = event.message.text.trim().toLowerCase()
+
+    if (typeof event.message.quick_reply !== "undefined") {
+      //Facebook's Quick Reply buttons come back as text messages, but with a payload.
+      const payload = JSON.parse(event.message.quick_reply.payload)
+
+      log(id, "text", payload.event, {
+        "text": event.message.text,
+        "payload": payload
+      })
+      Events[payload.event](userData, payload)
+    } else {
+      const ev = getEventForTextMessage(text)
+      log(id, "text", ev, {"text": event.message.text})
+      Events[ev](userData)
+    }
+
+  } else if (event.postback) {
+
+    const payload = JSON.parse(event.postback.payload)
+    log(id, "postback", payload.event, {"payload": payload})
+
+    if (Events[payload.event]) {
+      Events[payload.event](userData, payload)
+    } else {
+      Events.unknown(userData)
+    }
+  }
+}
+
 function getEventForTextMessage(text) {
   if (text.match(/^(hi|hello|ola|hey|salut)\s*[!?.]*$/)) {
-    return "start"
+    return "greeting"
   } else if (text.match(/^help|^what can you do/)) {
     return "help"
   } else if (text.match(/^menu/)) {
