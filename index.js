@@ -330,7 +330,7 @@ function buildGenericAttachment(elements) {
 }
 
 function getAndSendCapiResults(user, type, page) {
-  const sendCapiResults = (id, results) => {
+  const sendCapiResults = (results) => {
     const elements = results.slice(page,page+LINK_COUNT).map(item => {
       return buildElement(
         item.webTitle,
@@ -348,7 +348,7 @@ function getAndSendCapiResults(user, type, page) {
       )
     ]
 
-    Facebook.sendMessage(id, att)
+    Facebook.sendMessage(user.ID, att)
   }
 
   if (type === "headlines") {
