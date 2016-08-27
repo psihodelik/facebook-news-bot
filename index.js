@@ -164,7 +164,7 @@ const Events = {
     Facebook.sendTextMessage(
       user.ID,
       Messages.morning_briefing(),
-      Events.headlines(user.ID)
+      Events.headlines(user)
     )
   },
   headlines(user, payload) {
@@ -426,12 +426,12 @@ function notifyUser(dynamoData, fbData) {
   const latestOffset = fbData.timezone
   if (typeof latestOffset !== "undefined") {
     if (latestOffset === dynamoData.offsetHours) {
-      Events.morningBriefing(dynamoData.ID)
+      Events.morningBriefing(dynamoData)
     } else {
       //User's timezone has changed
       if (latestOffset < dynamoData.offsetHours) {
         //We've missed the notification time for this new timezone, so push now
-        Events.morningBriefing(dynamoData.ID)
+        Events.morningBriefing(dynamoData)
       }
 
       const timeStringUTC = getUTCTime(Moment(dynamoData.notificationTime, "HH:mm"), latestOffset)
