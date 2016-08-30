@@ -556,13 +556,13 @@ function handleExistingUser(id, event, userData) {
 }
 
 function getEventForTextMessage(text) {
-  if (text.match(/^(hi|hello|ola|hey|salut)\s*[!?.]*$/)) {
+  if (text.match(/^(hi|hello|ola|hey|salut|ello|whats up)\s*[!?.]*$/)) {
     return "greeting"
   } else if (text.match(/^help|^what can you do/)) {
     return "help"
   } else if (text.match(/^menu/)) {
     return "menu"
-  } else if (text.match(/^subscribe/)) {
+  } else if (text.match(/^subscribe|^can you send me a morning briefing/)) {
     return "subscribe_yes"
   } else if (text.match(/^unsubscribe/)) {
     return "unsubscribe"
