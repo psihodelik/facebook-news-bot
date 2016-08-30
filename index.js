@@ -289,7 +289,7 @@ function buildQuickReply(title, payload) {
   }
 }
 
-function buildElement(title, buttons, subtitle, imageUrl) {
+function buildElement(title, buttons, subtitle, imageUrl, itemUrl) {
   let element = {
     "title": title
   }
@@ -301,6 +301,9 @@ function buildElement(title, buttons, subtitle, imageUrl) {
   }
   if (typeof imageUrl !== "undefined") {
     element.image_url = imageUrl
+  }
+  if (typeof itemUrl !== "undefined") {
+    element.item_url = itemUrl
   }
   return element
 }
@@ -337,7 +340,8 @@ function getAndSendCapiResults(user, type, page) {
         item.webTitle,
         [buildLinkButton(item.webUrl)],
         item.fields.standfirst.replace(/<.*?>/g, ""),
-        getImageUrl(item)
+        getImageUrl(item),
+        item.webUrl
       )
     })
 
