@@ -342,7 +342,7 @@ function getAndSendCapiResults(user, type, page) {
       return buildElement(
         item.webTitle, [
           buildButton("postback", "Share", buildPayload("share", {
-            "url": item.webUrl,
+            "url": item.webUrl + "?"+ CAMPAIGN_CODE_PARAM +"_share",
             "title": item.webTitle
           }))
         ],
