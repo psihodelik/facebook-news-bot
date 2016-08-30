@@ -174,6 +174,9 @@ const Events = {
   most_popular(user, payload) {
     const page = (payload && payload.page) ? payload.page : 0
     getAndSendCapiResults(user, "most_popular", page)
+  },
+  share(user, payload) {
+    Facebook.sendTextMessage(user.ID, payload.title +" - "+ payload.url)
   }
 }
 
@@ -337,8 +340,12 @@ function getAndSendCapiResults(user, type, page) {
   const sendCapiResults = (results) => {
     const elements = results.slice(page,page+LINK_COUNT).map(item => {
       return buildElement(
-        item.webTitle,
-        [buildLinkButton(item.webUrl)],
+        item.webTitle, [
+          buildButton("postback", "Share", buildPayload("share", {
+            "url": item.webUrl,
+            "title": item.webTitle
+          }))
+        ],
         item.fields.standfirst.replace(/<.*?>/g, ""),
         getImageUrl(item),
         item.webUrl
