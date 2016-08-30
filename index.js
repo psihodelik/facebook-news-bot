@@ -174,6 +174,9 @@ const Events = {
   most_popular(user, payload) {
     const page = (payload && payload.page) ? payload.page : 0
     getAndSendCapiResults(user, "most_popular", page)
+  },
+  share(user, payload) {
+    Facebook.sendTextMessage(user.ID, payload.title +" - "+ payload.url)
   }
 }
 
@@ -289,7 +292,7 @@ function buildQuickReply(title, payload) {
   }
 }
 
-function buildElement(title, buttons, subtitle, imageUrl) {
+function buildElement(title, buttons, subtitle, imageUrl, itemUrl) {
   let element = {
     "title": title
   }
@@ -301,6 +304,9 @@ function buildElement(title, buttons, subtitle, imageUrl) {
   }
   if (typeof imageUrl !== "undefined") {
     element.image_url = imageUrl
+  }
+  if (typeof itemUrl !== "undefined") {
+    element.item_url = itemUrl
   }
   return element
 }
@@ -334,10 +340,15 @@ function getAndSendCapiResults(user, type, page) {
   const sendCapiResults = (results) => {
     const elements = results.slice(page,page+LINK_COUNT).map(item => {
       return buildElement(
-        item.webTitle,
-        [buildLinkButton(item.webUrl)],
+        item.webTitle, [
+          buildButton("postback", "Share", buildPayload("share", {
+            "url": item.webUrl + "?"+ CAMPAIGN_CODE_PARAM +"_share",
+            "title": item.webTitle
+          }))
+        ],
         item.fields.standfirst.replace(/<.*?>/g, ""),
-        getImageUrl(item)
+        getImageUrl(item),
+        item.webUrl
       )
     })
 
