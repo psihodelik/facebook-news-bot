@@ -8,6 +8,7 @@ const Capi = require("./lib/capi")
 const Facebook = require("./lib/facebook")
 const Messages = require("./lib/messages").Messages
 const Schedule = require("node-schedule")
+const Promise = require("promise")
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN
@@ -420,15 +421,23 @@ Schedule.scheduleJob(recRule, () => {
       console.log("Error querying users: "+ err)
     } else {
       console.log("Found "+ data.Items.length +" users")
-      data.Items.forEach(user => {
-        Facebook.getFacebookUser(user.ID, (error, response, body) => {
-          if (error) {
-            console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(error))
-          } else {
-            notifyUser(user, JSON.parse(body))
-          }
+      if (data.Items.length > 0) {
+        //Pre-warm the cache - otherwise we could send many requests to CAPI before the first response is cached
+        const warmups = ["uk","us","au","international"].map((front) => {
+          return new Promise(resolve => {Capi.getEditorsPicks("", front, resolve)})
         })
-      })
+        Promise.all(warmups).then(result => {
+          data.Items.forEach(user => {
+            Facebook.getFacebookUser(user.ID, (error, response, body) => {
+              if (error) {
+                console.log("Error retrieving user "+ user.ID +"from facebook: "+ JSON.stringify(error))
+              } else {
+                notifyUser(user, JSON.parse(body))
+              }
+            })
+          })
+        })
+      }
     }
   })
 })

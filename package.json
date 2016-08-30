@@ -16,7 +16,8 @@
     "simple-get-promise": "^1.0.2",
     "aws-sdk": "^2.5.1",
     "moment": "^2.13.0",
-    "node-schedule": "^1.1.1"
+    "node-schedule": "^1.1.1",
+    "promise": "^7.1.1"
   },
   "devDependencies": {},
   "scripts": {
