@@ -464,7 +464,9 @@ function notifyUser(dynamoData, fbData) {
       })
     }
   } else {
-    console.log("No timezone found in facebook response: "+ JSON.stringify(response))
+    console.log("No timezone found in facebook response: "+ JSON.stringify(fbData))
+    //It appears sometimes FB doesn't give us a timezone, just push now
+    Events.morningBriefing(dynamoData)
   }
 }
 
