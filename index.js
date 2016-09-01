@@ -307,7 +307,7 @@ function buildElement(title, buttons, subtitle, imageUrl, itemUrl) {
     element.image_url = imageUrl
   }
   if (typeof itemUrl !== "undefined") {
-    element.item_url = itemUrl
+    element.item_url = itemUrl + "?" + CAMPAIGN_CODE_PARAM
   }
   return element
 }
