@@ -347,7 +347,7 @@ function getAndSendCapiResults(user, type, page) {
             "title": item.webTitle
           }))
         ],
-        item.fields.standfirst.replace(/<.*?>/g, ""),
+        item.fields.standfirst ? item.fields.standfirst.replace(/<.*?>/g, "") : "",
         getImageUrl(item),
         item.webUrl
       )
