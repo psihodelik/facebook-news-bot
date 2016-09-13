@@ -17,11 +17,13 @@
     "aws-sdk": "^2.5.1",
     "moment": "^2.13.0",
     "node-schedule": "^1.1.1",
-    "promise": "^7.1.1"
+    "promise": "^7.1.1",
+    "tap": "^6.1.1"
   },
   "devDependencies": {},
   "scripts": {
-    "deploy": "export ARTEFACT_PATH=`pwd` && node deploy.js"
+    "deploy": "export ARTEFACT_PATH=`pwd` && node deploy.js",
+    "test": "tap test"
   },
   "author": "",
   "license": "ISC"
