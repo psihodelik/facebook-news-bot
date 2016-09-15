@@ -106,6 +106,8 @@ function getEventAndPayloadForTextMessage(text) {
     return result("subscribe_yes")
   } else if (text.match(/^unsubscribe/)) {
     return result("unsubscribe")
+  } else if (text === "support") {
+    return result("support")
 
   } else if (text.includes("headlines")) {
     const topic = checkForTopic(text)
