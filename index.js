@@ -5,6 +5,7 @@ const Events = require("./lib/events").Events
 const log = require("./lib/helpers").log
 const UserStore = require("./lib/user-store")
 const Scheduler = new (require("./lib/scheduler"))
+const isTopic = require("./lib/capi").isTopic
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN
 
@@ -61,9 +62,9 @@ function handleExistingUser(id, event, userData) {
       })
       Events[payload.event](userData, payload)
     } else {
-      const ev = getEventForTextMessage(text)
-      log(id, "text", ev, {"text": event.message.text})
-      Events[ev](userData)
+      const res = getEventAndPayloadForTextMessage(text)
+      log(id, "text", res.event, {"text": event.message.text})
+      Events[res.event](userData, res.payload)
     }
 
   } else if (event.postback) {
@@ -88,24 +89,47 @@ function handleExistingUser(id, event, userData) {
   }
 }
 
-function getEventForTextMessage(text) {
-  if (text.match(/^(hi|hello|ola|hey|salut|ello|whats up)\s*[!?.]*$/)) {
-    return "greeting"
-  } else if (text.match(/^help|^what can you do/)) {
-    return "help"
-  } else if (text.match(/^menu/)) {
-    return "menu"
-  } else if (text.match(/^subscribe|^can you send me a morning briefing/)) {
-    return "subscribe_yes"
-  } else if (text.match(/^unsubscribe/)) {
-    return "unsubscribe"
-  } else if (text.includes("headlines")) {
-    return "headlines"
-  } else if (text.includes("popular")) {
-    return "most_popular"
-  } else {
-    return "unknown"
+function getEventAndPayloadForTextMessage(text) {
+  const result = (event, payload) => {
+    return {
+      "event": event,
+      "payload": payload
+    }
   }
+  if (text.match(/^(hi|hello|ola|hey|salut|ello|whats up)\s*[!?.]*$/)) {
+    return result("greeting")
+  } else if (text.match(/^help|^what can you do/)) {
+    return result("help")
+  } else if (text.match(/^menu/)) {
+    return result("menu")
+  } else if (text.match(/^subscribe|^can you send me a morning briefing/)) {
+    return result("subscribe_yes")
+  } else if (text.match(/^unsubscribe/)) {
+    return result("unsubscribe")
+
+  } else if (text.includes("headlines")) {
+    const topic = checkForTopic(text)
+    if (topic) return result("headlines", {"topic": topic})
+    else return result("headlines")
+
+  } else if (text.includes("popular")) {
+    const topic = checkForTopic(text)
+    if (topic) return result("most_popular", {"topic": topic})
+    else return result("most_popular")
+
+  } else if (text.length < 200) {
+    const topic = checkForTopic(text)
+    if (topic) return result("headlines", {"topic": topic})
+    else return result("unknown")
+
+  } else {
+    return result("unknown")
+  }
+}
+
+//If text contains a valid topic then return it, else undefined
+function checkForTopic(text) {
+  return text.split(" ").find(word => isTopic(word))
 }
 
 // Verification GET
@@ -122,4 +146,3 @@ app.get("/webhook/", (req, res) => {
 const listen = app.listen((process.env.PORT || 5000), () => {
   console.log("running on port", listen.address().port)
 })
-
