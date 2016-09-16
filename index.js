@@ -129,8 +129,9 @@ function getEventAndPayloadForTextMessage(text) {
 
 //If text contains a valid topic then return it, else undefined
 function checkForTopic(text) {
-  return text.split(" ").find(word => isTopic(word))
+  return stripPunctuation(text).split(" ").find(word => isTopic(word))
 }
+const stripPunctuation = (s) => s.replace(/[!?.,]/, "")
 
 // Verification GET
 app.get("/webhook/", (req, res) => {
