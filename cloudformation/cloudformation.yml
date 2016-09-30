@@ -1,0 +1,345 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Facebook messenger news chatbot
+Parameters:
+    Stack:
+        Description: Stack name
+        Type: String
+        Default: content-api-facebook-news-bot
+    App:
+        Description: Application name
+        Type: String
+        Default: facebook-news-bot
+    Stage:
+        Description: Stage name
+        Type: String
+        AllowedValues:
+            - PROD
+            - CODE
+        Default: CODE
+    ApplicationPort:
+        Description: Port used by the application server
+        Type: Number
+        Default: 9000
+    GuardianIP:
+        Description: Ip range for the office
+        Type: String
+    CertificateArn:
+        Description: ARN of the SSL certificate for this service
+        Type: String
+    AMI:
+        Description: AMI ID
+        Type: String
+    DeployBucket:
+        Description: S3 buckets where RiffRaff deploys artifacts
+        Type: String
+        Default: content-api-dist/content-api
+    VPC:
+        Description: VPC to run EC2 within
+        Type: AWS::EC2::VPC::Id
+    Subnets:
+        Description: Subnets to run load balancer within
+        Type: List<AWS::EC2::Subnet::Id>
+    LoggingKinesisStream:
+        Description: The name of the logging kinesis stream
+        Type: String
+    DynamodbTableName:
+        Description: Name of dynamodb table used to store user data
+        Type: String
+
+Mappings:
+    StageMap:
+        PROD:
+            MinSize: 1
+            MaxSize: 2
+            DesiredCapacity: 1
+            InstanceType: t2.micro
+        CODE:
+            MinSize: 1
+            MaxSize: 2
+            DesiredCapacity: 1
+            InstanceType: t2.micro
+
+Resources:
+    FacebookNewsBotRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ec2.amazonaws.com
+                      Action:
+                        - sts:AssumeRole
+            Path: /
+
+    BackendDeployPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: BackendDeployPolicy
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Action:
+                        - s3:GetObject
+                      Resource:
+                        !Sub arn:aws:s3:::${DeployBucket}/*
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    Ec2DescribeInstancesPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: ec2-describe-instances
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - ec2:DescribeInstances
+                        - ec2:DescribeTags
+                    Resource:
+                        - "*"
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    DynamoPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:GetItem
+                        - dynamodb:PutItem
+                        - dynamodb:UpdateItem
+                        - dynamodb:Query
+                    Resource:
+                        !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamodbTableName}*
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    DynamoListConfigPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-list-config-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:ListTables
+                    Resource:
+                        - "*"
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    DynamoConfigPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-config-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:DescribeTable
+                        - dynamodb:GetItem
+                    Resource:
+                        !Sub arn:aws:dynamodb:*:*:table/config-${Stack}
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    KinesisSenderPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: kinesis-sender
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Action:
+                          - kinesis:PutRecord
+                          - kinesis:PutRecords
+                          - kinesis:DescribeStream
+                      Resource:
+                          !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${LoggingKinesisStream}
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    InstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Path: /
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    SSHSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId:
+              Ref: VPC
+            GroupDescription: Allow SSH access from the office
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp:
+                    Ref: GuardianIP
+
+    AppServerSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId:
+              Ref: VPC
+            GroupDescription: Application servers
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort:
+                    Ref: ApplicationPort
+                  ToPort:
+                    Ref: ApplicationPort
+                  CidrIp:
+                    Ref: GuardianIP
+                - IpProtocol: tcp
+                  FromPort:
+                    Ref: ApplicationPort
+                  ToPort:
+                    Ref: ApplicationPort
+                  SourceSecurityGroupId:
+                    Ref: LoadBalancerSecurityGroup
+
+    LoadBalancerSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId:
+              Ref: VPC
+            GroupDescription: Application load balanacer
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: "0.0.0.0/0"
+                - IpProtocol: tcp
+                  FromPort: 443
+                  ToPort: 443
+                  CidrIp: "0.0.0.0/0"
+
+    LoadBalancer:
+        Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Properties:
+            Scheme: internet-facing
+            Subnets:
+                Ref: Subnets
+            CrossZone: true
+            SecurityGroups:
+                - !GetAtt LoadBalancerSecurityGroup.GroupId
+            Listeners:
+                - LoadBalancerPort: 80
+                  InstancePort:
+                    Ref: ApplicationPort
+                  Protocol: HTTP
+                - LoadBalancerPort: 443
+                  InstancePort:
+                    Ref: ApplicationPort
+                  Protocol: HTTPS
+                  InstanceProtocol: HTTP
+                  SSLCertificateId:
+                    Ref: CertificateArn
+            HealthCheck:
+                Target:
+                    !Sub HTTP:${ApplicationPort}/status
+                HealthyThreshold: 2
+                UnhealthyThreshold: 10
+                Interval: 60
+                Timeout: 5
+            Tags:
+                - Key: Stage
+                  Value:
+                    Ref: Stage
+                - Key: Stack
+                  Value:
+                    Ref: Stack
+                - Key: App
+                  Value:
+                    Ref: App
+
+    AutoscalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            VPCZoneIdentifier:
+                Ref: Subnets
+            LaunchConfigurationName:
+                Ref: LaunchConfiguration
+            MinSize:
+                Fn::FindInMap:
+                    - StageMap
+                    - Ref: Stage
+                    - MinSize
+            MaxSize:
+                Fn::FindInMap:
+                    - StageMap
+                    - Ref: Stage
+                    - MaxSize
+            DesiredCapacity:
+                Fn::FindInMap:
+                    - StageMap
+                    - Ref: Stage
+                    - DesiredCapacity
+            Cooldown: "180"
+            HealthCheckType: ELB
+            HealthCheckGracePeriod: 200
+            LoadBalancerNames:
+                - Ref: LoadBalancer
+            Tags:
+                - Key: Stage
+                  Value:
+                    Ref: Stage
+                  PropagateAtLaunch: true
+                - Key: Stack
+                  Value:
+                    Ref: Stack
+                  PropagateAtLaunch: true
+                - Key: App
+                  Value:
+                    Ref: App
+                  PropagateAtLaunch: true
+
+    LaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+            AssociatePublicIpAddress: true
+            IamInstanceProfile:
+                Ref: InstanceProfile
+            ImageId:
+                Ref: AMI
+            InstanceType:
+                Fn::FindInMap:
+                    - StageMap
+                    - Ref: Stage
+                    - InstanceType
+            SecurityGroups:
+                - Ref: AppServerSecurityGroup
+                - Ref: SSHSecurityGroup
+            UserData:
+                Fn::Base64:
+                    !Sub |
+                          #!/bin/bash -ev
+                          adduser --disabled-password content-api
+
+                          aws configure set region ${AWS::Region}
+
+                          aws s3 cp s3://content-api-dist/authorized_keys /home/ubuntu/.ssh/authorized_keys
+
+                          mkdir -p /etc/gu
+                          echo "STAGE=${Stage}" > /etc/gu/conf
+                          cat /etc/gu/conf
+
+                          cd /home/content-api
+                          mkdir logs
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot.service /etc/systemd/system/facebook-news-bot.service
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot-0.1-SNAPSHOT.tgz .
+                          tar xfv facebook-news-bot-0.1-SNAPSHOT.tgz
+                          mv facebook-news-bot-0.1-SNAPSHOT facebook-news-bot
+
+                          chown -R content-api /home/content-api
+                          chgrp -R content-api /home/content-api
+
+                          systemctl start facebook-news-bot
