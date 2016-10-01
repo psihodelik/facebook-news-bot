@@ -12,6 +12,6 @@ private[state] object Events {
   type Event = (User, MessageFromFacebook.Messaging) => Future[Result]
 
   def greeting: Event = (user: User, message: MessageFromFacebook.Messaging) => {
-    Future.successful((user, List(MessageToFacebook.textMessage(user.id, "Hi!"))))
+    Future.successful((user, List(MessageToFacebook.textMessage(user.ID, "Hi!"))))
   }
 }

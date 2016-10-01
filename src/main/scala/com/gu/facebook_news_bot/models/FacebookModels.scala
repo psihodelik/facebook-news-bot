@@ -13,8 +13,10 @@ object MessageToFacebook {
 
   def textMessage(id: String, message: String) =
     MessageToFacebook(Id(id),
-               Some(Message(Some(message),None,None,None)),
-               None, None)
+     Some(Message(Some(message),None,None,None)),
+     None, None)
+
+  def errorMessage(id: String) = textMessage(id, "Sorry, I'm having some technical difficulties at the moment. Please try again later.")
 
   case class Message(text: Option[String],
                      attachment: Option[Attachment],

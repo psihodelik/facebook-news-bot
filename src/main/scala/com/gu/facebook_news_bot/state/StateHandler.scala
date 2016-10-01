@@ -28,7 +28,7 @@ private[state] class StateHandler(facebook: Facebook, capi: Capi) {
 
   private def newUser(id: String): User = {
     val offset = facebook.getOffset(id)
-    User(id, "uk", offset, "-", "-", "NEW_USER")
+    User(id, "uk", offset, "-", "-", "NEW_USER", 0)
   }
 
   private def getStateFromString(state: String): State = state.toUpperCase match {
