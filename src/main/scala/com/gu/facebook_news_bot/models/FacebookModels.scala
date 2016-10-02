@@ -62,3 +62,5 @@ object MessageFromFacebook {
   case class Postback(payload: String) extends AnyVal
 
 }
+
+case class FacebookUser(first_name: String, last_name: String, gender: String, locale: String, timezone: Double)

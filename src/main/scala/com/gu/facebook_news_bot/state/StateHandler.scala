@@ -4,6 +4,8 @@ import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, 
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.Future
 
 object StateHandler {
@@ -19,16 +21,17 @@ private[state] class StateHandler(facebook: Facebook, capi: Capi) {
     * @return updated user, plus any messages to send to Facebook
     */
   def process(userOpt: Option[User], message: MessageFromFacebook.Messaging): Future[Result] = {
-    val user = userOpt.getOrElse(newUser(message.sender.id))
-
-    val state = getStateFromString(user.state)
-    val event = state.getEvent(user, message)
-    event(user, message)
+    userOpt.map(Future.successful).getOrElse(newUser(message.sender.id)) flatMap { user =>
+      val state = getStateFromString(user.state)
+      val event = state.getEvent(user, message)
+      event(user, message)
+    }
   }
 
-  private def newUser(id: String): User = {
-    val offset = facebook.getOffset(id)
-    User(id, "uk", offset, "-", "-", "NEW_USER", 0)
+  private def newUser(id: String): Future[User] = {
+    facebook.getUser(id) map { facebookUser =>
+      User(id, "uk", facebookUser.timezone, "-", "-", "NEW_USER", 0)
+    }
   }
 
   private def getStateFromString(state: String): State = state.toUpperCase match {

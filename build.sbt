@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % CirceVersion,
   "io.circe" %% "circe-parser" % CirceVersion,
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
   "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion,
   "de.heikoseeberger" %% "akka-http-circe" % "1.10.0",
   "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.10.20",
