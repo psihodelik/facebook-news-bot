@@ -1,0 +1,50 @@
+{
+  "recipient":{
+    "id":"headlines_test"
+  },
+  "message":{
+    "text":null,
+    "attachment":{
+      "type":"template",
+      "payload":{
+        "template_type":"generic",
+        "text":null,
+        "elements":[
+          {
+            "title":"Steven Woolfe seriously ill after altercation at Ukip meeting",
+            "item_url":"https://www.theguardian.com/politics/2016/oct/06/ukip-leadership-favourite-steven-woolfe-collapses-in-european-parliament",
+            "image_url":null,
+            "subtitle":"<p>Sources say MEP, who is favourite for the party’s leadership, was punched and subsequently collapsed at the Strasbourg parliament</p><ul><li><a href=\"https://www.theguardian.com/politics/blog/live/2016/oct/06/prevent-programme-should-be-reviewed-and-overhauled-says-terror-law-watchdog-politics-live\">Ukip leadership candidate Steven Woolfe seriously ill – Politics live</a></li></ul>",
+            "buttons":null
+          },
+          {
+            "title":"Brexit 'not good news for British science' warn new Nobel laureates",
+            "item_url":"https://www.theguardian.com/science/2016/oct/06/brexit-not-good-news-for-british-science-warn-new-nobel-laureates",
+            "image_url":null,
+            "subtitle":"<p>Duncan Haldane and Sir Fraser Stoddart call for scientists to be given protected status for visas, and highlight the role of EU funding in attracting elite scientists</p>",
+            "buttons":null
+          }
+        ],
+        "buttons":[
+          {
+            "type":"element_share",
+            "title":null,
+            "url":null,
+            "payload":null
+          }
+        ]
+      }
+    },
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"More stories",
+        "payload":"",
+        "image_url":null
+      }
+    ],
+    "metadata":null
+  },
+  "sender_action":null,
+  "notification_type":null
+}

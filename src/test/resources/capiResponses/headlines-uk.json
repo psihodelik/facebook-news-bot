@@ -1,0 +1,405 @@
+[
+  {
+    "elements": [
+      {
+        "type": "image",
+        "relation": "main",
+        "assets": [
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/2000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "1200",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "2000"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/2000.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/1000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "600",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "1000"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/1000.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/500.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "300",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "500"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/500.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/140.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "84",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "140"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/140.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/3000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "1800",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "3000"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/3000.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/master/3000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "isMaster": "true",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "1800",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "caption": "Steven Woolfe.",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "3000"
+            },
+            "file": "http://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/master/3000.jpg",
+            "mimeType": "image/jpeg"
+          }
+        ],
+        "id": "6ed99377b0359b11c34fcc80f4af6f54042e9931"
+      },
+      {
+        "type": "image",
+        "relation": "thumbnail",
+        "assets": [
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/master/3000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "isMaster": "true",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "1800",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "3000"
+            },
+            "file": "http://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/master/3000.jpg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/3000.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "1800",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "3000"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/3000.jpg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "copyright": "2016 Getty Images",
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/500.jpg",
+              "source": "Getty Images",
+              "photographer": "Matt Cardy",
+              "imageType": "Photograph",
+              "altText": "Steven Woolfe.",
+              "suppliersReference": "606171860",
+              "height": "300",
+              "credit": "Photograph: Matt Cardy/Getty Images",
+              "mediaId": "6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/6ed99377b0359b11c34fcc80f4af6f54042e9931",
+              "width": "500"
+            },
+            "file": "https://media.guim.co.uk/6ed99377b0359b11c34fcc80f4af6f54042e9931/0_154_3000_1800/500.jpg"
+          }
+        ],
+        "id": "6ed99377b0359b11c34fcc80f4af6f54042e9931"
+      }
+    ],
+    "webUrl": "https://www.theguardian.com/politics/2016/oct/06/ukip-leadership-favourite-steven-woolfe-collapses-in-european-parliament",
+    "webPublicationDate": "2016-10-06T11:58:29Z",
+    "webTitle": "Steven Woolfe seriously ill after altercation at Ukip meeting",
+    "sectionName": "Politics",
+    "apiUrl": "https://content.guardianapis.com/politics/2016/oct/06/ukip-leadership-favourite-steven-woolfe-collapses-in-european-parliament",
+    "id": "politics/2016/oct/06/ukip-leadership-favourite-steven-woolfe-collapses-in-european-parliament",
+    "isHosted": false,
+    "fields": {
+      "standfirst": "<p>Sources say MEP, who is favourite for the party’s leadership, was punched and subsequently collapsed at the Strasbourg parliament</p><ul><li><a href=\"https://www.theguardian.com/politics/blog/live/2016/oct/06/prevent-programme-should-be-reviewed-and-overhauled-says-terror-law-watchdog-politics-live\">Ukip leadership candidate Steven Woolfe seriously ill – Politics live</a></li></ul>"
+    },
+    "sectionId": "politics",
+    "type": "article"
+  },
+  {
+    "elements": [
+      {
+        "type": "image",
+        "relation": "main",
+        "assets": [
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2000.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "1200",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "2000"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2000.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/1000.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "600",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "1000"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/1000.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/500.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "300",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "500"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/500.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/140.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "84",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "140"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/140.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2560.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "1536",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "2560"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2560.jpg",
+            "mimeType": "image/jpeg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/master/2560.jpg",
+              "source": "AFP / Getty, Reuters",
+              "isMaster": "true",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "1536",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "caption": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "2560"
+            },
+            "file": "http://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/master/2560.jpg",
+            "mimeType": "image/jpeg"
+          }
+        ],
+        "id": "ef429ae52ece5adeb1e27963f3c86fb7a7814835"
+      },
+      {
+        "type": "image",
+        "relation": "thumbnail",
+        "assets": [
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/master/2560.jpg",
+              "source": "AFP / Getty, Reuters",
+              "isMaster": "true",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "1536",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "2560"
+            },
+            "file": "http://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/master/2560.jpg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2560.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "1536",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "2560"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/2560.jpg"
+          },
+          {
+            "type": "image",
+            "typeData": {
+              "displayCredit": "true",
+              "secureFile": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/500.jpg",
+              "source": "AFP / Getty, Reuters",
+              "imageType": "Composite",
+              "altText": "Duncan Haldane (L) and Sir Fraser Stoddart",
+              "height": "300",
+              "credit": "Composite: AFP / Getty, Reuters",
+              "mediaId": "ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "mediaApiUri": "https://api.media.gutools.co.uk/images/ef429ae52ece5adeb1e27963f3c86fb7a7814835",
+              "width": "500"
+            },
+            "file": "https://media.guim.co.uk/ef429ae52ece5adeb1e27963f3c86fb7a7814835/0_0_2560_1536/500.jpg"
+          }
+        ],
+        "id": "ef429ae52ece5adeb1e27963f3c86fb7a7814835"
+      }
+    ],
+    "webUrl": "https://www.theguardian.com/science/2016/oct/06/brexit-not-good-news-for-british-science-warn-new-nobel-laureates",
+    "webPublicationDate": "2016-10-06T11:05:44Z",
+    "webTitle": "Brexit 'not good news for British science' warn new Nobel laureates",
+    "sectionName": "Science",
+    "apiUrl": "https://content.guardianapis.com/science/2016/oct/06/brexit-not-good-news-for-british-science-warn-new-nobel-laureates",
+    "id": "science/2016/oct/06/brexit-not-good-news-for-british-science-warn-new-nobel-laureates",
+    "isHosted": false,
+    "fields": {
+      "standfirst": "<p>Duncan Haldane and Sir Fraser Stoddart call for scientists to be given protected status for visas, and highlight the role of EU funding in attracting elite scientists</p>"
+    },
+    "sectionId": "science",
+    "type": "article"
+  }
+]

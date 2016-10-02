@@ -4,7 +4,7 @@ import com.gu.facebook_news_bot.models.{MessageFromFacebook, User}
 import com.gu.facebook_news_bot.state.Events._
 
 trait State {
-  def name: String
+  val name: String
   /**
     * Decides which event logic to trigger, based on current state + received message
     */

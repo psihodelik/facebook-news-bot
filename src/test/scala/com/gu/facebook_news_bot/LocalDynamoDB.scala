@@ -2,11 +2,18 @@ package com.gu.facebook_news_bot
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model._
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 
 import scala.collection.convert.decorateAsJava._
 
 //Totally stolen from https://github.com/guardian/scanamo/blob/master/src/test/scala/com/gu/scanamo/LocalDynamoDB.scala
 object LocalDynamoDB {
+
+  def createTable(name: String) = {
+    println(s"Creating table $name")
+    withTableWithSecondaryIndex(name, "notificationTimeUTC-ID-index")('ID -> S)('notificationTimeUTC -> S,'ID -> S)
+  }
+
   val client = {
     val c = new AmazonDynamoDBAsyncClient(new com.amazonaws.auth.BasicAWSCredentials("key", "secret"))
     c.setEndpoint("http://localhost:8000")

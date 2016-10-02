@@ -1,44 +1,46 @@
 package com.gu.facebook_news_bot.models
 
-case class Id(id: String) extends AnyVal
+case class Id(id: String)
 
 /**
   * Messages sent to Messenger users
   */
 case class MessageToFacebook(recipient: Id,
-                             message: Option[MessageToFacebook.Message],
-                             sender_action: Option[String],
-                             notification_type: Option[String])
+                             message: Option[MessageToFacebook.Message] = None,
+                             sender_action: Option[String] = None,
+                             notification_type: Option[String] = None)
 object MessageToFacebook {
 
   def textMessage(id: String, message: String) =
-    MessageToFacebook(Id(id),
-     Some(Message(Some(message),None,None,None)),
-     None, None)
+    MessageToFacebook(recipient = Id(id), Some(Message(text = Some(message))))
 
   def errorMessage(id: String) = textMessage(id, "Sorry, I'm having some technical difficulties at the moment. Please try again later.")
 
-  case class Message(text: Option[String],
-                     attachment: Option[Attachment],
-                     quick_replies: Option[List[QuickReply]],
-                     metadata: Option[String])
+  case class Message(text: Option[String] = None,
+                     attachment: Option[Attachment] = None,
+                     quick_replies: Option[Seq[QuickReply]] = None,
+                     metadata: Option[String] = None)
 
-  case class Attachment(`type`: String, payload: String)
+  case class Attachment(`type`: String, payload: Payload)
 
   case class QuickReply(content_type: String,
-                        title: Option[String],
-                        payload: Option[String],
-                        image_url: Option[String])
+                        title: Option[String] = None,
+                        payload: Option[String] = None,
+                        image_url: Option[String] = None)
 
+  case class Payload(template_type: String, text: Option[String] = None, elements: Option[Seq[Element]] = None, buttons: Option[Seq[Button]] = None)
+
+  case class Element(title: String, item_url: Option[String] = None, image_url: Option[String] = None, subtitle: Option[String] = None, buttons: Option[String] = None)
+  case class Button(`type`: String, title: Option[String] = None, url: Option[String] = None, payload: Option[String] = None)
 }
 
 /**
   * Messages received from Messenger users
   */
-case class MessageFromFacebook(entry: List[MessageFromFacebook.Entry])
+case class MessageFromFacebook(entry: Seq[MessageFromFacebook.Entry])
 object MessageFromFacebook {
 
-  case class Entry(id: String, time: Long, messaging: List[Messaging])
+  case class Entry(id: String, time: Long, messaging: Seq[Messaging])
 
   case class Messaging(sender: Id,
                        recipient: Id,
@@ -49,7 +51,7 @@ object MessageFromFacebook {
   case class Message(mid: String,
                      seq: Int,
                      text: Option[String],
-                     attachments: Option[List[Attachment]],
+                     attachments: Option[Seq[Attachment]],
                      quick_reply: Option[QuickReply])
 
   case class Attachment(`type`: String, payload: Payload)
@@ -57,9 +59,9 @@ object MessageFromFacebook {
   case class Payload(url: Option[String])
 
   //quick_reply and postback payloads contain the string that we supplied - this is different from the attachment payloads.
-  case class QuickReply(payload: String) extends AnyVal
+  case class QuickReply(payload: String)
 
-  case class Postback(payload: String) extends AnyVal
+  case class Postback(payload: String)
 
 }
 

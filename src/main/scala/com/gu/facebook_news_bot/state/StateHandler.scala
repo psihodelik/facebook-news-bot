@@ -5,7 +5,6 @@ import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 
 object StateHandler {
@@ -14,7 +13,8 @@ object StateHandler {
   type Result = (User, List[MessageToFacebook])
 }
 
-private[state] class StateHandler(facebook: Facebook, capi: Capi) {
+class StateHandler(facebook: Facebook, capi: Capi) {
+
   /**
     * @param userOpt  user from dynamodb
     * @param message  message from Facebook messenger
@@ -24,18 +24,18 @@ private[state] class StateHandler(facebook: Facebook, capi: Capi) {
     userOpt.map(Future.successful).getOrElse(newUser(message.sender.id)) flatMap { user =>
       val state = getStateFromString(user.state)
       val event = state.getEvent(user, message)
-      event(user, message)
+      event(user, message, capi, facebook)
     }
   }
 
   private def newUser(id: String): Future[User] = {
     facebook.getUser(id) map { facebookUser =>
-      User(id, "uk", facebookUser.timezone, "-", "-", "NEW_USER", 0)
+      User(id, "uk", facebookUser.timezone, "-", "-", NewUserState.name, 0)
     }
   }
 
   private def getStateFromString(state: String): State = state.toUpperCase match {
-    case "NEW_USER" => NewUserState
+    case NewUserState.name => NewUserState
     case _ => MainState
   }
 }

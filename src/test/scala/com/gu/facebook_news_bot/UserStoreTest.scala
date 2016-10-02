@@ -1,6 +1,5 @@
 package com.gu.facebook_news_bot
 
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType._
 import com.gu.facebook_news_bot.models.User
 import com.gu.facebook_news_bot.stores.UserStore
 import org.scalatest.{FunSpec, Matchers}
@@ -12,9 +11,9 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(15, Millis))
 
-  val tableName = "facebook-news-bot-dynamo"
-  LocalDynamoDB.withTableWithSecondaryIndex(tableName, "notificationTimeUTC-ID-index")('ID -> S)('notificationTimeUTC -> S,'ID -> S)
-  val userStore = new UserStore(LocalDynamoDB.client, tableName)
+  val TableName = "user-store-test"
+  LocalDynamoDB.createTable(TableName)
+  val userStore = new UserStore(LocalDynamoDB.client, TableName)
 
   it("should return None for new user") {
     userStore.getUser("1").futureValue should be(None)

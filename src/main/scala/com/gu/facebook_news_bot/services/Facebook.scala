@@ -12,14 +12,22 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
 import akka.contrib.throttle.TimerBasedThrottler
+
 import scala.concurrent.duration._
 import akka.contrib.throttle.Throttler.{RateInt, SetTarget}
+import com.gu.facebook_news_bot.BotConfig
 
 import scala.concurrent.Future
 import com.gu.facebook_news_bot.models.MessageToFacebook
 import com.typesafe.scalalogging.StrictLogging
 
-class Facebook(url: String, accessToken: String) extends CirceSupport with StrictLogging {
+trait Facebook {
+  def send(messages: List[MessageToFacebook]): Unit
+
+  def getUser(id: String): Future[FacebookUser]
+}
+
+class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
 
   implicit val system = ActorSystem("facebook-actor-system")
   implicit val materializer = ActorMaterializer()
@@ -42,7 +50,7 @@ class Facebook(url: String, accessToken: String) extends CirceSupport with Stric
     val responseFuture = Http().singleRequest(
       HttpRequest(
         method = HttpMethods.GET,
-        uri = s"$url/$id"
+        uri = s"${BotConfig.facebook.url}/$id"
       )
     )
 
@@ -60,7 +68,7 @@ class Facebook(url: String, accessToken: String) extends CirceSupport with Stric
           Http().singleRequest(
             request = HttpRequest(
               method = HttpMethods.POST,
-              uri = s"$url/me/messages?access_token=$accessToken",
+              uri = s"${BotConfig.facebook.url}/me/messages?access_token=${BotConfig.facebook.accessToken}",
               entity = entity
             )
           )
