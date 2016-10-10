@@ -17,6 +17,10 @@ object BotConfig {
 
   val port = getMandatoryInt("port")
 
+  val defaultImageUrl = getMandatoryString("defaultImageUrl")
+
+  val campaignCode = getStringOrDefault("campaignCode", "fb_newsbot")
+
   object aws {
     val usersTable = getMandatoryString("aws.dynamo.usersTableName")
     val region = getStringOrDefault("aws.region", "eu-west-1")

@@ -31,7 +31,7 @@ class HeadlinesTest extends FunSpec with Matchers with ScalatestRouteTest with M
   override val usersTable = TableName
 
   //Create the user
-  Await.result(userStore.updateUser(User("headlines_test", "uk", 0, "-", "-", "MAIN", 1)), 5.seconds)
+  Await.result(userStore.updateUser(User("headlines_test", "uk", 0, "-", "-", Some("MAIN"), Some(0))), 5.seconds)
 
   it("should return uk headlines") {
     val jsonRequest = loadFile("src/test/resources/facebookRequests/headlinesRequest.json")
@@ -46,6 +46,22 @@ class HeadlinesTest extends FunSpec with Matchers with ScalatestRouteTest with M
       status should equal(OK)
 
       val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/headlinesResponse.json")
+      verify(facebook, timeout(5000)).send(List(expectedMessage))
+    }
+  }
+
+  it("should return more uk headlines") {
+    val jsonRequest = loadFile("src/test/resources/facebookRequests/moreHeadlinesQuickReply.json")
+    val request = HttpRequest(
+      method = HttpMethods.POST,
+      uri = "/webhook",
+      entity = HttpEntity(MediaTypes.`application/json`, jsonRequest)
+    )
+
+    request ~> routes ~> check {
+      status should equal(OK)
+
+      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/moreHeadlinesResponse.json")
       verify(facebook, timeout(5000)).send(List(expectedMessage))
     }
   }

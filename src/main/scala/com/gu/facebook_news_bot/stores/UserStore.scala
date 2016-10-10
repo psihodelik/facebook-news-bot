@@ -37,8 +37,8 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String) exten
 
   def updateUser(user: User): Future[Xor[ConditionalCheckFailedException, PutItemResult]] = {
     //Conditional update - if user already exists and its version has changed, do not update
-    val currentVersion = user.version
-    val newUser = user.copy(version = currentVersion+1)
+    val currentVersion = user.version.getOrElse(0l)
+    val newUser = user.copy(version = Some(currentVersion + 1))
     val table = Table[User](usersTableName)
     ScanamoAsync.exec(client)(table.given(Not(attributeExists('version)) or 'version -> currentVersion).put(newUser))
   }

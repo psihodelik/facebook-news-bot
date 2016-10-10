@@ -22,6 +22,15 @@ object MessageToFacebook {
                      metadata: Option[String] = None)
 
   case class Attachment(`type`: String, payload: Payload)
+  object Attachment {
+    def apply(elements: Seq[Element]): Attachment = Attachment(
+      `type` = "template",
+      payload = Payload(
+        template_type = "generic",
+        elements = Some(elements.toList)
+      )
+    )
+  }
 
   case class QuickReply(content_type: String,
                         title: Option[String] = None,
@@ -30,7 +39,7 @@ object MessageToFacebook {
 
   case class Payload(template_type: String, text: Option[String] = None, elements: Option[Seq[Element]] = None, buttons: Option[Seq[Button]] = None)
 
-  case class Element(title: String, item_url: Option[String] = None, image_url: Option[String] = None, subtitle: Option[String] = None, buttons: Option[String] = None)
+  case class Element(title: String, item_url: Option[String] = None, image_url: Option[String] = None, subtitle: Option[String] = None, buttons: Option[Seq[Button]] = None)
   case class Button(`type`: String, title: Option[String] = None, url: Option[String] = None, payload: Option[String] = None)
 }
 
@@ -50,7 +59,7 @@ object MessageFromFacebook {
 
   case class Message(mid: String,
                      seq: Int,
-                     text: Option[String],
+                     text: String,
                      attachments: Option[Seq[Attachment]],
                      quick_reply: Option[QuickReply])
 

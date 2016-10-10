@@ -20,26 +20,26 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
   }
 
   it("should create new user") {
-    val futureResult = userStore.updateUser(User("1", "uk", 0, "-", "-", "NEW_USER", 0))
+    val futureResult = userStore.updateUser(User("1", "uk", 0, "-", "-", Some("NEW_USER")))
     whenReady(futureResult) { _ =>
       userStore.getUser("1").futureValue should not be None
     }
   }
 
   it("should update user if version hasn't changed") {
-    val futureResult = userStore.updateUser(User("1", "us", 0, "-", "-", "MAIN", 1))
+    val futureResult = userStore.updateUser(User("1", "us", 0, "-", "-", Some("MAIN"), Some(1)))
     whenReady(futureResult) { _ =>
       val user = userStore.getUser("1").futureValue
       user should not be None
       user.foreach { u =>
         u.front should be("us")
-        u.version should be(2)
+        u.version should be(Some(2))
       }
     }
   }
 
   it("should not update user if version has changed") {
-    val futureResult = userStore.updateUser(User("1", "au", 0, "-", "-", "MAIN", 1))  //version is now 2 in dynamo
+    val futureResult = userStore.updateUser(User("1", "au", 0, "-", "-", Some("MAIN"), Some(1)))  //version is now 2 in dynamo
     whenReady(futureResult) { result =>
       result.toOption should be(None)
 
@@ -47,7 +47,7 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
       user should not be None
       user.foreach { u =>
         u.front should be("us")
-        u.version should be(2)
+        u.version should be(Some(2))
       }
     }
   }

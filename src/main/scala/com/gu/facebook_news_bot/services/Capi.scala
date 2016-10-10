@@ -13,19 +13,19 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait Capi {
-  def getHeadlines(front: String, topic: Option[String]): Future[Seq[Content]]
+  def getHeadlines(front: String, topic: Option[Topic]): Future[Seq[Content]]
 
-  def getMostViewed(front: String, topic: Option[String]): Future[Seq[Content]]
+  def getMostViewed(front: String, topic: Option[Topic]): Future[Seq[Content]]
 }
 
 object CapiImpl extends Capi with StrictLogging {
 
   private lazy val client = new GuardianContentClient(BotConfig.capi.key)
 
-  def getHeadlines(front: String, topic: Option[String]): Future[Seq[Content]] =
+  def getHeadlines(front: String, topic: Option[Topic]): Future[Seq[Content]] =
     doQuery(basicItemQuery(front).showEditorsPicks(), _.editorsPicks)
 
-  def getMostViewed(front: String, topic: Option[String]): Future[Seq[Content]] =
+  def getMostViewed(front: String, topic: Option[Topic]): Future[Seq[Content]] =
     doQuery(basicItemQuery(front).showMostViewed(), _.mostViewed)
 
   private def doQuery(query: ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
@@ -58,4 +58,14 @@ object CapiCache {
 
   def get(query: String): Option[Seq[Content]] = Option(cache.getIfPresent(query))
   def put(query: String, results: Seq[Content]): Unit = cache.put(query, results)
+}
+
+//TODO - implement topics
+sealed trait Topic {
+  val name: String
+  def path: Option[String]
+}
+
+object Topic {
+  def getTopic(name: String): Option[Topic] = None
 }

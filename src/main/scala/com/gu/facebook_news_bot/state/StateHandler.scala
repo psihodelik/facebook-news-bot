@@ -22,15 +22,14 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     */
   def process(userOpt: Option[User], message: MessageFromFacebook.Messaging): Future[Result] = {
     userOpt.map(Future.successful).getOrElse(newUser(message.sender.id)) flatMap { user =>
-      val state = getStateFromString(user.state)
-      val event = state.getEvent(user, message)
-      event(user, message, capi, facebook)
+      val state = user.state.map(getStateFromString) getOrElse MainState
+      state.transition(user, message, capi, facebook)
     }
   }
 
   private def newUser(id: String): Future[User] = {
     facebook.getUser(id) map { facebookUser =>
-      User(id, "uk", facebookUser.timezone, "-", "-", NewUserState.name, 0)
+      User(id, "uk", facebookUser.timezone, "-", "-", Some(NewUserState.name), Some(0))
     }
   }
 

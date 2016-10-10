@@ -17,11 +17,13 @@ enablePlugins(RiffRaffArtifact, JavaAppPackaging)
 val CapiVersion = "10.5"
 
 libraryDependencies ++= Seq(
+  "org.jsoup" % "jsoup" % "1.8.1",
   "com.google.code.findbugs" % "jsr305" % "2.0.3" % Compile,
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "ch.qos.logback" %  "logback-classic" % "1.1.7",
   "com.gu" %% "configuration-magic-core" % "1.3.0",
   "com.gu" %% "content-api-client" % CapiVersion,
+  "io.circe" %% "circe-optics" % CirceVersion,
   "io.circe" %% "circe-core" % CirceVersion,
   "io.circe" %% "circe-generic" % CirceVersion,
   "io.circe" %% "circe-parser" % CirceVersion,

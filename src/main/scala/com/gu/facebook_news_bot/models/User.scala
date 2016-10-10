@@ -8,5 +8,8 @@ case class User(ID: String,
                 offsetHours: Double,
                 notificationTime: String,
                 notificationTimeUTC: String,
-                state: String,
-                version: Long)
+                state: Option[String] = None,
+                version: Option[Long] = None,
+                contentTopic: Option[String] = None,
+                contentOffset: Option[Int] = None,
+                contentType: Option[String] = None)

@@ -14,6 +14,7 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport
 import io.circe.generic.auto._
 import com.gu.facebook_news_bot.state.StateHandler
 import com.gu.facebook_news_bot.stores.UserStore
+import com.gu.facebook_news_bot.utils.JsonHelpers
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.ExecutionContextExecutor
@@ -39,6 +40,7 @@ trait BotService extends CirceSupport with StrictLogging {
   } ~ path("webhook") {
     post {
       entity(as[MessageFromFacebook]) { fromFb =>
+        logger.debug(s"Received message from Facebook: ${JsonHelpers.encodeJson(fromFb)}")
         complete {
           /**
             * A message from FB may contains many 'entries', each with many 'messagings', from any number of users.
@@ -50,7 +52,10 @@ trait BotService extends CirceSupport with StrictLogging {
             messaging <- entry.messaging
           } yield messaging
 
-          messagings foreach (processMessaging(_))
+          messagings foreach { messaging =>
+            //For now, ignore message receipts
+            if (messaging.message.isDefined || messaging.postback.isDefined) processMessaging(messaging)
+          }
         }
       }
     }

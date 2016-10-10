@@ -10,7 +10,6 @@ import com.gu.facebook_news_bot.models.FacebookUser
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import io.circe.generic.auto._
 import akka.contrib.throttle.TimerBasedThrottler
 
 import scala.concurrent.duration._
@@ -20,6 +19,8 @@ import com.gu.facebook_news_bot.BotConfig
 import scala.concurrent.Future
 import com.gu.facebook_news_bot.models.MessageToFacebook
 import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.JsonHelpers._
+import io.circe.generic.auto._
 
 trait Facebook {
   def send(messages: List[MessageToFacebook]): Unit
@@ -64,6 +65,7 @@ class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
     def receive = {
       case message: MessageToFacebook =>
         val responseFuture = Marshal(message).to[RequestEntity] flatMap { entity =>
+          logger.debug(s"Sending message to Facebook: $entity")
 
           Http().singleRequest(
             request = HttpRequest(
