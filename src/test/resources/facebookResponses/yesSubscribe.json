@@ -1,0 +1,25 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"When would you like your morning briefing delivered?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"6am",
+        "payload":"6"
+      },
+      {
+        "content_type":"text",
+        "title":"7am",
+        "payload":"7"
+      },
+      {
+        "content_type":"text",
+        "title":"8am",
+        "payload":"8"
+      }
+    ]
+  }
+}

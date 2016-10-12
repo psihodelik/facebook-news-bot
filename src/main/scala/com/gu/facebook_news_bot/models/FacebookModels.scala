@@ -16,6 +16,27 @@ object MessageToFacebook {
 
   def errorMessage(id: String) = textMessage(id, "Sorry, I'm having some technical difficulties at the moment. Please try again later.")
 
+  def buttonsMessage(id: String, buttons: Seq[Button], text: String): MessageToFacebook = {
+    val attachment = MessageToFacebook.Attachment.buttonsAttachment(buttons, text)
+    MessageToFacebook(
+      recipient = Id(id),
+      message = Some(MessageToFacebook.Message(
+        attachment = Some(attachment)
+      ))
+    )
+  }
+
+  def quickRepliesMessage(id: String, quickReplies: Seq[QuickReply], text: String): MessageToFacebook = {
+    val message = MessageToFacebook.Message(
+      text = Some(text),
+      quick_replies = Some(quickReplies)
+    )
+    MessageToFacebook(
+      recipient = Id(id),
+      message = Some(message)
+    )
+  }
+
   case class Message(text: Option[String] = None,
                      attachment: Option[Attachment] = None,
                      quick_replies: Option[Seq[QuickReply]] = None,
@@ -23,11 +44,20 @@ object MessageToFacebook {
 
   case class Attachment(`type`: String, payload: Payload)
   object Attachment {
-    def apply(elements: Seq[Element]): Attachment = Attachment(
+    def genericAttachment(elements: Seq[Element]): Attachment = Attachment(
       `type` = "template",
       payload = Payload(
         template_type = "generic",
         elements = Some(elements.toList)
+      )
+    )
+
+    def buttonsAttachment(buttons: Seq[Button], text: String): Attachment = Attachment(
+      `type` = "template",
+      payload = MessageToFacebook.Payload(
+        template_type = "button",
+        text = Some(text),
+        buttons = Some(buttons)
       )
     )
   }

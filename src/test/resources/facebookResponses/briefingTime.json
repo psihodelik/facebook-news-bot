@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Done. You will start receiving the morning briefing at 6.\n\nRemember, you can change your subscription to this at any time from the menu.\n\nWould you like to see the headlines or the most popular stories right now?"
+  }
+}

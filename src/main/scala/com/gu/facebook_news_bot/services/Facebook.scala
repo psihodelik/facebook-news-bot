@@ -51,13 +51,14 @@ class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
     val responseFuture = Http().singleRequest(
       HttpRequest(
         method = HttpMethods.GET,
-        uri = s"${BotConfig.facebook.url}/$id"
+        uri = s"${BotConfig.facebook.url}/$id?access_token=${BotConfig.facebook.accessToken}"
       )
     )
 
     for {
       response <- responseFuture
-      facebookUser <- Unmarshal(response.entity).to[FacebookUser]
+      //Force the content type here because FB graph specifies "text/javascript"
+      facebookUser <- Unmarshal(response.entity.withContentType(ContentTypes.`application/json`)).to[FacebookUser]
     } yield facebookUser
   }
 

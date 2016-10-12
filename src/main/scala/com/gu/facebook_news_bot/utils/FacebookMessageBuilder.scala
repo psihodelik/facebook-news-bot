@@ -23,7 +23,7 @@ object FacebookMessageBuilder {
           buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
         )
       }
-      val attachment = MessageToFacebook.Attachment(tiles)
+      val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
 
       Some(MessageToFacebook.Message(
         attachment = Some(attachment),

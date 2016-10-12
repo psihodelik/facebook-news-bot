@@ -11,6 +11,8 @@ object StateHandler {
   def apply(facebook: Facebook, capi: Capi) = new StateHandler(facebook, capi)
 
   type Result = (User, List[MessageToFacebook])
+
+  val NewUserStateName = "NEW_USER"
 }
 
 class StateHandler(facebook: Facebook, capi: Capi) {
@@ -29,12 +31,24 @@ class StateHandler(facebook: Facebook, capi: Capi) {
 
   private def newUser(id: String): Future[User] = {
     facebook.getUser(id) map { facebookUser =>
-      User(id, "uk", facebookUser.timezone, "-", "-", Some(NewUserState.name), Some(0))
+      User(id, localToFront(facebookUser.locale), facebookUser.timezone, "-", "-", Some(StateHandler.NewUserStateName), Some(0))
     }
   }
 
   private def getStateFromString(state: String): State = state.toUpperCase match {
-    case NewUserState.name => NewUserState
+    case StateHandler.NewUserStateName => SubscribeQuestionState
+    case SubscribeQuestionState.Name => SubscribeQuestionState
+    case BriefingTimeQuestionState.Name => BriefingTimeQuestionState
+    case EditionQuestionState.Name => EditionQuestionState
     case _ => MainState
+  }
+
+  private def localToFront(locale: String): String = {
+    locale match {
+      case "en_GB" => "uk"
+      case "en_US" => "us"
+      case "en_UD" => "au"
+      case _ => "international"
+    }
   }
 }

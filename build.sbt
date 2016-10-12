@@ -17,6 +17,8 @@ enablePlugins(RiffRaffArtifact, JavaAppPackaging)
 val CapiVersion = "10.5"
 
 libraryDependencies ++= Seq(
+  "joda-time" % "joda-time" % "2.9.4",
+  "org.joda" % "joda-convert" % "1.8.1",
   "org.jsoup" % "jsoup" % "1.8.1",
   "com.google.code.findbugs" % "jsr305" % "2.0.3" % Compile,
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",

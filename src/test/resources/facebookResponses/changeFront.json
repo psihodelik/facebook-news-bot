@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Your edition has been updated to UK"
+  }
+}

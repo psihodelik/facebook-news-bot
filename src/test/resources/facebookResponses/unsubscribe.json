@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Done. You will no longer receive the morning briefing.\n\nYou can re-subscribe at any time from the menu"
+  }
+}
