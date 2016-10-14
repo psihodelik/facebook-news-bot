@@ -8,6 +8,7 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.cm.Mode
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook}
 import com.gu.facebook_news_bot.services.{Capi, CapiImpl, Facebook, FacebookImpl}
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -109,6 +110,8 @@ object Bot extends App with BotService {
       new AmazonDynamoDBAsyncClient(BotConfig.aws.CredentialsProvider).withRegion(awsRegion)
     }
   }
+
+  val poller = system.actorOf(MorningBriefingPoller.props(userStore, capi, facebook))
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
 }

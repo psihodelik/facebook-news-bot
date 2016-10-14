@@ -10,14 +10,14 @@ object FacebookMessageBuilder {
   val MaxImageWidth = 1000
   val CarouselSize = 5  //Number of items in a carousel
 
-  def contentToCarousel(contentList: Seq[Content], offset: Int): Option[MessageToFacebook.Message] = {
+  def contentToCarousel(contentList: Seq[Content], offset: Int, variant: Option[String] = None): Option[MessageToFacebook.Message] = {
     val sliced = contentList.slice(offset, offset + CarouselSize)
     if (sliced.isEmpty) None
     else {
       val tiles = sliced.map { content =>
         MessageToFacebook.Element(
           title = content.webTitle,
-          item_url = Some(s"${content.webUrl}?CMP=${BotConfig.campaignCode}"),
+          item_url = Some(buildUrl(content.webUrl, variant)),
           subtitle = content.fields.flatMap(_.standfirst.map(Jsoup.parse(_).text)),
           image_url = Some(getImageUrl(content)),
           buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
@@ -36,6 +36,10 @@ object FacebookMessageBuilder {
       ))
     }
   }
+
+  //Include the variant in the campaign code if present
+  private def buildUrl(webUrl: String, variant: Option[String]): String =
+    s"$webUrl?CMP=${BotConfig.campaignCode}${variant.map(v => s"_$v").getOrElse("")}"
 
   // Look for widest image up to MaxImageWidth
   private def getImageUrl(content: Content): String = {
