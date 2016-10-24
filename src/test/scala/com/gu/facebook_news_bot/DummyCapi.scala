@@ -9,16 +9,16 @@ import scala.concurrent.Future
 
 object DummyCapi extends Capi {
 
-  def getHeadlines(front: String, topic: Option[Topic]): Future[Seq[Content]] = {
-    getFromFile("headlines", front, topic)
+  def getHeadlines(edition: String, topic: Option[Topic]): Future[Seq[Content]] = {
+    getFromFile("headlines", edition, topic)
   }
 
-  def getMostViewed(front: String, topic: Option[Topic]): Future[Seq[Content]] = {
-    getFromFile("mostviewed", front, topic)
+  def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]] = {
+    getFromFile("mostviewed", edition, topic)
   }
 
-  private def getFromFile(`type`: String, front: String, topic: Option[Topic]): Future[Seq[Content]] = {
-    val file = s"src/test/resources/capiResponses/${`type`}-$front${topic.map(_.name).getOrElse("")}.json"
+  private def getFromFile(`type`: String, edition: String, topic: Option[Topic]): Future[Seq[Content]] = {
+    val file = s"src/test/resources/capiResponses/${`type`}-${topic.map(_.getPath(edition).replace("/","-")).getOrElse(edition)}.json"
     val result = JsonHelpers.decodeFromFile[Seq[Content]](file)
 
     Future.successful(result)

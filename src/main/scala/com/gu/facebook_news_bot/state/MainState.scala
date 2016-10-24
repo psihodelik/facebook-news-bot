@@ -106,19 +106,27 @@ case object MainState extends State {
     else None
   }
 
-  private def processText(text: String): Option[Event] = {
+  private def processText(raw: String): Option[Event] = {
     //Note - each case must reference all capture groups from the regex for the extractor to work
-    text.toLowerCase match {
+    val text = raw.toLowerCase
+    val event = text match {
       case Patterns.more(_,_) => Some(MoreContentEvent)
-      case Patterns.headlines(_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType)))
-      case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType)))
+      case Patterns.headlines(_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
+      case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(text)))
       case Patterns.greeting(_) => Some(GreetingEvent)
       case Patterns.menu(_,_) => Some(MenuEvent(ResponseText.menu))
       case Patterns.help(_,_) => Some(MenuEvent(ResponseText.help))
       case Patterns.subscribe(_,_) => Some(SubscribeYesEvent)
       case Patterns.unsubscribe(_,_) => Some(UnsubscribeEvent)
-      case _ => None  //TODO - handle topics
+      case _ => None
     }
+
+    event.orElse(
+      //Does it contain a topic?
+      Topic.getTopic(text).map { topic =>
+        NewContentEvent(contentType = Some(HeadlinesType), topic = Some(topic))
+      }
+    )
   }
 
   private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi): Future[Result] = {
@@ -132,7 +140,7 @@ case object MainState extends State {
         val updatedUser = user.copy(
           state = Some(Name),
           contentType = Some(contentType.name),
-          contentTopic = topic.map(_.name),
+          contentTopic = topic.map(_.terms.headOption.getOrElse("")),
           contentOffset = Some(offset)
         )
 

@@ -53,4 +53,28 @@ class HeadlinesTest extends FunSpec with Matchers with ScalatestRouteTest with M
       verify(service.facebook, timeout(5000)).send(List(expectedMessage))
     }
   }
+
+  it("should return uk politics headlines") {
+    val service = new TestService(TableName)
+    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/politicsHeadlines.json"))
+
+    request ~> service.routes ~> check {
+      status should equal(OK)
+
+      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/politicsHeadlines.json")
+      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
+    }
+  }
+
+  it("should return more uk politics headlines") {
+    val service = new TestService(TableName)
+    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/moreHeadlinesQuickReply.json"))
+
+    request ~> service.routes ~> check {
+      status should equal(OK)
+
+      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/morePoliticsHeadlines.json")
+      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
+    }
+  }
 }
