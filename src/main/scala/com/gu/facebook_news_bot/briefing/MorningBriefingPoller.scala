@@ -14,7 +14,7 @@ import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText}
-import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.Loggers._
 import io.circe.generic.auto._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -30,7 +30,7 @@ object MorningBriefingPoller {
   case object Poll
 }
 
-class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook) extends Actor with StrictLogging {
+class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook) extends Actor {
 
   private val MaxBatchSize = 10 //Max allowed by SQS
   private val PollPeriod = 500.millis
@@ -51,7 +51,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       val messages: Seq[Message] = Try(SQS.client.receiveMessage(request)) match {
         case Success(result) => result.getMessages.asScala
         case Failure(e) =>
-          logger.error(s"Error polling SQS queue: $e")
+          appLogger.error(s"Error polling SQS queue: ${e.getMessage}", e)
           Nil
       }
 
@@ -67,14 +67,14 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
           messages.map(message => new DeleteMessageBatchRequestEntry(message.getMessageId, message.getReceiptHandle)).asJava
         )
         Try(SQS.client.deleteMessageBatch(deleteRequest)) recover {
-          case e => logger.warn(s"Failed to delete messages from queue: ${e.getMessage}")
+          case e => appLogger.warn(s"Failed to delete messages from queue: ${e.getMessage}", e)
         }
       }
 
       context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
 
     case _ =>
-      logger.warn("Unknown message received by MorningBriefingPoller")
+      appLogger.warn("Unknown message received by MorningBriefingPoller")
   }
 
   private def processUser(user: User): Unit = {
@@ -82,7 +82,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       if (fbUser.timezone == user.offsetHours) {
         getMorningBriefing(user).onComplete {
           case Success((updatedUser, fbMessages)) => updateAndSend(updatedUser, fbMessages)
-          case Failure(error) => logger.error(s"Error getting morning briefing for user ${user.ID}: $error")
+          case Failure(error) => appLogger.error(s"Error getting morning briefing for user ${user.ID}: ${error.getMessage}", error)
         }
       } else {
         //User's timezone has changed - fix this now, but don't send briefing
@@ -102,7 +102,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
   }
 
   private def getMorningBriefing(user: User): Future[Result] = {
-    logger.debug(s"Getting morning briefing for User: $user")
+    appLogger.debug(s"Getting morning briefing for User: $user")
 
     //TODO - add A/B testing switch here
     MainState.getHeadlines(user, capi, variant = user.variant)
@@ -125,12 +125,12 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
             }}
           } else {
             //Something has gone very wrong
-            logger.error(s"Failed to update user state multiple times. User is $user and error is $error")
+            appLogger.error(s"Failed to update user state multiple times. User is $user and error is ${error.getMessage}", error)
           }
         }, { _ =>
           if (messages.nonEmpty) {
             val briefing = morningMessage(user) :: messages
-            logger.debug(s"Sending morning briefing to ${user.ID}: $briefing")
+            appLogger.debug(s"Sending morning briefing to ${user.ID}: $briefing")
             facebook.send(briefing)
           }
         }

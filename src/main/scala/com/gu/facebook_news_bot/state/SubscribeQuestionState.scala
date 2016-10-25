@@ -4,6 +4,7 @@ import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, 
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.ResponseText
+import io.circe.generic.auto._
 
 import scala.concurrent.Future
 
@@ -14,7 +15,10 @@ import scala.concurrent.Future
 case object SubscribeQuestionState extends State {
   val Name = "SUBSCRIBE_QUESTION"
 
-  val YesPattern = "(yes|yeah|yep|sure)".r.unanchored
+  private val YesPattern = "(yes|yeah|yep|sure)".r.unanchored
+
+  private case class SubscribeNoEvent(id: String, event: String = "subscribe_no") extends LogEvent
+  private case class SubscribeYesEvent(id: String, event: String = "subscribe_yes") extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(processPostback(user, _, capi, facebook)) getOrElse {
@@ -42,10 +46,12 @@ case object SubscribeQuestionState extends State {
   }
 
   private def yes(user: User, facebook: Facebook): Future[Result] = {
+    log(SubscribeYesEvent(user.ID))
     BriefingTimeQuestionState.question(user)
   }
 
   private def no(user: User): Future[Result] = {
+    log(SubscribeNoEvent(user.ID))
     val response = MessageToFacebook.textMessage(user.ID, ResponseText.subscribeNo)
     Future.successful(State.changeState(user, MainState.Name), List(response))
   }

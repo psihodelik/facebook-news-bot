@@ -6,6 +6,7 @@ import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.ResponseText
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import io.circe.generic.auto._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,6 +20,8 @@ case object BriefingTimeQuestionState extends State {
   val Name = "BRIEFING_TIME_QUESTION"
 
   val ValidTimes = Seq("6", "7", "8")
+
+  private case class BriefingTimeEvent(id: String, event: String = "subscribe", time: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {
@@ -41,6 +44,8 @@ case object BriefingTimeQuestionState extends State {
   }
 
   private def success(user: User, time: String, facebook: Facebook): Future[Result] = {
+    log(BriefingTimeEvent(id = user.ID, time = time))
+
     facebook.getUser(user.ID) flatMap { fbData =>
       val notifyTime = DateTime.parse(time, DateTimeFormat.forPattern("H"))
       val notifyTimeUTC = notifyTime.minusMinutes((fbData.timezone * 60).toInt)

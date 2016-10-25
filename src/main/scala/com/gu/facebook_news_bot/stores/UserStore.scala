@@ -7,7 +7,7 @@ import com.gu.facebook_news_bot.models.User
 import com.gu.scanamo.query.Not
 import com.gu.scanamo.{ScanamoAsync, Table}
 import com.gu.scanamo.syntax._
-import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.Loggers._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * TODO -
   * Make reads strongly consistent - requires scanamo change
   */
-class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String) extends StrictLogging {
+class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String) {
 
   def getUser(id: String): Future[Option[User]] = {
     val futureResult = ScanamoAsync.get[User](client)(usersTableName)('ID -> id)
@@ -25,7 +25,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String) exten
         //If parsing fails, log the error and we'll have to create a new user
         parseResult.fold(
           { error =>
-            logger.error(s"Error parsing User data from dynamodb: $error")
+            appLogger.error(s"Error parsing User data from dynamodb: $error")
             None
           }, {
             Some(_)

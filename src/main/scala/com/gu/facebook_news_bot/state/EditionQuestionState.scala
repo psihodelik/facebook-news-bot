@@ -4,6 +4,7 @@ import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebo
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.ResponseText
+import io.circe.generic.auto._
 
 import scala.concurrent.Future
 
@@ -16,6 +17,8 @@ case object EditionQuestionState extends State {
   val Name = "EDITION_QUESTION"
 
   val Editions = Seq("au", "uk", "us", "international")
+
+  private case class EditionEvent(id: String, event: String = "change_edition", edition: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {
@@ -56,6 +59,7 @@ case object EditionQuestionState extends State {
   }
 
   private def success(user: User, edition: String): Future[Result] = {
+    log(EditionEvent(id = user.ID, edition = edition))
     val response = MessageToFacebook.textMessage(user.ID, ResponseText.editionChanged(frontToUserFriendly(edition)))
     val updatedUser = user.copy(state = Some(MainState.Name), front = edition)
     Future.successful((updatedUser, List(response)))

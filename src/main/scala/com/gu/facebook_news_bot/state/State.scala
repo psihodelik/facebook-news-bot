@@ -3,7 +3,9 @@ package com.gu.facebook_news_bot.state
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
-import com.gu.facebook_news_bot.utils.ResponseText
+import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText}
+import com.gu.facebook_news_bot.utils.Loggers._
+import io.circe.ObjectEncoder
 
 import scala.concurrent.Future
 
@@ -13,6 +15,18 @@ trait State {
     * Define the user's state transition, and build any messages to be sent to user
     */
   def transition(user: User, message: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result]
+
+  /**
+    * Each State can optionally perform additional logging using an object with type LogEvent.
+    * It will be logged as JSON
+    */
+  protected trait LogEvent {
+    val id: String    //user's ID
+    val event: String  //the name of the event being logged
+  }
+  protected def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
+    logEvent(JsonHelpers.encodeJson(event))
+  }
 }
 
 object State {

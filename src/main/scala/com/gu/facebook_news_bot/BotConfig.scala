@@ -25,6 +25,8 @@ object BotConfig {
     val usersTable = getMandatoryString("aws.dynamo.usersTableName")
     val region = getStringOrDefault("aws.region", "eu-west-1")
 
+    val loggingKinesisStreamName: Option[String] = Try(config.getString("aws.logging.kinesisStreamName")).toOption
+
     val CredentialsProvider = new AWSCredentialsProviderChain(
       new ProfileCredentialsProvider("capi"),
       new ProfileCredentialsProvider(),

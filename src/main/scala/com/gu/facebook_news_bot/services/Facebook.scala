@@ -18,7 +18,7 @@ import com.gu.facebook_news_bot.BotConfig
 
 import scala.concurrent.Future
 import com.gu.facebook_news_bot.models.MessageToFacebook
-import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.JsonHelpers._
 import io.circe.generic.auto._
 
@@ -28,7 +28,7 @@ trait Facebook {
   def getUser(id: String): Future[FacebookUser]
 }
 
-class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
+class FacebookImpl extends Facebook with CirceSupport {
 
   implicit val system = ActorSystem("facebook-actor-system")
   implicit val materializer = ActorMaterializer()
@@ -66,7 +66,7 @@ class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
     def receive = {
       case message: MessageToFacebook =>
         val responseFuture = Marshal(message).to[RequestEntity] flatMap { entity =>
-          logger.debug(s"Sending message to Facebook: $entity")
+          appLogger.debug(s"Sending message to Facebook: $entity")
 
           Http().singleRequest(
             request = HttpRequest(
@@ -76,7 +76,7 @@ class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
             )
           )
         }
-        responseFuture.onFailure { case error: Throwable => logger.error(s"Error sending message $message to facebook: $error") }
+        responseFuture.onFailure { case error: Throwable => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error) }
     }
   }
 }

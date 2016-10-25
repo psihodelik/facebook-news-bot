@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.gu.contentapi.client.GuardianContentClient
-import com.typesafe.scalalogging.StrictLogging
 import com.gu.contentapi.client.model.ItemQuery
 import com.gu.contentapi.client.model.v1.{Content, ItemResponse}
 import com.gu.facebook_news_bot.BotConfig
@@ -19,7 +18,7 @@ trait Capi {
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]]
 }
 
-object CapiImpl extends Capi with StrictLogging {
+object CapiImpl extends Capi {
 
   private lazy val client = new GuardianContentClient(BotConfig.capi.key)
 

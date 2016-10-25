@@ -41,6 +41,8 @@ libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsVersion,
   "com.amazonaws" % "aws-java-sdk-ec2" % AwsVersion,
   "com.gu" %% "scanamo" % "0.7.0",
+  "com.gu" % "kinesis-logback-appender" % "1.3.0",
+  "net.logstash.logback" % "logstash-logback-encoder" % "4.6",
   "com.typesafe.akka" %% "akka-http-testkit" % akkaVersion,
   "org.scalatest" %% "scalatest" % "3.0.0" % "test",
   "com.gu" % "content-api-models-json" % CapiVersion % Test, //this version needs to match the one used by content-api-client
@@ -50,6 +52,9 @@ libraryDependencies ++= Seq(
 startDynamoDBLocal <<= startDynamoDBLocal.dependsOn(compile in Test)
 test in Test <<= (test in Test).dependsOn(startDynamoDBLocal)
 testOptions in Test <+= dynamoDBLocalTestCleanup
+
+//TODO - after moving to yaml for the riff-raff deploy file, remove "packages" from this path:
+riffRaffArtifactResources += baseDirectory.value / "logstash.conf" -> s"packages/${riffRaffPackageName.value}/logstash.conf"
 
 riffRaffPackageName := "facebook-news-bot"
 riffRaffPackageType := (packageZipTarball in Universal).value

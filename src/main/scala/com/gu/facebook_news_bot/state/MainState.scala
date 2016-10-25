@@ -5,6 +5,7 @@ import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.ResponseText
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.{CarouselSize, contentToCarousel}
+import io.circe.generic.auto._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,6 +13,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 //The 'main' state - when we're not expecting any particular message from the user
 case object MainState extends State {
   val Name = "MAIN"
+
+  private case class ContentLogEvent(id: String, event: String, topic: String, offset: Int) extends LogEvent
+  private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe") extends LogEvent
 
   private object Patterns {
     val headlines = """(^|\W)headlines($|\W)""".r.unanchored
@@ -68,17 +72,23 @@ case object MainState extends State {
       case NewContentEvent(maybeContentType, maybeTopic) =>
         //Either have a new contentType, or use an existing contentType
         maybeContentType.orElse(user.contentType.flatMap(ContentType.fromString)) map { contentType =>
+          log(ContentLogEvent(user.ID, contentType.name, maybeTopic.flatMap(_.terms.headOption).getOrElse(""), 0))
+
           carousel(user, contentType, maybeTopic, 0, capi)
         }
 
       case MoreContentEvent =>
         //Must have contentType in User
         user.contentType.flatMap(ContentType.fromString).map { contentType =>
+          val offset = user.contentOffset.getOrElse(0) + CarouselSize
+
+          log(ContentLogEvent(user.ID, contentType.name, user.contentTopic.getOrElse(""), offset))
+
           carousel(
             user = user,
             contentType = contentType,
             topic = user.contentTopic.flatMap(Topic.getTopic),
-            offset = user.contentOffset.getOrElse(0) + CarouselSize,
+            offset = offset,
             capi = capi)
         }
 
@@ -198,6 +208,8 @@ case object MainState extends State {
   }
 
   private def unsubscribe(user: User): Future[Result] = {
+    log(UnsubscribeLogEvent(user.ID))
+
     val updatedUser = user.copy(
       notificationTime = "-",
       notificationTimeUTC = "-"

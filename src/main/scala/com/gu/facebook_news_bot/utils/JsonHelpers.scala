@@ -1,17 +1,17 @@
 package com.gu.facebook_news_bot.utils
 
 import com.gu.facebook_news_bot.models.MessageToFacebook
-import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.Loggers._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 
-object JsonHelpers extends StrictLogging {
+object JsonHelpers {
 
   private def parseJson(s: String): Option[Json] = parse(s).fold(
     { error =>
-      logger.error(s"Error parsing string $s. Error was $error")
+      appLogger.error(s"Error parsing string $s. Error was $error")
       None
     },
     Some(_)
@@ -21,7 +21,7 @@ object JsonHelpers extends StrictLogging {
     parseJson(s).flatMap { json =>
       json.as[T].fold(
         { error =>
-          logger.error(s"Error decoding string $s. Error was $error")
+          appLogger.error(s"Error decoding string $s. Error was $error")
           None
         },
         Some(_)

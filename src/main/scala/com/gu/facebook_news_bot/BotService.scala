@@ -11,19 +11,20 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller
-import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook}
+import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, CapiImpl, Facebook, FacebookImpl}
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 import io.circe.generic.auto._
 import com.gu.facebook_news_bot.state.StateHandler
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.{JsonHelpers, Verification}
-import com.typesafe.scalalogging.StrictLogging
+import com.gu.facebook_news_bot.utils.{KinesisAppenderConfig, LogStash}
+import com.gu.facebook_news_bot.utils.Loggers._
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success}
 
-trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers with StrictLogging {
+trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
   implicit val materializer: Materializer
@@ -43,12 +44,11 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers wit
   } ~ path("webhook") {
     post {
       //Verify the signature header before processing the request
-      headerValueByName("X-Hub-Signature") { signature =>
+      optionalHeaderValueByName("X-Hub-Signature") { signature =>
         entity(as[Array[Byte]]) { bytes =>
-          if (Verification.verifySignature(signature, bytes)) {
+          if (BotConfig.stage == Mode.Dev || signature.exists(Verification.verifySignature(_, bytes))) {
 
             entity(as[MessageFromFacebook]) { fromFb =>
-              logger.debug(s"Received message from Facebook: ${JsonHelpers.encodeJson(fromFb)}")
               complete {
                 /**
                   * A message from FB may contains many 'entries', each with many 'messagings', from any number of users.
@@ -67,7 +67,7 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers wit
               }
             }
           } else {
-            logger.warn(s"Invalid X-Hub-Signature header, rejecting POST request.")
+            appLogger.warn(s"Invalid X-Hub-Signature header, rejecting POST request.")
             complete(StatusCodes.Forbidden)
           }
         }
@@ -75,11 +75,17 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers wit
     }
   }
 
+  case class MessageLog(event: String, messaging: MessageFromFacebook.Messaging, user: Option[User])
+
   def processMessaging(msg: MessageFromFacebook.Messaging, retry: Int = 0): Unit = {
+
     val futureResult = for {
       user <- userStore.getUser(msg.sender.id)
       result <- stateHandler.process(user, msg)
-    } yield result
+    } yield {
+      logEvent(JsonHelpers.encodeJson(MessageLog("receipt", msg, user)))
+      result
+    }
 
     futureResult onComplete {
       case Success((updatedUser, messages)) =>
@@ -92,14 +98,15 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers wit
             if (retry < 3) processMessaging(msg, retry+1)
             else {
               //Something has gone very wrong
-              logger.error(s"Failed to update user state multiple times. User is $updatedUser and error is $error")
+              appLogger.error(s"Failed to update user state multiple times. User is $updatedUser and error is ${error.getMessage}", error)
             }
           }, { _ =>
+            logEvent(JsonHelpers.encodeJson(MessageLog("complete", msg, Some(updatedUser))))
             facebook.send(messages)
           })
         }
       case Failure(error) =>
-        logger.error(s"Error processing message $msg: ${error.getMessage}", error)
+        appLogger.error(s"Error processing message $msg: ${error.getMessage}", error)
         facebook.send(List(MessageToFacebook.errorMessage(msg.sender.id)))
     }
   }
@@ -122,6 +129,13 @@ object Bot extends App with BotService {
       val awsRegion = Regions.fromName(BotConfig.aws.region)
       new AmazonDynamoDBAsyncClient(BotConfig.aws.CredentialsProvider).withRegion(awsRegion)
     }
+  }
+
+  BotConfig.aws.loggingKinesisStreamName match {
+    case Some(stream) =>
+      val appenderConfig = KinesisAppenderConfig(stream, BotConfig.aws.CredentialsProvider)
+      LogStash.init(appenderConfig)
+    case None => appLogger.warn(s"No kinesis stream name found for logging.")
   }
 
   val poller = system.actorOf(MorningBriefingPoller.props(userStore, capi, facebook))
