@@ -45,6 +45,9 @@ Parameters:
     DynamodbTableName:
         Description: Name of dynamodb table used to store user data
         Type: String
+    MorningBriefingSnsTopicArn:
+        Description: ARN of the morning briefings SNS topic
+        Type: String
 
 Mappings:
     StageMap:
@@ -163,6 +166,39 @@ Resources:
                           !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${LoggingKinesisStream}
             Roles:
                 - !Ref FacebookNewsBotRole
+
+    SQSPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: sqs-policy
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Action:
+                          - sqs:ReceiveMessage
+                          - sqs:DeleteMessage
+                          - sqs:DeleteMessageBatch
+                      Resource:
+                          - !GetAtt MorningBriefingSQS.Arn
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    MorningBriefingSQSPolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            Queues:
+                - !Ref MorningBriefingSQS
+            PolicyDocument:
+                Statement:
+                    - Sid: allow-sqs-sendmessage
+                      Effect: Allow
+                      Principal:
+                          AWS: "*"
+                      Action: SQS:SendMessage
+                      Resource: !GetAtt MorningBriefingSQS.Arn
+                      Condition:
+                          ArnEquals:
+                              aws:SourceArn: !Ref MorningBriefingSnsTopicArn
 
     InstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -301,6 +337,11 @@ Resources:
                   Value:
                     Ref: App
                   PropagateAtLaunch: true
+
+    MorningBriefingSQS:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub facebook-news-bot-morning-briefing-${Stage}
 
     LaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration

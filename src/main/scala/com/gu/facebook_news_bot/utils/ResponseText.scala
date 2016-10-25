@@ -40,5 +40,12 @@ object ResponseText {
 
   def editionChanged(edition: String) = s"Your edition has been updated to $edition"
 
+  def morningBriefing = random(List(
+    "Good morning! Here are the top stories today",
+    "Good morning! Your briefing is ready for you",
+    "Good morning! Your briefing has arrived",
+    "Good morning! Check out this morning's headline stories"
+  ))
+
   private def random(list: List[String]) = list((Random.nextDouble * list.length).floor.toInt)
 }

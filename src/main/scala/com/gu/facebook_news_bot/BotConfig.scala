@@ -30,6 +30,8 @@ object BotConfig {
       new ProfileCredentialsProvider(),
       new InstanceProfileCredentialsProvider()
     )
+
+    val morningBriefingSQSName = getMandatoryString("aws.sqs.morningBriefingSQSName")
   }
 
   object facebook {

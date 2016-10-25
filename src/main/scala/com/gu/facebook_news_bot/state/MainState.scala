@@ -60,6 +60,9 @@ case object MainState extends State {
     result getOrElse State.unknown(user)
   }
 
+  //For use by morning briefing, which for now just uses editors-picks and leaves the user in the MAIN state
+  def getHeadlines(user: User, capi: Capi, variant: Option[String] = None): Future[Result] = carousel(user, HeadlinesType, None, 0, capi, variant)
+
   private def processEvent(user: User, event: Event, capi: Capi, facebook: Facebook): Future[Result] = {
     val result = event match {
       case NewContentEvent(maybeContentType, maybeTopic) =>
@@ -129,10 +132,10 @@ case object MainState extends State {
     )
   }
 
-  private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi): Future[Result] = {
+  private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi, variant: Option[String] = None): Future[Result] = {
     val futureCarousel = contentType match {
-      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset))
-      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset))
+      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, variant))
+      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, variant))
     }
 
     futureCarousel map {

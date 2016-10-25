@@ -15,8 +15,10 @@ resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 enablePlugins(RiffRaffArtifact, JavaAppPackaging)
 
 val CapiVersion = "10.5"
+val AwsVersion = "1.11.8"
 
 libraryDependencies ++= Seq(
+  "com.google.guava" % "guava" % "19.0",
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",
   "org.jsoup" % "jsoup" % "1.8.1",
@@ -35,8 +37,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
   "com.github.ben-manes.caffeine" % "caffeine" % "2.3.3",
   "de.heikoseeberger" %% "akka-http-circe" % "1.10.0",
-  "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.10.51",
-  "com.amazonaws" % "aws-java-sdk-ec2" % "1.10.52",
+  "com.amazonaws" % "aws-java-sdk-sqs" % AwsVersion,
+  "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsVersion,
+  "com.amazonaws" % "aws-java-sdk-ec2" % AwsVersion,
   "com.gu" %% "scanamo" % "0.7.0",
   "com.typesafe.akka" %% "akka-http-testkit" % akkaVersion,
   "org.scalatest" %% "scalatest" % "3.0.0" % "test",
