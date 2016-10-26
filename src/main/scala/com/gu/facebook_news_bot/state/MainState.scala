@@ -134,8 +134,8 @@ case object MainState extends State {
 
   private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi, variant: Option[String] = None): Future[Result] = {
     val futureCarousel = contentType match {
-      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, variant))
-      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, variant))
+      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, user.front, variant))
+      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, user.front, variant))
     }
 
     futureCarousel map {

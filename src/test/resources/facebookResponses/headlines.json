@@ -90,6 +90,30 @@
         "title" : "More stories",
         "payload" : "more",
         "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Politics",
+        "payload" : "politics",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Football",
+        "payload" : "football",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Business",
+        "payload" : "business",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Sport",
+        "payload" : "sport",
+        "image_url" : null
       }
     ],
     "metadata" : null
