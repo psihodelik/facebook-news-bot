@@ -44,7 +44,7 @@ class FacebookImpl extends Facebook with CirceSupport with StrictLogging {
   throttler ! SetTarget(Some(facebookActor))
 
   def send(messages: List[MessageToFacebook]): Unit = {
-    messages.foreach(facebookActor ! _)
+    messages.foreach(throttler ! _)
   }
 
   def getUser(id: String): Future[FacebookUser] = {
