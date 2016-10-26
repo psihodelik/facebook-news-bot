@@ -15,7 +15,7 @@ import scala.concurrent.Future
 case object EditionQuestionState extends State {
   val Name = "EDITION_QUESTION"
 
-  val Editions = Seq("uk", "us", "australia", "international")
+  val Editions = Seq("au", "uk", "us", "international")
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {
