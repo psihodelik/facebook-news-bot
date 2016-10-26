@@ -10,7 +10,7 @@ object FacebookMessageBuilder {
   val MaxImageWidth = 1000
   val CarouselSize = 5  //Number of items in a carousel
 
-  def contentToCarousel(contentList: Seq[Content], offset: Int, variant: Option[String] = None): Option[MessageToFacebook.Message] = {
+  def contentToCarousel(contentList: Seq[Content], offset: Int, edition: String, variant: Option[String] = None): Option[MessageToFacebook.Message] = {
     val sliced = contentList.slice(offset, offset + CarouselSize)
     if (sliced.isEmpty) None
     else {
@@ -27,14 +27,23 @@ object FacebookMessageBuilder {
 
       Some(MessageToFacebook.Message(
         attachment = Some(attachment),
-        //TODO - topic quick_replies
         quick_replies = Some(List(MessageToFacebook.QuickReply(
           content_type = "text",
           title = Some("More stories"),
           payload = Some("more")
-        )))
+        )) ++ topicQuickReplies(edition))
       ))
     }
+  }
+
+  private def topicQuickReplies(edition: String): List[MessageToFacebook.QuickReply] = {
+    val topicNames = edition match {
+      case "us" => List("Politics", "Sport", "Business")
+      case "au" => List("Politics", "Sport", "Business", "Culture")
+      case "international" => List("Sport", "Business", "Technology")
+      case _ => List("Politics", "Football", "Business", "Sport")
+    }
+    topicNames.map(t => MessageToFacebook.QuickReply(content_type = "text", title = Some(t), payload = Some(t.toLowerCase())))
   }
 
   //Include the variant in the campaign code if present
