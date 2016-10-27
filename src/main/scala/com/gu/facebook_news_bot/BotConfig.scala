@@ -37,6 +37,7 @@ object BotConfig {
   object facebook {
     val url = getMandatoryString("facebook.url")
     val accessToken = getMandatoryString("facebook.accessToken")
+    val secret = getMandatoryString("facebook.secret")
   }
 
   object capi {
