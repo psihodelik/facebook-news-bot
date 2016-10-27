@@ -75,7 +75,8 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
     }
   }
 
-  case class MessageLog(event: String, messaging: MessageFromFacebook.Messaging, user: Option[User])
+  case class ReceiptLog(event: String, messaging: MessageFromFacebook.Messaging, user: Option[User])
+  case class CompleteLog(event: String, messages: List[MessageToFacebook], user: Option[User])
 
   def processMessaging(msg: MessageFromFacebook.Messaging, retry: Int = 0): Unit = {
 
@@ -83,7 +84,7 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
       user <- userStore.getUser(msg.sender.id)
       result <- stateHandler.process(user, msg)
     } yield {
-      logEvent(JsonHelpers.encodeJson(MessageLog("receipt", msg, user)))
+      logEvent(JsonHelpers.encodeJson(ReceiptLog("receipt", msg, user)))
       result
     }
 
@@ -101,7 +102,7 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
               appLogger.error(s"Failed to update user state multiple times. User is $updatedUser and error is ${error.getMessage}", error)
             }
           }, { _ =>
-            logEvent(JsonHelpers.encodeJson(MessageLog("complete", msg, Some(updatedUser))))
+            logEvent(JsonHelpers.encodeJson(CompleteLog("complete", messages, Some(updatedUser))))
             facebook.send(messages)
           })
         }
