@@ -36,14 +36,16 @@ object FacebookMessageBuilder {
     }
   }
 
-  private def topicQuickReplies(edition: String): List[MessageToFacebook.QuickReply] = {
-    val topicNames = edition match {
-      case "us" => List("Politics", "Sport", "Business")
-      case "au" => List("Politics", "Sport", "Business", "Culture")
-      case "international" => List("Sport", "Business", "Technology")
-      case _ => List("Politics", "Football", "Business", "Sport")
-    }
+  def topicQuickReplies(edition: String): List[MessageToFacebook.QuickReply] = {
+    val topicNames = suggestedTopics(edition)
     topicNames.map(t => MessageToFacebook.QuickReply(content_type = "text", title = Some(t), payload = Some(t.toLowerCase())))
+  }
+
+  def suggestedTopics(edition: String): List[String] = edition match {
+    case "us" => List("Politics", "Sport", "Business")
+    case "au" => List("Politics", "Sport", "Business", "Culture")
+    case "international" => List("Sport", "Business", "Technology")
+    case _ => List("Politics", "Football", "Lifestyle", "Sport", "Tech")
   }
 
   //Include the variant in the campaign code if present

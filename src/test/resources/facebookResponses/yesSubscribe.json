@@ -3,7 +3,7 @@
     "id":"subscription_test"
   },
   "message":{
-    "text":"When would you like your morning briefing delivered?",
+    "text":"When would you like your morning briefing delivered? You can choose from 6, 7 or 8am.",
     "quick_replies":[
       {
         "content_type":"text",

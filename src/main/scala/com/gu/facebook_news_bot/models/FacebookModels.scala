@@ -62,7 +62,7 @@ object MessageToFacebook {
     )
   }
 
-  case class QuickReply(content_type: String,
+  case class QuickReply(content_type: String = "text",
                         title: Option[String] = None,
                         payload: Option[String] = None,
                         image_url: Option[String] = None)
