@@ -10,7 +10,7 @@ object FacebookMessageBuilder {
   val MaxImageWidth = 1000
   val CarouselSize = 5  //Number of items in a carousel
 
-  def contentToCarousel(contentList: Seq[Content], offset: Int, edition: String, variant: Option[String] = None): Option[MessageToFacebook.Message] = {
+  def contentToCarousel(contentList: Seq[Content], offset: Int, edition: String, currentTopic: Option[String], variant: Option[String] = None): Option[MessageToFacebook.Message] = {
     val sliced = contentList.slice(offset, offset + CarouselSize)
     if (sliced.isEmpty) None
     else {
@@ -29,16 +29,17 @@ object FacebookMessageBuilder {
         attachment = Some(attachment),
         quick_replies = Some(List(MessageToFacebook.QuickReply(
           content_type = "text",
-          title = Some("More stories"),
+          title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
           payload = Some("more")
-        )) ++ topicQuickReplies(edition))
+        )) ++ topicQuickReplies(edition, currentTopic))
       ))
     }
   }
 
-  def topicQuickReplies(edition: String): List[MessageToFacebook.QuickReply] = {
+  def topicQuickReplies(edition: String, currentTopic: Option[String] = None): List[MessageToFacebook.QuickReply] = {
     val topicNames = suggestedTopics(edition)
-    topicNames.map(t => MessageToFacebook.QuickReply(content_type = "text", title = Some(t), payload = Some(t.toLowerCase())))
+    val filtered = currentTopic.map(current => topicNames.filterNot(_.toLowerCase == current)).getOrElse(topicNames)
+    filtered.map(t => MessageToFacebook.QuickReply(content_type = "text", title = Some(t), payload = Some(t.toLowerCase())))
   }
 
   def suggestedTopics(edition: String): List[String] = edition match {

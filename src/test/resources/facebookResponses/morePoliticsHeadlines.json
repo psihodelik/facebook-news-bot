@@ -87,14 +87,8 @@
     "quick_replies" : [
       {
         "content_type" : "text",
-        "title" : "More stories",
+        "title" : "More politics",
         "payload" : "more",
-        "image_url" : null
-      },
-      {
-        "content_type" : "text",
-        "title" : "Politics",
-        "payload" : "politics",
         "image_url" : null
       },
       {
