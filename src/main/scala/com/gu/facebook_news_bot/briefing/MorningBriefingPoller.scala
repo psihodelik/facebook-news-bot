@@ -104,8 +104,14 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
   private def getMorningBriefing(user: User): Future[Result] = {
     appLogger.debug(s"Getting morning briefing for User: $user")
 
-    //TODO - add A/B testing switch here
-    MainState.getHeadlines(user, capi, variant = user.variant)
+    CollectionsBriefing.getBriefing(user).flatMap { maybeBriefing: Option[Result] =>
+      maybeBriefing.map(Future.successful).getOrElse {
+        //Fall back on editors-picks briefing
+        MainState.getHeadlines(user, capi, variant = Some("editors-picks")) map { case (updatedUser, messages) =>
+          (updatedUser, morningMessage(updatedUser) :: messages)
+        }
+      }
+    }
   }
 
   //Update the user in dynamo, then send the messages
@@ -129,9 +135,8 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
           }
         }, { _ =>
           if (messages.nonEmpty) {
-            val briefing = morningMessage(user) :: messages
-            appLogger.debug(s"Sending morning briefing to ${user.ID}: $briefing")
-            facebook.send(briefing)
+            appLogger.debug(s"Sending morning briefing to ${user.ID}: $messages")
+            facebook.send(messages)
           }
         }
       )

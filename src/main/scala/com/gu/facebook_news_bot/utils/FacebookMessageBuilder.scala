@@ -49,9 +49,9 @@ object FacebookMessageBuilder {
     case _ => List("Politics", "Football", "Lifestyle", "Sport", "Tech")
   }
 
-  //Include the variant in the campaign code if present
+  //Include the variant as a parameter if present
   private def buildUrl(webUrl: String, variant: Option[String]): String =
-    s"$webUrl?CMP=${BotConfig.campaignCode}${variant.map(v => s"_$v").getOrElse("")}"
+    s"$webUrl?CMP=${BotConfig.campaignCode}${variant.map(v => s"&variant=$v").getOrElse("")}"
 
   // Look for widest image up to MaxImageWidth
   private def getImageUrl(content: Content): String = {
