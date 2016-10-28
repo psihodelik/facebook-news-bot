@@ -32,9 +32,7 @@ trait State {
 object State {
   def changeState(user: User, state: String): User = user.copy(state = Some(state))
 
-  def greeting(user: User): Future[Result] = {
-    Future.successful((changeState(user, MainState.Name), List(MessageToFacebook.textMessage(user.ID, ResponseText.greeting))))
-  }
+  def greeting(user: User): Future[Result] = MainState.menu(user, ResponseText.greeting)
 
   def unknown(user: User): Future[Result] = {
     Future.successful((changeState(user, MainState.Name), List(MessageToFacebook.textMessage(user.ID, ResponseText.unknown))))
