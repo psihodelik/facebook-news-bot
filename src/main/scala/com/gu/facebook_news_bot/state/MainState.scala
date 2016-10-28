@@ -75,7 +75,7 @@ case object MainState extends State {
       case NewContentEvent(maybeContentType, maybeTopic) =>
         //Either have a new contentType, or use an existing contentType
         maybeContentType.orElse(user.contentType.flatMap(ContentType.fromString)) map { contentType =>
-          log(ContentLogEvent(user.ID, contentType.name, maybeTopic.flatMap(_.terms.headOption).getOrElse(""), 0))
+          log(ContentLogEvent(user.ID, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
 
           carousel(user, contentType, maybeTopic, 0, capi)
         }
@@ -150,8 +150,8 @@ case object MainState extends State {
 
   private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi, variant: Option[String] = None): Future[Result] = {
     val futureCarousel = contentType match {
-      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, user.front, variant))
-      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, user.front, variant))
+      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant))
+      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant))
     }
 
     futureCarousel map {
@@ -159,7 +159,7 @@ case object MainState extends State {
         val updatedUser = user.copy(
           state = Some(Name),
           contentType = Some(contentType.name),
-          contentTopic = topic.map(_.terms.headOption.getOrElse("")),
+          contentTopic = topic.map(_.name),
           contentOffset = Some(offset)
         )
 

@@ -110,6 +110,7 @@ sealed trait Topic {
   val terms: List[String]
   lazy val pattern: Regex = ("""(^|\W)(""" + terms.mkString("|") + """)($|\W)""").r.unanchored
   def getPath(edition: String): String
+  def name: String = terms.headOption.getOrElse("")
 }
 
 case class SectionTopic(terms: List[String], section: String) extends Topic {
