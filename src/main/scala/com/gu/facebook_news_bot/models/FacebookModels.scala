@@ -89,7 +89,7 @@ object MessageFromFacebook {
 
   case class Message(mid: String,
                      seq: Int,
-                     text: String,
+                     text: Option[String],
                      attachments: Option[Seq[Attachment]],
                      quick_reply: Option[QuickReply])
 
