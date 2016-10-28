@@ -50,13 +50,13 @@ case object BriefingTimeQuestionState extends State {
       val notifyTime = DateTime.parse(time, DateTimeFormat.forPattern("H"))
       val notifyTimeUTC = notifyTime.minusMinutes((fbData.timezone * 60).toInt)
 
-      val message = MessageToFacebook.textMessage(user.ID, ResponseText.subscribed(time))
       val updatedUser = user.copy(
         state = Some(MainState.Name),
         notificationTime = notifyTime.toString("HH:mm"),
         notificationTimeUTC = notifyTimeUTC.toString("HH:mm")
       )
-      Future.successful(updatedUser, List(message))
+
+      MainState.menu(updatedUser, ResponseText.subscribed(time))
     }
   }
 }
