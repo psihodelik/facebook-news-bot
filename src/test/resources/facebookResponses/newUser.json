@@ -3,7 +3,7 @@
     "id":"subscription_test"
   },
   "message":{
-    "text":"Hi, I'm a prototype chatbot created by the Guardian to keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?",
+    "text":"Hi, I'm the Guardian chatbot. I'll keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?",
     "quick_replies":[
       {
         "content_type":"text",

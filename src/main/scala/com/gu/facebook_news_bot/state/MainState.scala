@@ -3,7 +3,7 @@ package com.gu.facebook_news_bot.state
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
-import com.gu.facebook_news_bot.utils.ResponseText
+import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, ResponseText}
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.{CarouselSize, contentToCarousel}
 import io.circe.generic.auto._
 
@@ -26,6 +26,8 @@ case object MainState extends State {
     val help = """(^|\W)help($|\W)""".r.unanchored
     val subscribe = """(^|\W)subscribe($|\W)""".r.unanchored
     val unsubscribe = """(^|\W)unsubscribe($|\W)""".r.unanchored
+    val manageSubscription = """(^|\W)subscription($|\W)""".r.unanchored
+    val suggest = """(^|\W)suggest($|\W)""".r.unanchored
   }
 
   private sealed trait Event
@@ -35,8 +37,9 @@ case object MainState extends State {
   private case class MenuEvent(text: String) extends Event
   private case object ManageSubscriptionEvent extends Event
   private case object SubscribeYesEvent extends Event
-  private case object ChangeFrontEvent extends Event
+  private case object ChangeEditionEvent extends Event
   private case object UnsubscribeEvent extends Event
+  private case object SuggestEvent extends Event
 
   private sealed trait ContentType { val name: String }
   private case object HeadlinesType extends ContentType { val name = "headlines" }
@@ -97,7 +100,8 @@ case object MainState extends State {
       case ManageSubscriptionEvent => Some(manageSubscription(user))
       case SubscribeYesEvent => Some(BriefingTimeQuestionState.question(user))
       case UnsubscribeEvent => Some(unsubscribe(user))
-      case ChangeFrontEvent => Some(EditionQuestionState.question(user))
+      case ChangeEditionEvent => Some(EditionQuestionState.question(user))
+      case SuggestEvent => Some(suggest(user))
     }
 
     result.getOrElse(State.unknown(user))
@@ -114,7 +118,7 @@ case object MainState extends State {
     else if (postback.payload.contains("most_popular")) Some(NewContentEvent(Some(MostViewedType)))
     else if (postback.payload.contains("manage_subscription")) Some(ManageSubscriptionEvent)
     else if (postback.payload.contains("subscribe_yes")) Some(SubscribeYesEvent)
-    else if (postback.payload.contains("change_front_menu")) Some(ChangeFrontEvent)
+    else if (postback.payload.contains("change_front_menu")) Some(ChangeEditionEvent)
     else if (postback.payload.contains("unsubscribe")) Some(UnsubscribeEvent)
     else None
   }
@@ -131,6 +135,8 @@ case object MainState extends State {
       case Patterns.help(_,_) => Some(MenuEvent(ResponseText.help))
       case Patterns.subscribe(_,_) => Some(SubscribeYesEvent)
       case Patterns.unsubscribe(_,_) => Some(UnsubscribeEvent)
+      case Patterns.manageSubscription(_,_) => Some(ManageSubscriptionEvent)
+      case Patterns.suggest(_,_) => Some(SuggestEvent)
       case _ => None
     }
 
@@ -168,21 +174,22 @@ case object MainState extends State {
   }
 
   private def menu(user: User, text: String): Future[Result] = {
-    def getSubscriptionButton = (user: User) => {
+    def getSubscriptionQuickReply = (user: User) => {
       if (user.notificationTime != "-") {
-        MessageToFacebook.Button("postback", Some("Manage subscription"), payload = Some("manage_subscription"))
+        MessageToFacebook.QuickReply(title = Some("Manage subscription"), payload = Some("subscription"))
       } else {
-        MessageToFacebook.Button("postback", Some("Subscribe"), payload = Some("subscribe_yes"))
+        MessageToFacebook.QuickReply(title = Some("Subscribe"), payload = Some("subscribe"))
       }
     }
 
-    val buttons = Seq(
-      MessageToFacebook.Button("postback", Some("Headlines"), payload = Some("headlines")),
-      MessageToFacebook.Button("postback", Some("Most popular"),payload = Some("most_popular")),
-      getSubscriptionButton(user)
+    val quickReplies = Seq(
+      MessageToFacebook.QuickReply(title = Some("Headlines"), payload = Some("headlines")),
+      MessageToFacebook.QuickReply(title = Some("Most popular"),payload = Some("popular")),
+      getSubscriptionQuickReply(user),
+      MessageToFacebook.QuickReply(title = Some("Suggest something"),payload = Some("suggest"))
     )
 
-    val message = MessageToFacebook.buttonsMessage(user.ID, buttons, text)
+    val message = MessageToFacebook.quickRepliesMessage(user.ID, quickReplies, text)
 
     Future.successful((State.changeState(user, MainState.Name), List(message)))
   }
@@ -216,5 +223,13 @@ case object MainState extends State {
     )
     val response = MessageToFacebook.textMessage(user.ID, ResponseText.unsubscribe)
     Future.successful((updatedUser, List(response)))
+  }
+
+  private def suggest(user: User): Future[Result] = {
+    val response = MessageToFacebook.quickRepliesMessage(
+      user.ID,
+      FacebookMessageBuilder.topicQuickReplies(user.front),
+      ResponseText.suggest)
+    Future.successful((user, List(response)))
   }
 }

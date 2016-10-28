@@ -105,14 +105,20 @@
       },
       {
         "content_type" : "text",
-        "title" : "Business",
-        "payload" : "business",
+        "title" : "Lifestyle",
+        "payload" : "lifestyle",
         "image_url" : null
       },
       {
         "content_type" : "text",
         "title" : "Sport",
         "payload" : "sport",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Tech",
+        "payload" : "tech",
         "image_url" : null
       }
     ],
