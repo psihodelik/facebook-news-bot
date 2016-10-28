@@ -3,12 +3,15 @@ package com.gu.facebook_news_bot.utils
 import scala.util.Random
 
 object ResponseText {
-  def greeting = random(List(
-    "Hi there",
-    "Hi",
-    "Hello",
-    "Hey"
-  ))
+  def greeting = {
+    val start = random(List(
+      "Hi there",
+      "Hi",
+      "Hello",
+      "Hey"
+    ))
+    s"$start. How can I help?"
+  }
 
   def welcome = "Hi, I'm the Guardian chatbot. I'll keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?"
 

@@ -173,7 +173,7 @@ case object MainState extends State {
     }
   }
 
-  private def menu(user: User, text: String): Future[Result] = {
+  def menu(user: User, text: String): Future[Result] = {
     def getSubscriptionQuickReply = (user: User) => {
       if (user.notificationTime != "-") {
         MessageToFacebook.QuickReply(title = Some("Manage subscription"), payload = Some("subscription"))
