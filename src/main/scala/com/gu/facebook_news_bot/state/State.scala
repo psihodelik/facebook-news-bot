@@ -41,7 +41,7 @@ object State {
   def getUserInput(messaging: MessageFromFacebook.Messaging): Option[String] = {
     for {
       message <- messaging.message
-      value = message.quick_reply.map(_.payload).getOrElse(message.text)
+      value = message.quick_reply.map(_.payload).getOrElse(message.text.getOrElse(""))
     } yield value
   }
 }

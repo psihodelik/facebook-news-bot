@@ -3,7 +3,8 @@ package com.gu.facebook_news_bot
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.server.{MissingCookieRejection, RejectionHandler}
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers
 import com.amazonaws.regions.Regions
@@ -36,6 +37,12 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
   val usersTable: String
 
   lazy val userStore = new UserStore(dynamoClient, usersTable)
+
+  implicit val rejectionHandler = RejectionHandler.newBuilder()
+    .handle { case r =>
+      appLogger.warn(s"Rejected request: $r")
+      complete(StatusCodes.BadRequest)
+    }
 
   val routes = path("status") {
     get {

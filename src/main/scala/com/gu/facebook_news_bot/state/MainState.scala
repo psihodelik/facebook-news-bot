@@ -107,9 +107,9 @@ case object MainState extends State {
     result.getOrElse(State.unknown(user))
   }
 
-  //A Message must have a text field, but may also have a quick_reply
+  //If the message has a quick_reply use that, otherwise look for a text field
   private def processMessage(message: MessageFromFacebook.Message): Option[Event] =
-    message.quick_reply.flatMap(reply => processText(reply.payload)).orElse(processText(message.text))
+    message.quick_reply.flatMap(reply => processText(reply.payload)).orElse(processText(message.text.getOrElse("")))
 
   //On button click
   private def processButtonPostback(postback: MessageFromFacebook.Postback): Option[Event] = {
