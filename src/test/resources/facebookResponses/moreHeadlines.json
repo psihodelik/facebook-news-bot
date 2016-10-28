@@ -1,0 +1,129 @@
+{
+  "recipient" : {
+    "id" : "headlines_test"
+  },
+  "message" : {
+    "text" : null,
+    "attachment" : {
+      "type" : "template",
+      "payload" : {
+        "template_type" : "generic",
+        "text" : null,
+        "elements" : [
+          {
+            "title" : "US says support for Saudi Arabia not a 'blank cheque' after Yemen air raid",
+            "item_url" : "https://www.theguardian.com/world/2016/oct/09/saudi-arabia-investigate-air-raid-on-funeral-in-yemen?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/a2e50bb17f168c448adcb7d52d2b64bfdb69b736/0_118_4096_2458/500.jpg",
+            "subtitle" : "Coalition announces inquiry into strike that killed 140 people in Sana’a as US says its backing is not ‘a blank cheque’",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "BBC presenter Jacqui Oatley forced to call police over online threat",
+            "item_url" : "https://www.theguardian.com/uk-news/2016/oct/09/bbc-sports-presenter-jacqui-oatley-forced-to-call-police-over-online-threats?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/d9704783c7f5c48dd599dbc59f83fe092b56fcdc/0_160_3147_1888/1000.jpg",
+            "subtitle" : "Oatley, Match of the Day’s first female commentator, says she was threatened by man saying he would ‘cut’ her",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Football insiders claim world game is ‘endemically corrupt’ in player transfers",
+            "item_url" : "https://www.theguardian.com/football/2016/oct/09/world-football-endemically-corrupt-player-transfers-agents?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/bdeaf3c4f0c180315a85d2e8a7f928ed6f65b597/0_170_5100_3060/1000.jpg",
+            "subtitle" : "In the first of a two-part series looking into alleged corruption in football, the Guardian talks to agents, lawyers and academics close to the biggest deals",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Andy Murray too good for battling Grigor Dimitrov in China Open final",
+            "item_url" : "https://www.theguardian.com/sport/2016/oct/09/andy-murray-grigor-dimitrov-china-open-final-tennis?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/edee435ee8332bbe42a8de584b83d3821bd80fdc/0_18_1903_1142/1000.jpg",
+            "subtitle" : "• Andy Murray wins in Beijing for his fifth title of the year 6-4, 7-6 • Grigor Dimitrov broken in opening game but stages second-set fightback",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Glastonbury ticket website crashes",
+            "item_url" : "https://www.theguardian.com/music/2016/oct/09/glastonbury-ticket-website-crashes?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/14014ba91f8cfa872d7ab8bcb264048610b409b9/0_140_3500_2100/1000.jpg",
+            "subtitle" : "Would-be festivalgoers feel frustration as See Tickets site shows up as unavailable when ticket sale was due to begin",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          }
+        ],
+        "buttons" : null
+      }
+    },
+    "quick_replies" : [
+      {
+        "content_type" : "text",
+        "title" : "More stories",
+        "payload" : "more",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Politics",
+        "payload" : "politics",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Football",
+        "payload" : "football",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Lifestyle",
+        "payload" : "lifestyle",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Sport",
+        "payload" : "sport",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Tech",
+        "payload" : "tech",
+        "image_url" : null
+      }
+    ],
+    "metadata" : null
+  },
+  "sender_action" : null,
+  "notification_type" : null
+}

@@ -1,0 +1,129 @@
+{
+  "recipient" : {
+    "id" : "headlines_test"
+  },
+  "message" : {
+    "text" : null,
+    "attachment" : {
+      "type" : "template",
+      "payload" : {
+        "template_type" : "generic",
+        "text" : null,
+        "elements" : [
+          {
+            "title" : "MPs urge chancellor to honour leave campaign's £350m NHS promise",
+            "item_url" : "https://www.theguardian.com/society/2016/oct/24/mps-letter-urges-chancellor-honour-vote-leave-campaign-350m-pound-nhs-promise?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/27696ea3be12971acba062d824bc4774e8ee24c6/0_12_5379_3228/1000.jpg",
+            "subtitle" : "Vote Leave Watch letter signed by 41 MPs demands pledge from Philip Hammond to provide extra NHS funding after Brexit",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Tim Farron: Tories are creating 'a nastier, more divided' Britain",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/24/tim-farron-tories-are-creating-a-nastier-more-divided-britain?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/ecb92a1b59dacaf1cc566fa1131bcafd5714d658/0_112_3500_2100/1000.jpg",
+            "subtitle" : "Lib Dem leader condemns plans to reduce migration, including that of doctors and students, in speech to Runnymede Trust",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Ukip's Suzanne Evans and Paul Nuttall to stand for leadership",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/23/ukip-paul-nuttall-suzanne-evans-stand-for-leadership?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/4f1b29891a48073e038422255a1eed34bc951b87/328_63_2148_1289/500.jpg",
+            "subtitle" : "Divisions within party are made clear as Nigel Farage denounces Evans minutes after she announces candidacy",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Cameron adviser reveals No 10's alarm at his holding in offshore fund",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/23/david-cameron-adviser-craig-oliver-no-10-alarm-holding-offshore-fund-cayman-islands?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/dac6c5e319e5566614f4cf8547679e4eed3f0988/0_197_2811_1687/1000.jpg",
+            "subtitle" : "Book by Craig Oliver says Downing Street did not disclose investment after deciding: ‘We think it’s fine, but what if it’s not?’",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Female Labour MPs call for legal change following Ched Evans retrial",
+            "item_url" : "https://www.theguardian.com/society/2016/oct/23/female-labour-mps-write-to-attorney-general-over-ched-evans-case?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/2ff753aebb781e998c314c9a604be4d2aa6d15f3/0_0_4500_2700/1000.jpg",
+            "subtitle" : "More than 40 MPs write to attorney general to urge change in law that would stop use of a complainant’s sexual history becoming routine practice",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          }
+        ],
+        "buttons" : null
+      }
+    },
+    "quick_replies" : [
+      {
+        "content_type" : "text",
+        "title" : "More stories",
+        "payload" : "more",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Politics",
+        "payload" : "politics",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Football",
+        "payload" : "football",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Lifestyle",
+        "payload" : "lifestyle",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Sport",
+        "payload" : "sport",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Tech",
+        "payload" : "tech",
+        "image_url" : null
+      }
+    ],
+    "metadata" : null
+  },
+  "sender_action" : null,
+  "notification_type" : null
+}

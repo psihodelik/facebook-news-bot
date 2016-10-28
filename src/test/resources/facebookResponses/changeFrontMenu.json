@@ -1,0 +1,30 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Please choose a new edition:",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"UK",
+        "payload":"uk"
+      },
+      {
+        "content_type":"text",
+        "title":"US",
+        "payload":"us"
+      },
+      {
+        "content_type":"text",
+        "title":"Australian",
+        "payload":"au"
+      },
+      {
+        "content_type":"text",
+        "title":"International",
+        "payload":"international"
+      }
+    ]
+  }
+}

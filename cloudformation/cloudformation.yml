@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Facebook messenger news chatbot 
+Description: Facebook messenger news chatbot
 Parameters:
     Stack:
         Description: Stack name
         Type: String
-        Default: content-api
+        Default: content-api-facebook-news-bot
     App:
         Description: Application name
         Type: String
@@ -19,7 +19,7 @@ Parameters:
     ApplicationPort:
         Description: Port used by the application server
         Type: Number
-        Default: 5000
+        Default: 9000
     GuardianIP:
         Description: Ip range for the office
         Type: String
@@ -39,28 +39,14 @@ Parameters:
     Subnets:
         Description: Subnets to run load balancer within
         Type: List<AWS::EC2::Subnet::Id>
-    VerifyToken:
-        Description: Facebook messenger app verification token
-        Type: String
-    AccessToken:
-        Description: Facebook page access token
-        Type: String
-    ApiKey:
-        Description: CAPI key
-        Type: String
-        Default: ""
     LoggingKinesisStream:
         Description: The name of the logging kinesis stream
         Type: String
-    DefaultImageUrl:
-        Description: Url of image to use when no image is available in an article
-        Type: String
-    FacebookUrl:
-        Description: Url of facebook messenger endpoint
-        Type: String
-        Default: https://graph.facebook.com/v2.6/me/messages
     DynamodbTableName:
         Description: Name of dynamodb table used to store user data
+        Type: String
+    MorningBriefingSnsTopicArn:
+        Description: ARN of the morning briefings SNS topic
         Type: String
 
 Mappings:
@@ -75,6 +61,7 @@ Mappings:
             MaxSize: 2
             DesiredCapacity: 1
             InstanceType: t2.micro
+
 Resources:
     FacebookNewsBotRole:
         Type: AWS::IAM::Role
@@ -99,14 +86,9 @@ Resources:
                       Action:
                         - s3:GetObject
                       Resource:
-                        "Fn::Join":
-                            - ""
-                            -
-                                - "arn:aws:s3:::"
-                                - Ref: DeployBucket
-                                - "/*"
+                        !Sub arn:aws:s3:::${DeployBucket}/*
             Roles:
-                - Ref: FacebookNewsBotRole
+                - !Ref FacebookNewsBotRole
 
     Ec2DescribeInstancesPolicy:
         Type: AWS::IAM::Policy
@@ -117,10 +99,11 @@ Resources:
                     Effect: Allow
                     Action:
                         - ec2:DescribeInstances
+                        - ec2:DescribeTags
                     Resource:
                         - "*"
             Roles:
-                - Ref: FacebookNewsBotRole
+                - !Ref FacebookNewsBotRole
 
     DynamoPolicy:
         Type: AWS::IAM::Policy
@@ -135,18 +118,38 @@ Resources:
                         - dynamodb:UpdateItem
                         - dynamodb:Query
                     Resource:
-                        "Fn::Join":
-                            - ""
-                            -
-                                - "arn:aws:dynamodb:"
-                                - Ref: AWS::Region
-                                - ":"
-                                - Ref: AWS::AccountId
-                                - ":table/"
-                                - Ref: DynamodbTableName
-                                - "*"
+                        !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamodbTableName}*
             Roles:
-                - Ref: FacebookNewsBotRole
+                - !Ref FacebookNewsBotRole
+
+    DynamoListConfigPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-list-config-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:ListTables
+                    Resource:
+                        - "*"
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    DynamoConfigPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: dynamo-config-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:DescribeTable
+                        - dynamodb:GetItem
+                    Resource:
+                        !Sub arn:aws:dynamodb:*:*:table/config-${Stack}
+            Roles:
+                - !Ref FacebookNewsBotRole
 
     KinesisSenderPolicy:
         Type: AWS::IAM::Policy
@@ -160,24 +163,49 @@ Resources:
                           - kinesis:PutRecords
                           - kinesis:DescribeStream
                       Resource:
-                          Fn::Join:
-                            - ""
-                            -
-                                - "arn:aws:kinesis:"
-                                - Ref: AWS::Region
-                                - ":"
-                                - Ref: AWS::AccountId
-                                - ":stream/"
-                                - Ref: LoggingKinesisStream
+                          !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/${LoggingKinesisStream}
             Roles:
-                - Ref: FacebookNewsBotRole
+                - !Ref FacebookNewsBotRole
+
+    SQSPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: sqs-policy
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Action:
+                          - sqs:ReceiveMessage
+                          - sqs:DeleteMessage
+                          - sqs:DeleteMessageBatch
+                      Resource:
+                          - !GetAtt MorningBriefingSQS.Arn
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    MorningBriefingSQSPolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            Queues:
+                - !Ref MorningBriefingSQS
+            PolicyDocument:
+                Statement:
+                    - Sid: allow-sqs-sendmessage
+                      Effect: Allow
+                      Principal:
+                          AWS: "*"
+                      Action: SQS:SendMessage
+                      Resource: !GetAtt MorningBriefingSQS.Arn
+                      Condition:
+                          ArnEquals:
+                              aws:SourceArn: !Ref MorningBriefingSnsTopicArn
 
     InstanceProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
             Path: /
             Roles:
-                - Ref: FacebookNewsBotRole
+                - !Ref FacebookNewsBotRole
 
     SSHSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -238,7 +266,7 @@ Resources:
                 Ref: Subnets
             CrossZone: true
             SecurityGroups:
-                - Fn::GetAtt: [LoadBalancerSecurityGroup, GroupId]
+                - !GetAtt LoadBalancerSecurityGroup.GroupId
             Listeners:
                 - LoadBalancerPort: 80
                   InstancePort:
@@ -253,12 +281,7 @@ Resources:
                     Ref: CertificateArn
             HealthCheck:
                 Target:
-                    Fn::Join:
-                        - ""
-                        -
-                            - "HTTP:"
-                            - Ref: ApplicationPort
-                            - /status
+                    !Sub HTTP:${ApplicationPort}/status
                 HealthyThreshold: 2
                 UnhealthyThreshold: 10
                 Interval: 60
@@ -315,42 +338,13 @@ Resources:
                     Ref: App
                   PropagateAtLaunch: true
 
+    MorningBriefingSQS:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub facebook-news-bot-morning-briefing-${Stage}
+
     LaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
-        Metadata:
-            AWS::CloudFormation::Authentication:
-                instanceAuthentication:
-                    type: S3
-                    roleName:
-                        Ref: FacebookNewsBotRole
-                    buckets:
-                        - Ref: DeployBucket
-            AWS::CloudFormation::Init:
-                config:
-                    users:
-                        content-api:
-                            homeDir: /home/content-api
-                    sources:
-                        /home/content-api:
-                            Fn::Join:
-                                - /
-                                -
-                                    - https://s3-eu-west-1.amazonaws.com
-                                    - Ref: DeployBucket
-                                    - Ref: Stage
-                                    - Ref: App
-                                    - facebook-news-bot.tgz
-                    files:
-                        /etc/gu/facebook-news-bot.env:
-                            content: { "Fn::Join": [ "" , [
-                                "PORT=", {"Ref": "ApplicationPort"}, "\n",
-                                "STAGE=", {"Ref": "Stage"}, "\n",
-                                "APPLICATION_NAME=", {"Ref": "App"}, "\n",
-                                "LOG_FILE_PATH=logs/application.log", "\n",
-                                "NODE_ENV=production", "\n",
-                                "\n"
-                            ]] }
-                            owner: content-api
         Properties:
             AssociatePublicIpAddress: true
             IamInstanceProfile:
@@ -367,52 +361,31 @@ Resources:
                 - Ref: SSHSecurityGroup
             UserData:
                 Fn::Base64:
-                    Fn::Join:
-                        - "\n"
-                        -
-                            - "#!/bin/bash -ev"
-                            - wget -NP /home/ubuntu/.ssh https://s3-eu-west-1.amazonaws.com/content-api-dist/authorized_keys
-                            - Fn::Join:
-                                - " "
-                                -
-                                    - cfn-init
-                                    - "-s"
-                                    - Ref: AWS::StackId
-                                    - "-r LaunchConfiguration"
-                                    - "--region"
-                                    - Ref: AWS::Region
-                                    - "|| error_exit 'Failed to run cfn-init'"
-                            - npm install -g pm2
-                            - cd /home/content-api
-                            - Fn::Join:
-                              - ""
-                              -
-                                - "sed -i"
-                                - " -e 's,@@STAGE,"
-                                - Ref: Stage
-                                - ",g'"
-                                - " -e 's,@@STACK,"
-                                - Ref: Stack
-                                - ",g'"
-                                - " logstash.conf"
-                            - mv logstash.conf /etc/
-                            - mkdir logs
-                            - systemctl start logstash
-                            - chown -R content-api .
-                            - Fn::Join:
-                                - ""
-                                -
-                                    - "sudo -u content-api"
-                                    - " VERIFY_TOKEN="
-                                    - Ref: VerifyToken
-                                    - " ACCESS_TOKEN="
-                                    - Ref: AccessToken
-                                    - " API_KEY="
-                                    - Ref: ApiKey
-                                    - " FACEBOOK_URL="
-                                    - Ref: FacebookUrl
-                                    - " DEFAULT_IMAGE_URL="
-                                    - Ref: DefaultImageUrl
-                                    - " DYNAMODB_TABLE_NAME="
-                                    - Ref: DynamodbTableName
-                                    - " pm2 start application.pm2.json"
+                    !Sub |
+                          #!/bin/bash -ev
+                          adduser --disabled-password content-api
+
+                          aws configure set region ${AWS::Region}
+
+                          aws s3 cp s3://content-api-dist/authorized_keys /home/ubuntu/.ssh/authorized_keys
+
+                          mkdir -p /etc/gu
+                          echo "STAGE=${Stage}" > /etc/gu/conf
+                          cat /etc/gu/conf
+
+                          cd /home/content-api
+                          mkdir logs
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot.service /etc/systemd/system/facebook-news-bot.service
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot-0.1-SNAPSHOT.tgz .
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/logstash.conf .
+                          tar xfv facebook-news-bot-0.1-SNAPSHOT.tgz
+                          mv facebook-news-bot-0.1-SNAPSHOT facebook-news-bot
+
+                          sed -i -e 's,@@STAGE,${Stage},g' -e 's,@@STACK,${Stack},g' logstash.conf
+                          mv logstash.conf /etc/
+
+                          chown -R content-api /home/content-api
+                          chgrp -R content-api /home/content-api
+
+                          systemctl start logstash
+                          systemctl start facebook-news-bot

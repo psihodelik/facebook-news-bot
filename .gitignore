@@ -1,8 +1,4 @@
-/node_modules
-npm-debug.log
-.DS_Store
-/*.env
-/tmp
-/target
-cloudformation.json
-dynamodb.json
+target/
+.idea*
+dynamodb-local/
+logs/

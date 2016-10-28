@@ -1,0 +1,129 @@
+{
+  "recipient" : {
+    "id" : "headlines_test"
+  },
+  "message" : {
+    "text" : null,
+    "attachment" : {
+      "type" : "template",
+      "payload" : {
+        "template_type" : "generic",
+        "text" : null,
+        "elements" : [
+          {
+            "title" : "Britain to push post-Brexit UK immigration controls back to Irish border",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/09/britain-to-push-post-brexit-uk-immigration-controls-back-to-irish-border?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/2eddc425ad1b31f1f2d08cd0fb86ed096aa97f58/0_164_4149_2490/1000.jpg",
+            "subtitle" : "Northern Ireland secretary James Brokenshire says London and Dublin will share data to stop migrants using Irish border as backdoor into Britain",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Donald Trump groping remarks reveal 'pattern of sexual assault', says Kaine",
+            "item_url" : "https://www.theguardian.com/us-news/2016/oct/09/donald-trump-groping-remarks-sexual-assault-tim-kaine-debate?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/7373b2ac40fdb4924fb79eac865bb685fa57c0a6/0_333_4991_2995/500.jpg",
+            "subtitle" : "Clinton running mate says taped boasts from 2005 are ‘not just words’ Before debate, Trump camp seeks to deflect attention on to Bill Clinton",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Two Labour MPs resign as whips after Rosie Winterton sacking",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/09/conor-mcginn-holly-lynch-labour-mps-whips-resign-rosie-winterton?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/e1f4c27b83bef894c6e6d1a18bfb0714a37c40df/0_0_2560_1536/1000.jpg",
+            "subtitle" : "Conor McGinn and Holly Lynch step down as friends of MPs say they were both close to former shadow chief whip",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Facebook revenge pornography trial 'could open floodgates'",
+            "item_url" : "https://www.theguardian.com/technology/2016/oct/09/facebook-revenge-pornography-case-could-open-floodgates?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/2f1b78bb62c0f564dca1dd4ecfccb4cdb2eee057/0_124_2956_1774/1000.jpg",
+            "subtitle" : "Case of 14-year-old taking social network to court over naked picture has already resulted in others seeking legal advice",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Plan to force firms to reveal foreign staff numbers abandoned",
+            "item_url" : "https://www.theguardian.com/uk-news/2016/oct/09/plan-to-force-firms-to-reveal-foreign-staff-numbers-abandoned?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/b262ff44e038c0e2e38ab1a64dbb8a995db7fb3f/0_217_4000_2400/1000.jpg",
+            "subtitle" : "Justine Greening says data will not be used to ‘name and shame’ businesses, after proposal was roundly criticised",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          }
+        ],
+        "buttons" : null
+      }
+    },
+    "quick_replies" : [
+      {
+        "content_type" : "text",
+        "title" : "More stories",
+        "payload" : "more",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Politics",
+        "payload" : "politics",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Football",
+        "payload" : "football",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Lifestyle",
+        "payload" : "lifestyle",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Sport",
+        "payload" : "sport",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Tech",
+        "payload" : "tech",
+        "image_url" : null
+      }
+    ],
+    "metadata" : null
+  },
+  "sender_action" : null,
+  "notification_type" : null
+}

@@ -1,0 +1,129 @@
+{
+  "recipient" : {
+    "id" : "headlines_test"
+  },
+  "message" : {
+    "text" : null,
+    "attachment" : {
+      "type" : "template",
+      "payload" : {
+        "template_type" : "generic",
+        "text" : null,
+        "elements" : [
+          {
+            "title" : "'Overwhelming' case for Heathrow expansion, says commission chair",
+            "item_url" : "https://www.theguardian.com/environment/2016/oct/23/overwhelming-case-for-heathrow-expansion-says-commission-chair?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/b4e98258263768d67b653b4b8316d3f03d28e924/152_0_4669_2801/1000.jpg",
+            "subtitle" : "Sir Howard Davies, of the Airports Commission, lends backing to expanding UK’s largest airport instead of Gatwick",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Scotland must be equal partner in Brexit talks, says Holyrood",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/23/scotland-equal-partner-brexit-talks-holyrood?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/4b2423f406bc328c96a5cce55425c549ae45d962/0_165_3500_2100/1000.jpg",
+            "subtitle" : "Theresa May will meet leaders of Scotland, Wales and Northern Ireland on Monday to discuss Brexit process",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Twice as many voters trust May over Corbyn with economy and Brexit – poll",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/22/twice-voters-theresa-may-jeremy-corbyn-economy-brexit-opinium-observer-poll?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/a6ce293aeca93c55813e9d1fda677b25086d4bc7/4_184_4903_2943/1000.jpg",
+            "subtitle" : "Opinium/Observer poll to mark prime minister’s first 100 days in office also finds 46% think more positively about her now than when she took over in June",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Sadiq Khan to appoint London ‘night tsar’ in light of club closures",
+            "item_url" : "https://www.theguardian.com/uk-news/2016/oct/22/london-sadiq-khan-night-tsar-club-closures-24-hour-city-fabric?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/6ae3fbe58597508ec4caa36f45df1f5a4ef2f801/8_776_10281_6169/1000.jpg",
+            "subtitle" : "Music venue owners say developers and restrictive laws are placing £26bn night economy in jeopardy",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          },
+          {
+            "title" : "Ukip donor Arron Banks backs Raheem Kassam for party leadership",
+            "item_url" : "https://www.theguardian.com/politics/2016/oct/22/ukip-donor-backs-former-nigel-farage-aide-as-party-leader?CMP=fb_newsbot",
+            "image_url" : "https://media.guim.co.uk/726dcbf24c1e53532f4a7b8b707ab43185033b6d/118_550_5428_3257/1000.jpg",
+            "subtitle" : "Banks declares support for former Nigel Farage aide, despite speculation that ex-deputy leader Paul Nuttall will enter race",
+            "buttons" : [
+              {
+                "type" : "element_share",
+                "title" : null,
+                "url" : null,
+                "payload" : null
+              }
+            ]
+          }
+        ],
+        "buttons" : null
+      }
+    },
+    "quick_replies" : [
+      {
+        "content_type" : "text",
+        "title" : "More stories",
+        "payload" : "more",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Politics",
+        "payload" : "politics",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Football",
+        "payload" : "football",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Lifestyle",
+        "payload" : "lifestyle",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Sport",
+        "payload" : "sport",
+        "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Tech",
+        "payload" : "tech",
+        "image_url" : null
+      }
+    ],
+    "metadata" : null
+  },
+  "sender_action" : null,
+  "notification_type" : null
+}
