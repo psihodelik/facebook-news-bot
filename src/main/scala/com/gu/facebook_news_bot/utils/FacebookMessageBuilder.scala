@@ -29,7 +29,7 @@ object FacebookMessageBuilder {
         attachment = Some(attachment),
         quick_replies = Some(List(MessageToFacebook.QuickReply(
           content_type = "text",
-          title = Some(currentTopic.map(topic => s"More $topic stories").getOrElse("More stories")),
+          title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
           payload = Some("more")
         )) ++ topicQuickReplies(edition, currentTopic))
       ))
