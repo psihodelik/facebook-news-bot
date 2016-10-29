@@ -90,10 +90,7 @@ object MessageFromFacebook {
   case class Message(mid: String,
                      seq: Int,
                      text: Option[String],
-                     attachments: Option[Seq[Attachment]],
                      quick_reply: Option[QuickReply])
-
-  case class Attachment(`type`: String, payload: Payload)
 
   case class Payload(url: Option[String])
 

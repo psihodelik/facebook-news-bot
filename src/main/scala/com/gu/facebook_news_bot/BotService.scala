@@ -3,10 +3,10 @@ package com.gu.facebook_news_bot
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.{MissingCookieRejection, RejectionHandler}
+import akka.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
+import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler}
 import akka.stream.{ActorMaterializer, Materializer}
-import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers
+import akka.http.scaladsl.unmarshalling.{PredefinedFromEntityUnmarshallers, Unmarshal}
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
@@ -22,7 +22,8 @@ import com.gu.facebook_news_bot.utils.{JsonHelpers, Verification}
 import com.gu.facebook_news_bot.utils.{KinesisAppenderConfig, LogStash}
 import com.gu.facebook_news_bot.utils.Loggers._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
@@ -41,7 +42,16 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
   implicit val rejectionHandler = RejectionHandler.newBuilder()
     .handle { case r =>
       appLogger.warn(s"Rejected request: $r")
-      complete(StatusCodes.BadRequest)
+      //Send a 200 because otherwise FB refuses to send any more messages from any users
+      complete(StatusCodes.OK)
+    }
+    .result()
+
+  implicit val exceptionHandler: ExceptionHandler =
+    ExceptionHandler {
+      case error =>
+        appLogger.warn(s"Exception in route execution: ${error.getMessage}", error)
+        complete(StatusCodes.OK)
     }
 
   val routes = path("status") {
@@ -50,42 +60,58 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
     }
   } ~ path("webhook") {
     post {
-      //Verify the signature header before processing the request
-      optionalHeaderValueByName("X-Hub-Signature") { signature =>
-        entity(as[Array[Byte]]) { bytes =>
-          if (BotConfig.stage == Mode.Dev || signature.exists(Verification.verifySignature(_, bytes))) {
+      extractRequest { request =>
+        appLogger.debug(s"Received new webhook POST: $request")
 
-            entity(as[MessageFromFacebook]) { fromFb =>
-              complete {
-                /**
-                  * A message from FB may contains many 'entries', each with many 'messagings', from any number of users.
-                  * The order in which they are processed is not important.
-                  * We respond immediately with a 200.
-                  */
-                val messagings: Seq[MessageFromFacebook.Messaging] = for {
-                  entry <- fromFb.entry
-                  messaging <- entry.messaging
-                } yield messaging
+        optionalHeaderValueByName("X-Hub-Signature") { signature =>
+          //Ensure we have the full entity
+          onComplete(request.entity.toStrict(5.seconds)) {
 
-                messagings foreach { messaging =>
-                  //For now, ignore message receipts
-                  if (messaging.message.isDefined || messaging.postback.isDefined) processMessaging(messaging)
+            case Success(strictEntity) =>
+              val bytes = strictEntity.getData.toArray
+              if (BotConfig.stage == Mode.Dev || signature.exists(Verification.verifySignature(_, bytes))) {
+                getMessagings(strictEntity).onComplete {
+                  case Success(messagings) =>
+                    messagings foreach { messaging =>
+                      //For now, ignore message receipts
+                      if (messaging.message.isDefined || messaging.postback.isDefined) processMessaging(messaging)
+                    }
+                  case Failure(error) => appLogger.error(s"Failed to unmarshal messagings: ${error.getMessage}", error)
                 }
-              }
-            }
-          } else {
-            appLogger.warn(s"Invalid X-Hub-Signature header, rejecting POST request.")
-            complete(StatusCodes.Forbidden)
+              } else appLogger.warn(s"Invalid X-Hub-Signature header, rejecting POST request.")
+
+              complete(HttpResponse(StatusCodes.OK))
+
+            case Failure(error) =>
+              appLogger.error(s"Failed to get whole of entity: ${error.getMessage}", error)
+
+              complete(HttpResponse(StatusCodes.OK))
           }
         }
       }
     }
   }
 
+  /**
+    * A message from FB may contains many 'entries', each with many 'messagings', from any number of users.
+    * The order in which they are processed is not important.
+    * We respond immediately with a 200.
+    */
+  private def getMessagings(strictEntity: HttpEntity.Strict): Future[Seq[MessageFromFacebook.Messaging]] = {
+    Unmarshal(strictEntity).to[MessageFromFacebook] map { fbMessage =>
+      val messagings: Seq[MessageFromFacebook.Messaging] = for {
+        entry <- fbMessage.entry
+        messaging <- entry.messaging
+      } yield messaging
+
+      messagings
+    }
+  }
+
   case class ReceiptLog(event: String, messaging: MessageFromFacebook.Messaging, user: Option[User])
   case class CompleteLog(event: String, messages: List[MessageToFacebook], user: Option[User])
 
-  def processMessaging(msg: MessageFromFacebook.Messaging, retry: Int = 0): Unit = {
+  private def processMessaging(msg: MessageFromFacebook.Messaging, retry: Int = 0): Unit = {
 
     val futureResult = for {
       user <- userStore.getUser(msg.sender.id)
