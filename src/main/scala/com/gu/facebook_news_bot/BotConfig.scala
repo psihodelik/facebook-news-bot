@@ -37,9 +37,13 @@ object BotConfig {
   }
 
   object facebook {
-    val url = getMandatoryString("facebook.url")
+    val host = getMandatoryString("facebook.host")
+    val version = getMandatoryString("facebook.version")
+    val port = getIntOrDefault("facebook.port", 443)
     val accessToken = getMandatoryString("facebook.accessToken")
     val secret = getMandatoryString("facebook.secret")
+    //Facebook must be https, but if running locally against a test service we need the option
+    val protocol = if (stage == Mode.Dev) "http" else "https"
   }
 
   object capi {
@@ -54,5 +58,8 @@ object BotConfig {
   }
   private def getMandatoryInt(name: String): Int = {
     Try(config.getInt(name)).getOrElse(sys.error(s"Error - missing mandatory config item, $name"))
+  }
+  private def getIntOrDefault(name: String, default: Int): Int = {
+    Try(config.getInt(name)).getOrElse(default)
   }
 }

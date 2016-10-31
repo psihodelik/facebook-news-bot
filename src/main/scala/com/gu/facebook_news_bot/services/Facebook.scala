@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, OverflowStrategy, QueueOfferResult}
 import com.gu.facebook_news_bot.models.FacebookUser
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 
@@ -14,13 +14,17 @@ import akka.contrib.throttle.TimerBasedThrottler
 
 import scala.concurrent.duration._
 import akka.contrib.throttle.Throttler.{RateInt, SetTarget}
+import akka.stream.scaladsl.{Keep, Sink, Source}
+import com.gu.cm.Mode
 import com.gu.facebook_news_bot.BotConfig
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import com.gu.facebook_news_bot.models.MessageToFacebook
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.JsonHelpers._
 import io.circe.generic.auto._
+
+import scala.util.{Failure, Success}
 
 trait Facebook {
   def send(messages: List[MessageToFacebook]): Unit
@@ -51,7 +55,7 @@ class FacebookImpl extends Facebook with CirceSupport {
     val responseFuture = Http().singleRequest(
       HttpRequest(
         method = HttpMethods.GET,
-        uri = s"${BotConfig.facebook.url}/$id?access_token=${BotConfig.facebook.accessToken}"
+        uri = s"${BotConfig.facebook.protocol}://${BotConfig.facebook.host}/${BotConfig.facebook.version}/$id?access_token=${BotConfig.facebook.accessToken}"
       )
     )
 
@@ -63,20 +67,56 @@ class FacebookImpl extends Facebook with CirceSupport {
   }
 
   private class FacebookActor extends Actor {
+
+    /**
+      * Use a connection pool to limit the number of open http requests to the configured number,
+      * and a source queue to buffer requests if we exceed that limit.
+      */
+    private val pool = {
+      if (BotConfig.stage != Mode.Dev) Http().cachedHostConnectionPoolHttps[Promise[HttpResponse]](host = BotConfig.facebook.host, port = BotConfig.facebook.port)
+      else Http().cachedHostConnectionPool[Promise[HttpResponse]](host = BotConfig.facebook.host, port = BotConfig.facebook.port)
+    }
+    private val queue = Source.queue[(HttpRequest, Promise[HttpResponse])](bufferSize = 1000, OverflowStrategy.dropNew)
+      .via(pool)
+      .toMat(Sink.foreach {
+        case ((Success(resp), p)) => p.success(resp)
+        case ((Failure(e), p)) => p.failure(e)
+      })(Keep.left)
+      .run
+
     def receive = {
       case message: MessageToFacebook =>
-        val responseFuture = Marshal(message).to[RequestEntity] flatMap { entity =>
-          appLogger.debug(s"Sending message to Facebook: $entity")
+        val responseFuture = for {
+          entity <- Marshal(message).to[RequestEntity]
+          strict <- entity.toStrict(5.seconds)
+          response <- enqueue(strict)
+        } yield response
 
-          Http().singleRequest(
-            request = HttpRequest(
-              method = HttpMethods.POST,
-              uri = s"${BotConfig.facebook.url}/me/messages?access_token=${BotConfig.facebook.accessToken}",
-              entity = entity
-            )
-          )
+        responseFuture.onComplete {
+          case Success(response) =>
+            //Always read the entire stream to avoid blocking the connection
+            response.entity.toStrict(5.seconds).foreach { strictEntity =>
+              appLogger.debug(s"Messenger response: $strictEntity")
+            }
+          case Failure(error) => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
         }
-        responseFuture.onFailure { case error: Throwable => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error) }
+    }
+
+    private def enqueue(strict: HttpEntity.Strict): Future[HttpResponse] = {
+      appLogger.debug(s"Sending message to Facebook: $strict")
+
+      val request = HttpRequest(
+        method = HttpMethods.POST,
+        uri = s"/${BotConfig.facebook.version}/me/messages?access_token=${BotConfig.facebook.accessToken}",
+        entity = strict
+      )
+      val promise = Promise[HttpResponse]
+
+      queue.offer(request -> promise).flatMap {
+        case QueueOfferResult.Enqueued => promise.future
+        case QueueOfferResult.Failure(e) => Future.failed(e)
+        case _ => Future.failed(new RuntimeException())
+      }
     }
   }
 }
