@@ -53,10 +53,18 @@ startDynamoDBLocal <<= startDynamoDBLocal.dependsOn(compile in Test)
 test in Test <<= (test in Test).dependsOn(startDynamoDBLocal)
 testOptions in Test <+= dynamoDBLocalTestCleanup
 
-//TODO - after moving to yaml for the riff-raff deploy file, remove "packages" from this path:
-riffRaffArtifactResources += baseDirectory.value / "logstash.conf" -> s"packages/${riffRaffPackageName.value}/logstash.conf"
+topLevelDirectory in Universal := None
+packageName in Universal := normalizedName.value
+
+def env(key: String): Option[String] = Option(System.getenv(key))
+
+riffRaffArtifactResources += baseDirectory.value / "logstash.conf" -> s"${riffRaffPackageName.value}/logstash.conf"
 
 riffRaffPackageName := "facebook-news-bot"
 riffRaffPackageType := (packageZipTarball in Universal).value
 riffRaffUploadArtifactBucket := Option("riffraff-artifact")
 riffRaffUploadManifestBucket := Option("riffraff-builds")
+riffRaffManifestProjectName := s"Off-platform::${name.value}"
+riffRaffManifestVcsUrl := "git@github.com:guardian/facebook-news-bot.git"
+riffRaffManifestBranch := env("BRANCH_NAME").getOrElse("unknown_branch")
+riffRaffBuildIdentifier := env("BUILD_NUMBER").getOrElse("DEV")

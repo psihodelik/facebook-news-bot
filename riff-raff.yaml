@@ -1,0 +1,19 @@
+stacks:
+  - content-api-facebook-news-bot
+
+regions:
+  - eu-west-1
+
+deployments:
+  facebook-news-bot:
+    type: autoscaling
+    parameters:
+      bucket: content-api-dist
+  facebook-news-bot-ami-update:
+    type: ami-cloudformation-parameter
+    parameters:
+      amiTags:
+        Recipe: facebook-news-bot
+        AmigoStage: PROD
+      cloudFormationStackName: facebook-news-bot
+      prependStackToCloudFormationStackName: false
