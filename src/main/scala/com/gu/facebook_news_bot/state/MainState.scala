@@ -21,7 +21,7 @@ case object MainState extends State {
     val headlines = """(^|\W)headlines($|\W)""".r.unanchored
     val popular = """(^|\W)popular($|\W)""".r.unanchored
     val more = """(^|\W)more($|\W)""".r.unanchored
-    val greeting = """^(hi|hello|ola|hey|salut)\s*[!?.]*$""".r
+    val greeting = """(^|\W)(hi|hello|ola|hey|salut)($|\W)""".r.unanchored
     val menu = """(^|\W)menu($|\W)""".r.unanchored
     val help = """(^|\W)help($|\W)""".r.unanchored
     val subscribe = """(^|\W)subscribe($|\W)""".r.unanchored
@@ -120,6 +120,7 @@ case object MainState extends State {
     else if (postback.payload.contains("subscribe_yes")) Some(SubscribeYesEvent)
     else if (postback.payload.contains("change_front_menu")) Some(ChangeEditionEvent)
     else if (postback.payload.contains("unsubscribe")) Some(UnsubscribeEvent)
+    else if (postback.payload.contains("start")) Some(GreetingEvent)
     else None
   }
 
@@ -130,7 +131,7 @@ case object MainState extends State {
       case Patterns.more(_,_) => Some(MoreContentEvent)
       case Patterns.headlines(_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
       case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(text)))
-      case Patterns.greeting(_) => Some(GreetingEvent)
+      case Patterns.greeting(_,_,_) => Some(GreetingEvent)
       case Patterns.menu(_,_) => Some(MenuEvent(ResponseText.menu))
       case Patterns.help(_,_) => Some(MenuEvent(ResponseText.help))
       case Patterns.subscribe(_,_) => Some(SubscribeYesEvent)
