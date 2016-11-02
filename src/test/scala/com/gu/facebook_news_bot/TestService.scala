@@ -15,11 +15,11 @@ import scala.concurrent.duration._
 
 class TestService(testName: String, createUser: Boolean = false) extends BotService with MockitoSugar {
   override val facebook = mock[Facebook]
-  when(facebook.getUser(anyString())).thenReturn(Future.successful(FacebookUser("mr", "test", "m", "en_GB", 1.25)))
+  when(facebook.getUser(anyString())).thenReturn(Future.successful(FacebookUser("en_GB", 1.25)))
   override val capi = DummyCapi
   override val stateHandler = StateHandler(facebook, capi)
   override val dynamoClient = LocalDynamoDB.client
-  override val usersTable = testName
+  override val usersTable = testName  
 
   override implicit val system = ActorSystem("facebook-news-bot-actor-system")
   override implicit val executor = system.dispatcher
