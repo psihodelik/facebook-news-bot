@@ -34,9 +34,7 @@ object State {
 
   def greeting(user: User): Future[Result] = MainState.menu(user, ResponseText.greeting)
 
-  def unknown(user: User): Future[Result] = {
-    Future.successful((changeState(user, MainState.Name), List(MessageToFacebook.textMessage(user.ID, ResponseText.unknown))))
-  }
+  def unknown(user: User): Future[Result] = MainState.menu(user, ResponseText.unknown)
 
   def getUserInput(messaging: MessageFromFacebook.Messaging): Option[String] = {
     for {

@@ -13,15 +13,24 @@ object ResponseText {
     s"$start. How can I help?"
   }
 
+  def thanksResponse = random(List(
+      "No worries",
+      "You're welcome",
+      "Anytime"
+    ))
+
+  def goodbyeResponse = random(List(
+    "Bye",
+    "Goodbye"
+  ))
+
   def welcome = "Hi, I'm the Guardian chatbot. I'll keep you up-to-date with the latest news.\n\nWould you like me to deliver a daily morning briefing to you?"
 
-  def unknown = "I'm sorry, I didn't understand that. Typing 'menu' at anytime will bring up the options menu."
+  def unknown = "Sorry, I didn't understand that. Are any of these helpful?"
 
   def noResults = "Sorry, I don't have any stories on that at the moment"
 
   def menu = "How can I help?"
-
-  def help = "I'm the Guardian chatbot. I can keep you up-to-date with the latest news.\n\nI can give you the headlines, the most popular stories or deliver a morning briefing to you.\n\nHow can I help you today?"
 
   def briefingTimeQuestion = "When would you like your morning briefing delivered? You can choose from 6, 7 or 8am."
 

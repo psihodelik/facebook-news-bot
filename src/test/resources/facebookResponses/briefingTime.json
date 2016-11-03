@@ -24,6 +24,11 @@
         "content_type":"text",
         "title":"Suggest something",
         "payload":"suggest"
+      },
+      {
+        "content_type":"text",
+        "title":"Give us feedback",
+        "payload":"feedback"
       }
     ]
   }
