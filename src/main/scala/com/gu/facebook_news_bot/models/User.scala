@@ -12,5 +12,4 @@ case class User(ID: String,
                 version: Option[Long] = None,
                 contentTopic: Option[String] = None,
                 contentOffset: Option[Int] = None,
-                contentType: Option[String] = None,
-                variant: Option[String] = None)
+                contentType: Option[String] = None)
