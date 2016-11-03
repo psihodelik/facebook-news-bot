@@ -376,10 +376,9 @@ Resources:
                           cd /home/content-api
                           mkdir logs
                           aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot.service /etc/systemd/system/facebook-news-bot.service
-                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot-0.1-SNAPSHOT.tgz .
+                          aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/facebook-news-bot.tgz .
                           aws s3 cp s3://content-api-dist/${Stack}/${Stage}/facebook-news-bot/logstash.conf .
-                          tar xfv facebook-news-bot-0.1-SNAPSHOT.tgz
-                          mv facebook-news-bot-0.1-SNAPSHOT facebook-news-bot
+                          tar xfv facebook-news-bot.tgz
 
                           sed -i -e 's,@@STAGE,${Stage},g' -e 's,@@STACK,${Stack},g' logstash.conf
                           mv logstash.conf /etc/

@@ -51,13 +51,13 @@ object BotConfig {
   }
 
   private def getMandatoryString(name: String): String = {
-    Try(config.getString(name)).getOrElse(sys.error(s"Error - missing mandatory config item, $name"))
+    Try(config.getString(name)).getOrElse(if (stage == Mode.Dev) "" else sys.error(s"Error - missing mandatory config item, $name"))
   }
   private def getStringOrDefault(name: String, default: String): String = {
     Try(config.getString(name)).getOrElse(default)
   }
   private def getMandatoryInt(name: String): Int = {
-    Try(config.getInt(name)).getOrElse(sys.error(s"Error - missing mandatory config item, $name"))
+    Try(config.getInt(name)).getOrElse(if (stage == Mode.Dev) 0 else sys.error(s"Error - missing mandatory config item, $name"))
   }
   private def getIntOrDefault(name: String, default: Int): Int = {
     Try(config.getInt(name)).getOrElse(default)
