@@ -18,16 +18,18 @@ case object MainState extends State {
   private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe") extends LogEvent
 
   private object Patterns {
-    val headlines = """(^|\W)headlines($|\W)""".r.unanchored
+    val headlines = """(^|\W)(headlines|news)($|\W)""".r.unanchored
     val popular = """(^|\W)popular($|\W)""".r.unanchored
     val more = """(^|\W)more($|\W)""".r.unanchored
     val greeting = """(^|\W)(hi|hello|ola|hey|salut)($|\W)""".r.unanchored
-    val menu = """(^|\W)menu($|\W)""".r.unanchored
-    val help = """(^|\W)help($|\W)""".r.unanchored
+    val goodbye = """(^|\W)(goodbye|bye|see you)($|\W)""".r.unanchored
+    val thanks = """(^|\W)(thanks|thank you|thankyou|cheers|ta)($|\W)""".r.unanchored
+    val menu = """(^|\W)(menu|help)($|\W)""".r.unanchored
     val subscribe = """(^|\W)subscribe($|\W)""".r.unanchored
     val unsubscribe = """(^|\W)unsubscribe($|\W)""".r.unanchored
     val manageSubscription = """(^|\W)subscription($|\W)""".r.unanchored
     val suggest = """(^|\W)suggest($|\W)""".r.unanchored
+    val feedback = """(^|\W)feedback($|\W)""".r.unanchored
   }
 
   private sealed trait Event
@@ -40,6 +42,9 @@ case object MainState extends State {
   private case object ChangeEditionEvent extends Event
   private case object UnsubscribeEvent extends Event
   private case object SuggestEvent extends Event
+  private case object ThanksEvent extends Event
+  private case object GoodbyeEvent extends Event
+  private case object FeedbackEvent extends Event
 
   private sealed trait ContentType { val name: String }
   private case object HeadlinesType extends ContentType { val name = "headlines" }
@@ -102,6 +107,9 @@ case object MainState extends State {
       case UnsubscribeEvent => Some(unsubscribe(user))
       case ChangeEditionEvent => Some(EditionQuestionState.question(user))
       case SuggestEvent => Some(suggest(user))
+      case ThanksEvent => Some(thanksResponse(user))
+      case GoodbyeEvent => Some(goodbyeResponse(user))
+      case FeedbackEvent => Some(FeedbackState.question(user))
     }
 
     result.getOrElse(State.unknown(user))
@@ -129,15 +137,17 @@ case object MainState extends State {
     val text = raw.toLowerCase
     val event = text match {
       case Patterns.more(_,_) => Some(MoreContentEvent)
-      case Patterns.headlines(_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
+      case Patterns.headlines(_,_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
       case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(text)))
       case Patterns.greeting(_,_,_) => Some(GreetingEvent)
-      case Patterns.menu(_,_) => Some(MenuEvent(ResponseText.menu))
-      case Patterns.help(_,_) => Some(MenuEvent(ResponseText.help))
+      case Patterns.thanks(_,_,_) => Some(ThanksEvent)
+      case Patterns.goodbye(_,_,_) => Some(GoodbyeEvent)
+      case Patterns.menu(_,_,_) => Some(MenuEvent(ResponseText.menu))
       case Patterns.subscribe(_,_) => Some(SubscribeYesEvent)
       case Patterns.unsubscribe(_,_) => Some(UnsubscribeEvent)
       case Patterns.manageSubscription(_,_) => Some(ManageSubscriptionEvent)
       case Patterns.suggest(_,_) => Some(SuggestEvent)
+      case Patterns.feedback(_,_) => Some(FeedbackEvent)
       case _ => None
     }
 
@@ -187,7 +197,8 @@ case object MainState extends State {
       MessageToFacebook.QuickReply(title = Some("Headlines"), payload = Some("headlines")),
       MessageToFacebook.QuickReply(title = Some("Most popular"),payload = Some("popular")),
       getSubscriptionQuickReply(user),
-      MessageToFacebook.QuickReply(title = Some("Suggest something"),payload = Some("suggest"))
+      MessageToFacebook.QuickReply(title = Some("Suggest something"),payload = Some("suggest")),
+      MessageToFacebook.QuickReply(title = Some("Give us feedback"),payload = Some("feedback"))
     )
 
     val message = MessageToFacebook.quickRepliesMessage(user.ID, quickReplies, text)
@@ -233,4 +244,10 @@ case object MainState extends State {
       ResponseText.suggest)
     Future.successful((user, List(response)))
   }
+
+  private def thanksResponse(user: User): Future[Result] =
+    Future.successful(user, List(MessageToFacebook.textMessage(user.ID, ResponseText.thanksResponse)))
+
+  private def goodbyeResponse(user: User): Future[Result] =
+    Future.successful(user, List(MessageToFacebook.textMessage(user.ID, ResponseText.goodbyeResponse)))
 }

@@ -40,6 +40,7 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     case SubscribeQuestionState.Name => SubscribeQuestionState
     case BriefingTimeQuestionState.Name => BriefingTimeQuestionState
     case EditionQuestionState.Name => EditionQuestionState
+    case FeedbackState.Name => FeedbackState
     case _ => MainState
   }
 
