@@ -25,15 +25,25 @@ object FacebookMessageBuilder {
       }
       val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
 
+      val moreQuickReply = MessageToFacebook.QuickReply(
+        content_type = "text",
+        title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
+        payload = Some("more")
+      )
+
       Some(MessageToFacebook.Message(
         attachment = Some(attachment),
-        quick_replies = Some(List(MessageToFacebook.QuickReply(
-          content_type = "text",
-          title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
-          payload = Some("more")
-        )) ++ topicQuickReplies(edition, currentTopic))
+        quick_replies = Some(moreQuickReply :: topicQuickReplies(edition, currentTopic) ::: supportUsQuickReply :: Nil)
       ))
     }
+  }
+
+  def supportUsQuickReply = {
+    MessageToFacebook.QuickReply(
+      content_type = "text",
+      title = Some("Support the Guardian"),
+      payload = Some("support")
+    )
   }
 
   def topicQuickReplies(edition: String, currentTopic: Option[String] = None): List[MessageToFacebook.QuickReply] = {
@@ -78,5 +88,33 @@ object FacebookMessageBuilder {
         case width if width <= MaxImageWidth && width > widest => thisAsset
       } orElse widestAsset
     }
+  }
+
+  def supportUsCarousel(userEdition: String): MessageToFacebook.Message = {
+    val edition = if (userEdition == "international") "uk" else userEdition
+    val campaignCode = s"INTCMP=${BotConfig.campaignCode}"
+
+    val tiles = List(
+      MessageToFacebook.Element(
+        title = "Become a Guardian Supporter",
+        item_url = Some(s"https://membership.theguardian.com/$edition/supporter?$campaignCode"),
+        image_url = Some(BotConfig.supportersImageUrl),
+        buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
+      ),
+      MessageToFacebook.Element(
+        title = "Contribute to the Guardian",
+        item_url = Some(s"https://contribute.theguardian.com/$edition?$campaignCode"),
+        image_url = Some(BotConfig.supportersImageUrl),
+        buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
+      ),
+      MessageToFacebook.Element(
+        title = "How technology disrupted the truth",
+        item_url = Some(s"https://www.theguardian.com/media/2016/jul/12/how-technology-disrupted-the-truth?$campaignCode"),
+        image_url = Some("https://media.guim.co.uk/328e9120d07331a2458e2acdb2ba033fe1b672fe/0_0_5000_3000/1000.jpg"),
+        buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
+      )
+    )
+
+    MessageToFacebook.Message(attachment = Some(MessageToFacebook.Attachment.genericAttachment(tiles)))
   }
 }

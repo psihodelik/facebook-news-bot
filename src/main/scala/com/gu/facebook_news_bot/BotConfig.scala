@@ -18,6 +18,7 @@ object BotConfig {
   val port = getMandatoryInt("port")
 
   val defaultImageUrl = getMandatoryString("defaultImageUrl")
+  val supportersImageUrl = getMandatoryString("supportersImageUrl")
 
   val campaignCode = getStringOrDefault("campaignCode", "fb_newsbot")
 

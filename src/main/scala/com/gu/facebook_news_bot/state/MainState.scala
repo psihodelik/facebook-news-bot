@@ -1,5 +1,6 @@
 package com.gu.facebook_news_bot.state
 
+import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
@@ -30,6 +31,7 @@ case object MainState extends State {
     val manageSubscription = """(^|\W)subscription($|\W)""".r.unanchored
     val suggest = """(^|\W)suggest($|\W)""".r.unanchored
     val feedback = """(^|\W)feedback($|\W)""".r.unanchored
+    val support = """(^|\W)support($|\W)""".r.unanchored
   }
 
   private sealed trait Event
@@ -45,6 +47,7 @@ case object MainState extends State {
   private case object ThanksEvent extends Event
   private case object GoodbyeEvent extends Event
   private case object FeedbackEvent extends Event
+  private case object SupportEvent extends Event
 
   private sealed trait ContentType { val name: String }
   private case object HeadlinesType extends ContentType { val name = "headlines" }
@@ -110,6 +113,7 @@ case object MainState extends State {
       case ThanksEvent => Some(thanksResponse(user))
       case GoodbyeEvent => Some(goodbyeResponse(user))
       case FeedbackEvent => Some(FeedbackState.question(user))
+      case SupportEvent => Some(supportUsResponse(user))
     }
 
     result.getOrElse(State.unknown(user))
@@ -148,6 +152,7 @@ case object MainState extends State {
       case Patterns.manageSubscription(_,_) => Some(ManageSubscriptionEvent)
       case Patterns.suggest(_,_) => Some(SuggestEvent)
       case Patterns.feedback(_,_) => Some(FeedbackEvent)
+      case Patterns.support(_,_) => Some(SupportEvent)
       case _ => None
     }
 
@@ -198,7 +203,8 @@ case object MainState extends State {
       MessageToFacebook.QuickReply(title = Some("Most popular"),payload = Some("popular")),
       getSubscriptionQuickReply(user),
       MessageToFacebook.QuickReply(title = Some("Suggest something"),payload = Some("suggest")),
-      MessageToFacebook.QuickReply(title = Some("Give us feedback"),payload = Some("feedback"))
+      MessageToFacebook.QuickReply(title = Some("Give us feedback"),payload = Some("feedback")),
+      FacebookMessageBuilder.supportUsQuickReply
     )
 
     val message = MessageToFacebook.quickRepliesMessage(user.ID, quickReplies, text)
@@ -250,4 +256,12 @@ case object MainState extends State {
 
   private def goodbyeResponse(user: User): Future[Result] =
     Future.successful(user, List(MessageToFacebook.textMessage(user.ID, ResponseText.goodbyeResponse)))
+
+  private def supportUsResponse(user: User): Future[Result] = {
+    val messages = List(
+      MessageToFacebook.textMessage(user.ID, ResponseText.support),
+      MessageToFacebook(Id(user.ID), Some(FacebookMessageBuilder.supportUsCarousel(user.front)))
+    )
+    Future.successful(user, messages)
+  }
 }

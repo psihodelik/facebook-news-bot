@@ -52,10 +52,11 @@ class FacebookImpl extends Facebook with CirceSupport {
   }
 
   def getUser(id: String): Future[FacebookUser] = {
+    val port = if (BotConfig.stage == Mode.Dev) s":${BotConfig.facebook.port}" else ""
     val responseFuture = Http().singleRequest(
       HttpRequest(
         method = HttpMethods.GET,
-        uri = s"${BotConfig.facebook.protocol}://${BotConfig.facebook.host}/${BotConfig.facebook.version}/$id?access_token=${BotConfig.facebook.accessToken}"
+        uri = s"${BotConfig.facebook.protocol}://${BotConfig.facebook.host}$port/${BotConfig.facebook.version}/$id?access_token=${BotConfig.facebook.accessToken}"
       )
     )
 
