@@ -67,7 +67,7 @@ object CollectionsBriefing extends CirceSupport {
         maybeCollection.flatMap { collection =>
           //Check it's not old news
           if (DateTime.now(DateTimeZone.UTC).minusHours(OldNewsThresholdHours).isBefore(collection.timestamp)) {
-            Some((user, collection.messages))
+            Some((user, collection.messages.map(message => MessageToFacebook(Id(user.ID), Some(message)))))
           } else None
         }
       }
@@ -85,11 +85,8 @@ object CollectionsBriefing extends CirceSupport {
         if contentCollection.content.nonEmpty
         timestamp <- contentCollection.getTimestamp
       } yield {
-        val greetingMessage = MessageToFacebook.textMessage(user.ID, greetingContent.headline)
-        val carouselMessage = MessageToFacebook(
-          recipient = Id(user.ID),
-          message = Some(buildCarousel(user.front, contentCollection))
-        )
+        val greetingMessage = MessageToFacebook.Message(text = Some(greetingContent.headline))
+        val carouselMessage = buildCarousel(user.front, contentCollection)
         CachedCollection(timestamp, List(greetingMessage, carouselMessage))
       }
 
@@ -138,7 +135,7 @@ object CollectionsBriefing extends CirceSupport {
   private def buildUrl(id: String) = s"https://www.theguardian.com/$id?CMP=${BotConfig.campaignCode}&variant=$VariantName"
 }
 
-case class CachedCollection(timestamp: DateTime, messages: List[MessageToFacebook])
+case class CachedCollection(timestamp: DateTime, messages: List[MessageToFacebook.Message])
 
 object CollectionsBriefingCache {
   private val CacheExpireMinutes = 2
