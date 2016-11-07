@@ -14,7 +14,7 @@
             <pattern>%date [%thread] %-5level %logger{36} - %msg%n%xException{3}</pattern>
         </encoder>
     </appender>
-    <logger name="appLogger" level="DEBUG" additivity="false">
+    <logger name="appLogger" level="INFO" additivity="false">
         <appender-ref ref="appLogger"/>
     </logger>
 
@@ -40,7 +40,7 @@
         </encoder>
     </appender>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="console"/>
     </root>
 
