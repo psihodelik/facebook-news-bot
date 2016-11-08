@@ -97,7 +97,9 @@ object MessageFromFacebook {
   //quick_reply and postback payloads contain the string that we supplied - this is different from the attachment payloads.
   case class QuickReply(payload: String)
 
-  case class Postback(payload: String)
+  case class Postback(payload: String, referral: Option[Referral])
+
+  case class Referral(ref: String, source: String, `type`: String)
 
 }
 
