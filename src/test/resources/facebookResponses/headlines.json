@@ -120,6 +120,12 @@
         "title" : "Tech",
         "payload" : "tech",
         "image_url" : null
+      },
+      {
+        "content_type" : "text",
+        "title" : "Support the Guardian",
+        "payload" : "support",
+        "image_url" : null
       }
     ],
     "metadata" : null

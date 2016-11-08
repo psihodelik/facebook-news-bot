@@ -29,6 +29,12 @@
         "content_type":"text",
         "title":"Give us feedback",
         "payload":"feedback"
+      },
+      {
+        "content_type" : "text",
+        "title" : "Support the Guardian",
+        "payload" : "support",
+        "image_url" : null
       }
     ]
   }

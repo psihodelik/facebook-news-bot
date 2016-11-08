@@ -57,5 +57,7 @@ object ResponseText {
 
   def suggest = "You can ask for headlines or the most popular stories for various topics. Here are some examples:"
 
+  def support = "Producing well-reported journalism is difficult and expensive. Supporting us isn't. Please support the Guardian."
+
   private def random(list: List[String]) = list((Random.nextDouble * list.length).floor.toInt)
 }

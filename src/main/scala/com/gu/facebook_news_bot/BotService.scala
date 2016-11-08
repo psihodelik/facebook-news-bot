@@ -172,7 +172,9 @@ object Bot extends App with BotService {
     case None => appLogger.warn(s"No kinesis stream name found for logging.")
   }
 
-  val poller = system.actorOf(MorningBriefingPoller.props(userStore, capi, facebook))
+  val poller = PartialFunction.condOpt(BotConfig.stage != Mode.Dev) {
+    case true => system.actorOf(MorningBriefingPoller.props(userStore, capi, facebook))
+  }
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
 }
