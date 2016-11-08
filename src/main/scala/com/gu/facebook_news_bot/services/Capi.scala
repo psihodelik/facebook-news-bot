@@ -143,7 +143,7 @@ case object PoliticsTopic extends Topic {
   def getPath(edition: String): String = {
     edition.toLowerCase match {
       case "us" => "us-news/us-politics"
-      case "au" => "au-news/au-politics"
+      case "au" => "australia-news/australian-politics"
       case _ => "politics"
     }
   }
