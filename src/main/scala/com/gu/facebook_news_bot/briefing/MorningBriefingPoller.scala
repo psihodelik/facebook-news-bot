@@ -107,7 +107,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
     CollectionsBriefing.getBriefing(user).flatMap { maybeBriefing: Option[Result] =>
       maybeBriefing.map(Future.successful).getOrElse {
         //Fall back on editors-picks briefing
-        MainState.getHeadlines(user, capi, variant = Some("editors-picks")) map { case (updatedUser, messages) =>
+        MainState.getHeadlines(user, capi, Some(s"editors-picks-${user.front}")) map { case (updatedUser, messages) =>
           (updatedUser, morningMessage(updatedUser) :: messages)
         }
       }
