@@ -19,6 +19,7 @@ case object SubscribeQuestionState extends State {
 
   private case class SubscribeNoEvent(id: String, event: String = "subscribe_no") extends LogEvent
   private case class SubscribeYesEvent(id: String, event: String = "subscribe_yes") extends LogEvent
+  private case class ReferralEvent(id: String, event: String = "referral", referrer: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(processPostback(user, _, capi, facebook)) getOrElse {
@@ -57,7 +58,11 @@ case object SubscribeQuestionState extends State {
   }
 
   private def processPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook): Future[Result] = {
-    if (postback.payload.toLowerCase().contains("start")) question(user)  //new user
+    if (postback.payload.toLowerCase().contains("start")) {
+      //new user, check if there's a referral
+      postback.referral.foreach(referral => log(ReferralEvent(id = user.ID, referrer = referral.ref)))
+      question(user)
+    }
     else MainState.onMenuButtonClick(user, postback, capi, facebook)
   }
 }
