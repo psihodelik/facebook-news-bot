@@ -1,9 +1,11 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
+import com.gu.facebook_news_bot.services.Facebook.GetUserSuccessResponse
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.ResponseText
+import com.gu.facebook_news_bot.utils.Loggers.appLogger
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import io.circe.generic.auto._
@@ -46,17 +48,22 @@ case object BriefingTimeQuestionState extends State {
   private def success(user: User, time: String, facebook: Facebook): Future[Result] = {
     log(BriefingTimeEvent(id = user.ID, time = time))
 
-    facebook.getUser(user.ID) flatMap { fbData =>
-      val notifyTime = DateTime.parse(time, DateTimeFormat.forPattern("H"))
-      val notifyTimeUTC = notifyTime.minusMinutes((fbData.timezone * 60).toInt)
+    facebook.getUser(user.ID) flatMap {
+      case GetUserSuccessResponse(fbData) =>
+        val notifyTime = DateTime.parse(time, DateTimeFormat.forPattern("H"))
+        val notifyTimeUTC = notifyTime.minusMinutes((fbData.timezone * 60).toInt)
 
-      val updatedUser = user.copy(
-        state = Some(MainState.Name),
-        notificationTime = notifyTime.toString("HH:mm"),
-        notificationTimeUTC = notifyTimeUTC.toString("HH:mm")
-      )
+        val updatedUser = user.copy(
+          state = Some(MainState.Name),
+          notificationTime = notifyTime.toString("HH:mm"),
+          notificationTimeUTC = notifyTimeUTC.toString("HH:mm")
+        )
 
-      MainState.menu(updatedUser, ResponseText.subscribed(time))
+        MainState.menu(updatedUser, ResponseText.subscribed(time))
+
+      case other =>
+        appLogger.error(s"Failed to get user data for user ${user.ID} while processing briefing time: $other")
+        Future.successful(user, List(MessageToFacebook.errorMessage(user.ID)))
     }
   }
 }

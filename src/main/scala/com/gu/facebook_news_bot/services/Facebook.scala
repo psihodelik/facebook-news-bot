@@ -20,16 +20,35 @@ import com.gu.facebook_news_bot.BotConfig
 
 import scala.concurrent.{Future, Promise}
 import com.gu.facebook_news_bot.models.MessageToFacebook
+import com.gu.facebook_news_bot.services.Facebook._
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.JsonHelpers._
 import io.circe.generic.auto._
+import io.circe.Decoder
 
 import scala.util.{Failure, Success}
 
 trait Facebook {
   def send(messages: List[MessageToFacebook]): Unit
 
-  def getUser(id: String): Future[FacebookUser]
+  def getUser(id: String): Future[GetUserResult]
+}
+object Facebook {
+  sealed trait FacebookResponse
+  object FacebookResponse {
+    implicit val decodeFacebookResponse: Decoder[FacebookResponse] = Decoder.instance(cursor =>
+      cursor.as[FacebookSuccessResponse].orElse(cursor.as[FacebookErrorResponse])
+    )
+  }
+  case class FacebookSuccessResponse(recipient_id: String, message_id: String) extends FacebookResponse
+  case class FacebookErrorResponse(error: FacebookErrorMessage) extends FacebookResponse
+  case class FacebookErrorMessage(message: String, code: Int)
+
+
+  sealed trait GetUserResult
+  case class GetUserSuccessResponse(user: FacebookUser) extends GetUserResult
+  case object GetUserNoDataResponse extends GetUserResult
+  case class GetUserError(errorResponse: FacebookErrorResponse) extends GetUserResult
 }
 
 class FacebookImpl extends Facebook with CirceSupport {
@@ -51,7 +70,7 @@ class FacebookImpl extends Facebook with CirceSupport {
     messages.foreach(throttler ! _)
   }
 
-  def getUser(id: String): Future[FacebookUser] = {
+  def getUser(id: String): Future[GetUserResult] = {
     val port = if (BotConfig.stage == Mode.Dev) s":${BotConfig.facebook.port}" else ""
     val responseFuture = Http().singleRequest(
       HttpRequest(
@@ -60,11 +79,18 @@ class FacebookImpl extends Facebook with CirceSupport {
       )
     )
 
-    for {
-      response <- responseFuture
-      //Force the content type here because FB graph specifies "text/javascript"
-      facebookUser <- Unmarshal(response.entity.withContentType(ContentTypes.`application/json`)).to[FacebookUser]
-    } yield facebookUser
+    responseFuture.flatMap { response =>
+      if (response.status == StatusCodes.OK) {
+        //Force the content type here because FB graph specifies "text/javascript"
+        Unmarshal(response.entity.withContentType(ContentTypes.`application/json`)).to[FacebookUser].map(GetUserSuccessResponse).recover {
+          /**
+            * If we ask for the user's data and the user has deleted the conversation then FB returns a 200 with
+            * an empty body.
+            */
+          case _ => GetUserNoDataResponse
+        }
+      } else Unmarshal(response.entity.withContentType(ContentTypes.`application/json`)).to[FacebookErrorResponse].map(GetUserError)
+    }
   }
 
   private class FacebookActor extends Actor {
@@ -98,6 +124,13 @@ class FacebookImpl extends Facebook with CirceSupport {
             //Always read the entire stream to avoid blocking the connection
             response.entity.toStrict(5.seconds).foreach { strictEntity =>
               appLogger.debug(s"Messenger response: $strictEntity")
+
+              Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].onComplete {
+                case Success(facebookResponse: FacebookErrorResponse) =>
+                  appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
+                case Success(_) =>  //No error response, do nothing
+                case Failure(error) => appLogger.error(s"Error unmarshalling facebook response: ${error.getMessage}", error)
+              }
             }
           case Failure(error) => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
         }

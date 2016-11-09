@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{logBriefing, Poll}
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
+import com.gu.facebook_news_bot.services.Facebook.{GetUserError, GetUserNoDataResponse, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, SQS, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler.Result
@@ -82,17 +83,29 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
   }
 
   private def processUser(user: User): Unit = {
-    facebook.getUser(user.ID) map { fbUser =>
-      if (fbUser.timezone == user.offsetHours) {
-        getMorningBriefing(user).onComplete {
-          case Success((updatedUser, fbMessages)) => updateAndSend(updatedUser, fbMessages)
-          case Failure(error) => appLogger.error(s"Error getting morning briefing for user ${user.ID}: ${error.getMessage}", error)
+    facebook.getUser(user.ID) map {
+      case GetUserSuccessResponse(fbUser) =>
+        if (fbUser.timezone == user.offsetHours) {
+          getMorningBriefing(user).onComplete {
+            case Success((updatedUser, fbMessages)) => updateAndSend(updatedUser, fbMessages)
+            case Failure(error) => appLogger.error(s"Error getting morning briefing for user ${user.ID}: ${error.getMessage}", error)
+          }
+        } else {
+          //User's timezone has changed - fix this now, but don't send briefing
+          val updatedUser = updateNotificationTime(user, fbUser.timezone)
+          updateAndSend(updatedUser, Nil)
         }
-      } else {
-        //User's timezone has changed - fix this now, but don't send briefing
-        val updatedUser = updateNotificationTime(user, fbUser.timezone)
-        updateAndSend(updatedUser, Nil)
-      }
+
+      case GetUserNoDataResponse =>
+        /**
+          * Facebook returned a 200 but will not give us the user's data, which generally means they've deleted the conversation.
+          * Mark them as uncontactable
+          */
+        val daysUncontactable = user.daysUncontactable.map(_+1).getOrElse(1)
+        userStore.updateUser(user.copy(daysUncontactable = Some(daysUncontactable)))
+
+      case GetUserError(error) =>
+        appLogger.info(s"Error from Facebook while trying to get data for user ${user.ID}: $error")
     }
   }
 
@@ -126,7 +139,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
 
   //Update the user in dynamo, then send the messages
   private def updateAndSend(user: User, messages: List[MessageToFacebook], retry: Int = 0): Unit = {
-    userStore.updateUser(user) map { updateResult =>
+    userStore.updateUser(user.copy(daysUncontactable = Some(0))) map { updateResult =>
       updateResult.fold(
         { error: ConditionalCheckFailedException =>
           //User has since been updated in dynamo, get the latest version and try again
