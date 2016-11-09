@@ -114,7 +114,7 @@ object CollectionsBriefing extends CirceSupport {
     val tiles = collection.content.take(10).map { content =>
       MessageToFacebook.Element(
         title = content.headline,
-        item_url = Some(buildUrl(content.id)),
+        item_url = Some(buildUrl(content.id, edition)),
         subtitle = Some(content.trailText),
         image_url = Some(content.thumbnail),
         buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
@@ -132,7 +132,7 @@ object CollectionsBriefing extends CirceSupport {
     )
   }
 
-  private def buildUrl(id: String) = s"https://www.theguardian.com/$id?CMP=${BotConfig.campaignCode}&variant=$VariantName"
+  private def buildUrl(id: String, edition: String) = s"https://www.theguardian.com/$id?CMP=${BotConfig.campaignCode}&variant=$VariantName-$edition"
 }
 
 case class CachedCollection(timestamp: DateTime, messages: List[MessageToFacebook.Message])
