@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, Message, ReceiveMessageRequest}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.Poll
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{logBriefing, Poll}
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, SQS, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
@@ -28,6 +28,10 @@ object MorningBriefingPoller {
   def props(userStore: UserStore, capi: Capi, facebook: Facebook) = Props(new MorningBriefingPoller(userStore, capi, facebook))
 
   case object Poll
+
+  case class BriefingEventLog(id: String, event: String = "morning-briefing", variant: String)
+  def logBriefing(id: String, variant: String): Unit =
+    logEvent(JsonHelpers.encodeJson(BriefingEventLog(id = id, variant = variant)))
 }
 
 class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook) extends Actor {
@@ -105,9 +109,15 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
     appLogger.debug(s"Getting morning briefing for User: $user")
 
     CollectionsBriefing.getBriefing(user).flatMap { maybeBriefing: Option[Result] =>
-      maybeBriefing.map(Future.successful).getOrElse {
+      maybeBriefing.map { briefing =>
+        logBriefing(user.ID, CollectionsBriefing.getVariant(user.front))
+        Future.successful(briefing)
+      }.getOrElse {
         //Fall back on editors-picks briefing
-        MainState.getHeadlines(user, capi, Some(s"editors-picks-${user.front}")) map { case (updatedUser, messages) =>
+        val variant = s"editors-picks-${user.front}"
+        logBriefing(user.ID, variant)
+
+        MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
           (updatedUser, morningMessage(updatedUser) :: messages)
         }
       }
