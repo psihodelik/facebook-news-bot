@@ -75,6 +75,8 @@ object CollectionsBriefing extends CirceSupport {
     } else Future.successful(None)
   }
 
+  def getVariant(edition: String) = s"$VariantName-$edition"
+
   private def getCollection(user: User): Future[Option[CachedCollection]] = {
     requestCollection(EditionToCollectionName(user.front)).map { collectionsResponse =>
 
@@ -132,7 +134,7 @@ object CollectionsBriefing extends CirceSupport {
     )
   }
 
-  private def buildUrl(id: String, edition: String) = s"https://www.theguardian.com/$id?CMP=${BotConfig.campaignCode}&variant=$VariantName-$edition"
+  private def buildUrl(id: String, edition: String) = s"https://www.theguardian.com/$id?CMP=${BotConfig.campaignCode}&variant=${getVariant(edition)}"
 }
 
 case class CachedCollection(timestamp: DateTime, messages: List[MessageToFacebook.Message])
