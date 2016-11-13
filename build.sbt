@@ -18,6 +18,7 @@ val CapiVersion = "10.5"
 val AwsVersion = "1.11.8"
 
 libraryDependencies ++= Seq(
+  "org.clulab" %% "processors-corenlp" % "6.0.2",
   "com.google.guava" % "guava" % "19.0",
   "joda-time" % "joda-time" % "2.9.4",
   "org.joda" % "joda-convert" % "1.8.1",

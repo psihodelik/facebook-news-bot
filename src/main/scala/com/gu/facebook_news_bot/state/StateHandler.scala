@@ -37,6 +37,7 @@ object StateHandler {
     OscarsNomsStates.UpdateTypeState,
     CustomBriefingQuestionState,
     RemoveCustomBriefingTopicState,
+    SearchFeedbackState,
     UnsubscribeState)
     .map((state: State) => (state.Name, state))
     .toMap + (StateHandler.NewUserStateName -> SubscribeQuestionState)
