@@ -1,6 +1,7 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
+import com.gu.facebook_news_bot.services.Facebook.{GetUserError, GetUserNoDataResponse, GetUserResult, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 
@@ -29,9 +30,13 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     }
   }
 
+  case class GetUserException(data: GetUserResult) extends Throwable
   private def newUser(id: String): Future[User] = {
-    facebook.getUser(id) map { facebookUser =>
-      User(id, localToFront(facebookUser.locale), facebookUser.timezone, "-", "-", Some(StateHandler.NewUserStateName), Some(0))
+    facebook.getUser(id) map {
+      case GetUserSuccessResponse(facebookUser) => User(id, localToFront(facebookUser.locale), facebookUser.timezone, "-", "-", Some(StateHandler.NewUserStateName), Some(0))
+      case other =>
+        //Facebook won't give us the user's data for whatever reason. Throwing an exception here will cause the standard error response to be sent.
+        throw GetUserException(other)
     }
   }
 

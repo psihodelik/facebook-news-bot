@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest, MediaType
 import akka.stream.ActorMaterializer
 import com.gu.facebook_news_bot.models.{FacebookUser, User}
 import com.gu.facebook_news_bot.services.Facebook
+import com.gu.facebook_news_bot.services.Facebook.GetUserSuccessResponse
 import com.gu.facebook_news_bot.state.StateHandler
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -15,7 +16,7 @@ import scala.concurrent.duration._
 
 class TestService(testName: String, createUser: Boolean = false) extends BotService with MockitoSugar {
   override val facebook = mock[Facebook]
-  when(facebook.getUser(anyString())).thenReturn(Future.successful(FacebookUser("en_GB", 1.25)))
+  when(facebook.getUser(anyString())).thenReturn(Future.successful(GetUserSuccessResponse(FacebookUser("en_GB", 1.25))))
   override val capi = DummyCapi
   override val stateHandler = StateHandler(facebook, capi)
   override val dynamoClient = LocalDynamoDB.client
