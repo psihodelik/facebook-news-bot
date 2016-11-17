@@ -136,6 +136,7 @@ class FacebookImpl extends Facebook with CirceSupport {
         }
     }
 
+    private case class EnqueueException(result: QueueOfferResult) extends Throwable
     private def enqueue(strict: HttpEntity.Strict): Future[HttpResponse] = {
       appLogger.debug(s"Sending message to Facebook: $strict")
 
@@ -149,7 +150,8 @@ class FacebookImpl extends Facebook with CirceSupport {
       queue.offer(request -> promise).flatMap {
         case QueueOfferResult.Enqueued => promise.future
         case QueueOfferResult.Failure(e) => Future.failed(e)
-        case _ => Future.failed(new RuntimeException())
+        case QueueOfferResult.Dropped => Future.failed(EnqueueException(QueueOfferResult.Dropped))
+        case QueueOfferResult.QueueClosed => Future.failed(EnqueueException(QueueOfferResult.QueueClosed))
       }
     }
   }
