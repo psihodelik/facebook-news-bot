@@ -6,6 +6,7 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern.ask
+import akka.pattern.pipe
 import akka.stream.{ActorMaterializer, OverflowStrategy, QueueOfferResult}
 import com.gu.facebook_news_bot.models.FacebookUser
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -54,8 +55,8 @@ object Facebook {
 
 
   sealed trait FacebookMessageResult
-  case class FacebookMessageSuccess() extends FacebookMessageResult
-  case class FacebookMessageFailure() extends FacebookMessageResult
+  case object FacebookMessageSuccess extends FacebookMessageResult
+  case object FacebookMessageFailure extends FacebookMessageResult
 }
 
 class FacebookImpl extends Facebook with CirceSupport {
@@ -77,7 +78,7 @@ class FacebookImpl extends Facebook with CirceSupport {
 
   def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]] = {
     val result = messages.map { message =>
-      (throttler ? message).mapTo[FacebookMessageResult]
+      (facebookActor ? message).mapTo[FacebookMessageResult]
     }
     Future.sequence(result)
   }
@@ -105,17 +106,16 @@ class FacebookImpl extends Facebook with CirceSupport {
     }
   }
 
-  class FacebookActor extends Actor {
+  private class FacebookActor extends Actor {
 
     /**
       * Use a connection pool to limit the number of open http requests to the configured number,
-      * and source queues to buffer requests if we exceed that limit.
+      * and a source queue to buffer requests if we exceed that limit.
       */
     private val pool = {
       if (BotConfig.stage != Mode.Dev) Http().cachedHostConnectionPoolHttps[Promise[HttpResponse]](host = BotConfig.facebook.host, port = BotConfig.facebook.port)
       else Http().cachedHostConnectionPool[Promise[HttpResponse]](host = BotConfig.facebook.host, port = BotConfig.facebook.port)
     }
-
     private val queue = Source.queue[(HttpRequest, Promise[HttpResponse])](bufferSize = 1000, OverflowStrategy.dropNew)
       .via(pool)
       .toMat(Sink.foreach {
@@ -125,7 +125,7 @@ class FacebookImpl extends Facebook with CirceSupport {
       .run
 
     def receive = {
-      case message: MessageToFacebook => sender ! processMessage(message)
+      case message: MessageToFacebook => processMessage(message) pipeTo sender
     }
 
     private def processMessage(message: MessageToFacebook): Future[FacebookMessageResult] = {
@@ -143,13 +143,13 @@ class FacebookImpl extends Facebook with CirceSupport {
           Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].map {
             case facebookResponse: FacebookErrorResponse =>
               appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
-              FacebookMessageFailure()
-            case other => FacebookMessageSuccess()
+              FacebookMessageFailure
+            case other => FacebookMessageSuccess
           }
         }
       } recover { case error =>
         appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
-        FacebookMessageFailure()
+        FacebookMessageFailure
       }
     }
 
@@ -165,7 +165,6 @@ class FacebookImpl extends Facebook with CirceSupport {
       val promise = Promise[HttpResponse]
 
       queue.offer(request -> promise).flatMap {
-        //This future completes when the request is consumed by the stream or if the queue rejects it
         case QueueOfferResult.Enqueued => promise.future
         case QueueOfferResult.Failure(e) => Future.failed(e)
         case QueueOfferResult.Dropped => Future.failed(EnqueueException(QueueOfferResult.Dropped))

@@ -61,12 +61,14 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       }
 
       val decodedMessages = messages.flatMap(message => JsonHelpers.decodeJson[SQSMessageBody](message.getBody))
-      Future.sequence(decodedMessages.flatMap { decodedMessage =>
-        JsonHelpers.decodeJson[User](decodedMessage.Message).map(processUser)
-      }).foreach { _ =>
-        //Resume polling only once the requests have been sent
-        self ! Poll
-      }
+      if (decodedMessages.nonEmpty) {
+        Future.sequence(decodedMessages.flatMap { decodedMessage =>
+          JsonHelpers.decodeJson[User](decodedMessage.Message).map(processUser)
+        }).foreach { result =>
+          //Resume polling only once the requests have been sent
+          self ! Poll
+        }
+      } else context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
 
       //Delete items from the queue
       if (messages.nonEmpty) {
@@ -77,7 +79,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
         Try(SQS.client.deleteMessageBatch(deleteRequest)) recover {
           case e => appLogger.warn(s"Failed to delete messages from queue: ${e.getMessage}", e)
         }
-      } else context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
+      }
 
     case _ =>
       appLogger.warn("Unknown message received by MorningBriefingPoller")
