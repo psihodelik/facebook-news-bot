@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, Message, ReceiveMessageRequest}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{Poll, logBriefing}
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{logBriefing, Poll}
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook._
 import com.gu.facebook_news_bot.services.{Capi, Facebook, SQS, SQSMessageBody}
@@ -168,7 +168,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
         }, { _ =>
           if (messages.nonEmpty) {
             appLogger.debug(s"Sending morning briefing to ${user.ID}: $messages")
-            facebook.send(messages, lowPriority = true)
+            facebook.send(messages)
           } else Future.successful(Nil)
         }
       )
