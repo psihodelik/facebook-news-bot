@@ -40,7 +40,6 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
   private val MaxBatchSize = 10 //Max allowed by SQS
   private val PollPeriod = 500.millis
 
-
   implicit val exec = ExecutionContext.fromExecutorService(
     Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("morning-briefing-poller-%d").build())
   )

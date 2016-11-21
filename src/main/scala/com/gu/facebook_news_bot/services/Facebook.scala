@@ -77,7 +77,9 @@ class FacebookImpl extends Facebook with CirceSupport {
         if (lowPriority) FacebookActor.LowPriorityMessage(message)
         else FacebookActor.HighPriorityMessage(message)
       }
-      (throttler ? wrappedMessage).mapTo[FacebookResponse]
+      val reply = throttler ? wrappedMessage
+      appLogger.info(s"REPLY: $reply")
+      reply.mapTo[FacebookResponse]
     }
     Future.sequence(result)
   }
@@ -147,7 +149,9 @@ class FacebookImpl extends Facebook with CirceSupport {
             case facebookResponse: FacebookErrorResponse =>
               appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
               facebookResponse
-            case other => other  //Success
+            case other =>
+              appLogger.info(s"Successfully sent message: $other")
+              other  //Success
           }
         }
       } recover { case error =>
