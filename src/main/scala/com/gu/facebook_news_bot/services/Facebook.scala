@@ -31,7 +31,7 @@ import io.circe.Decoder
 import scala.util.{Failure, Success}
 
 trait Facebook {
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookResponse]]
+  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]]
 
   def getUser(id: String): Future[GetUserResult]
 }
@@ -43,7 +43,6 @@ object Facebook {
     )
   }
   case class FacebookSuccessResponse(recipient_id: String, message_id: String) extends FacebookResponse
-  case class InternalError() extends FacebookResponse
   case class FacebookErrorResponse(error: FacebookErrorMessage) extends FacebookResponse
   case class FacebookErrorMessage(message: String, code: Int)
 
@@ -52,6 +51,11 @@ object Facebook {
   case class GetUserSuccessResponse(user: FacebookUser) extends GetUserResult
   case object GetUserNoDataResponse extends GetUserResult
   case class GetUserError(errorResponse: FacebookErrorResponse) extends GetUserResult
+
+
+  sealed trait FacebookMessageResult
+  case class FacebookMessageSuccess() extends FacebookMessageResult
+  case class FacebookMessageFailure() extends FacebookMessageResult
 }
 
 class FacebookImpl extends Facebook with CirceSupport {
@@ -71,15 +75,13 @@ class FacebookImpl extends Facebook with CirceSupport {
   ))
   throttler ! SetTarget(Some(facebookActor))
 
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookResponse]] = {
+  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]] = {
     val result = messages.map { message =>
       val wrappedMessage = {
         if (lowPriority) FacebookActor.LowPriorityMessage(message)
         else FacebookActor.HighPriorityMessage(message)
       }
-      val reply = throttler ? wrappedMessage
-      appLogger.info(s"REPLY: $reply")
-      reply.mapTo[FacebookResponse]
+      (throttler ? wrappedMessage).mapTo[FacebookMessageResult]
     }
     Future.sequence(result)
   }
@@ -113,7 +115,7 @@ class FacebookImpl extends Facebook with CirceSupport {
     case class LowPriorityMessage(message: MessageToFacebook) extends FacebookMessage
   }
 
-  private class FacebookActor extends Actor {
+  class FacebookActor extends Actor {
 
     /**
       * Use a connection pool to limit the number of open http requests to the configured number,
@@ -133,7 +135,7 @@ class FacebookImpl extends Facebook with CirceSupport {
       case FacebookActor.LowPriorityMessage(message) => sender ! processMessage(message, lowPriorityQueue)
     }
 
-    private def processMessage(message: MessageToFacebook, queue: MessageQueue): Future[FacebookResponse] = {
+    private def processMessage(message: MessageToFacebook, queue: MessageQueue): Future[FacebookMessageResult] = {
       val responseFuture = for {
         entity <- Marshal(message).to[RequestEntity]
         strict <- entity.toStrict(5.seconds)
@@ -148,15 +150,13 @@ class FacebookImpl extends Facebook with CirceSupport {
           Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].map {
             case facebookResponse: FacebookErrorResponse =>
               appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
-              facebookResponse
-            case other =>
-              appLogger.info(s"Successfully sent message: $other")
-              other  //Success
+              FacebookMessageFailure()
+            case other => FacebookMessageSuccess()
           }
         }
       } recover { case error =>
         appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
-        InternalError()
+        FacebookMessageFailure()
       }
     }
 

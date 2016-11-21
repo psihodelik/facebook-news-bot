@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{Poll, logBriefing}
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.Facebook.{FacebookResponse, GetUserError, GetUserNoDataResponse, GetUserSuccessResponse}
+import com.gu.facebook_news_bot.services.Facebook._
 import com.gu.facebook_news_bot.services.{Capi, Facebook, SQS, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler.Result
@@ -65,7 +65,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
         JsonHelpers.decodeJson[User](decodedMessage.Message).map(processUser)
       }).foreach { _ =>
         //Resume polling only once the requests have been sent
-        context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
+        self ! Poll
       }
 
       //Delete items from the queue
@@ -83,7 +83,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       appLogger.warn("Unknown message received by MorningBriefingPoller")
   }
 
-  private def processUser(user: User): Future[List[FacebookResponse]] = {
+  private def processUser(user: User): Future[List[FacebookMessageResult]] = {
     facebook.getUser(user.ID) flatMap {
       case GetUserSuccessResponse(fbUser) =>
         if (fbUser.timezone == user.offsetHours) {
@@ -143,7 +143,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
   }
 
   //Update the user in dynamo, then send the messages
-  private def updateAndSend(user: User, messages: List[MessageToFacebook], retry: Int = 0): Future[List[FacebookResponse]] = {
+  private def updateAndSend(user: User, messages: List[MessageToFacebook], retry: Int = 0): Future[List[FacebookMessageResult]] = {
     userStore.updateUser(user.copy(daysUncontactable = Some(0))) flatMap { updateResult =>
       updateResult.fold(
         { error: ConditionalCheckFailedException =>
