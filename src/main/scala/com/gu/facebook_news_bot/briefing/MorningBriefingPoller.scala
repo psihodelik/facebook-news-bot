@@ -168,7 +168,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
         }, { _ =>
           if (messages.nonEmpty) {
             appLogger.debug(s"Sending morning briefing to ${user.ID}: $messages")
-            facebook.send(messages, lowPriority = true)
+            facebook.send(messages)
           } else Future.successful(Nil)
         }
       )

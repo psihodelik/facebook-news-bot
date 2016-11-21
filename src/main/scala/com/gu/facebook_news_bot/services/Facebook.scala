@@ -15,7 +15,7 @@ import akka.contrib.throttle.TimerBasedThrottler
 
 import scala.concurrent.duration._
 import akka.contrib.throttle.Throttler.{RateInt, SetTarget}
-import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.Timeout
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.BotConfig
@@ -31,7 +31,7 @@ import io.circe.Decoder
 import scala.util.{Failure, Success}
 
 trait Facebook {
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]]
+  def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]]
 
   def getUser(id: String): Future[GetUserResult]
 }
@@ -75,13 +75,9 @@ class FacebookImpl extends Facebook with CirceSupport {
   ))
   throttler ! SetTarget(Some(facebookActor))
 
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]] = {
+  def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]] = {
     val result = messages.map { message =>
-      val wrappedMessage = {
-        if (lowPriority) FacebookActor.LowPriorityMessage(message)
-        else FacebookActor.HighPriorityMessage(message)
-      }
-      (throttler ? wrappedMessage).mapTo[FacebookMessageResult]
+      (throttler ? message).mapTo[FacebookMessageResult]
     }
     Future.sequence(result)
   }
@@ -109,12 +105,6 @@ class FacebookImpl extends Facebook with CirceSupport {
     }
   }
 
-  object FacebookActor {
-    trait FacebookMessage { val message: MessageToFacebook }
-    case class HighPriorityMessage(message: MessageToFacebook) extends FacebookMessage
-    case class LowPriorityMessage(message: MessageToFacebook) extends FacebookMessage
-  }
-
   class FacebookActor extends Actor {
 
     /**
@@ -126,20 +116,23 @@ class FacebookImpl extends Facebook with CirceSupport {
       else Http().cachedHostConnectionPool[Promise[HttpResponse]](host = BotConfig.facebook.host, port = BotConfig.facebook.port)
     }
 
-    type MessageQueue = SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])]
-    private val highPriorityQueue: MessageQueue = createQueue(500)
-    private val lowPriorityQueue: MessageQueue = createQueue(5000)
+    private val queue = Source.queue[(HttpRequest, Promise[HttpResponse])](bufferSize = 1000, OverflowStrategy.dropNew)
+      .via(pool)
+      .toMat(Sink.foreach {
+        case ((Success(resp), p)) => p.success(resp)
+        case ((Failure(e), p)) => p.failure(e)
+      })(Keep.left)
+      .run
 
     def receive = {
-      case FacebookActor.HighPriorityMessage(message) => sender ! processMessage(message, highPriorityQueue)
-      case FacebookActor.LowPriorityMessage(message) => sender ! processMessage(message, lowPriorityQueue)
+      case message: MessageToFacebook => sender ! processMessage(message)
     }
 
-    private def processMessage(message: MessageToFacebook, queue: MessageQueue): Future[FacebookMessageResult] = {
+    private def processMessage(message: MessageToFacebook): Future[FacebookMessageResult] = {
       val responseFuture = for {
         entity <- Marshal(message).to[RequestEntity]
         strict <- entity.toStrict(5.seconds)
-        response <- enqueue(strict, queue)
+        response <- enqueue(strict)
       } yield response
 
       responseFuture.flatMap { response =>
@@ -161,7 +154,7 @@ class FacebookImpl extends Facebook with CirceSupport {
     }
 
     private case class EnqueueException(result: QueueOfferResult) extends Throwable
-    private def enqueue(strict: HttpEntity.Strict, queue: MessageQueue): Future[HttpResponse] = {
+    private def enqueue(strict: HttpEntity.Strict): Future[HttpResponse] = {
       appLogger.debug(s"Sending message to Facebook: $strict")
 
       val request = HttpRequest(
@@ -178,16 +171,6 @@ class FacebookImpl extends Facebook with CirceSupport {
         case QueueOfferResult.Dropped => Future.failed(EnqueueException(QueueOfferResult.Dropped))
         case QueueOfferResult.QueueClosed => Future.failed(EnqueueException(QueueOfferResult.QueueClosed))
       }
-    }
-
-    private def createQueue(bufferSize: Int): MessageQueue = {
-      Source.queue[(HttpRequest, Promise[HttpResponse])](bufferSize = bufferSize, OverflowStrategy.dropNew)
-        .via(pool)
-        .toMat(Sink.foreach {
-          case ((Success(resp), p)) => p.success(resp)
-          case ((Failure(e), p)) => p.failure(e)
-        })(Keep.left)
-        .run
     }
   }
 }
