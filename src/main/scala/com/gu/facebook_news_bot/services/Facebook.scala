@@ -5,6 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.pattern.ask
 import akka.stream.{ActorMaterializer, OverflowStrategy, QueueOfferResult}
 import com.gu.facebook_news_bot.models.FacebookUser
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -15,6 +16,7 @@ import akka.contrib.throttle.TimerBasedThrottler
 import scala.concurrent.duration._
 import akka.contrib.throttle.Throttler.{RateInt, SetTarget}
 import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
+import akka.util.Timeout
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.BotConfig
 
@@ -29,7 +31,7 @@ import io.circe.Decoder
 import scala.util.{Failure, Success}
 
 trait Facebook {
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Unit
+  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]]
 
   def getUser(id: String): Future[GetUserResult]
 }
@@ -49,12 +51,19 @@ object Facebook {
   case class GetUserSuccessResponse(user: FacebookUser) extends GetUserResult
   case object GetUserNoDataResponse extends GetUserResult
   case class GetUserError(errorResponse: FacebookErrorResponse) extends GetUserResult
+
+
+  sealed trait FacebookMessageResult
+  case class FacebookMessageSuccess() extends FacebookMessageResult
+  case class FacebookMessageFailure() extends FacebookMessageResult
 }
 
 class FacebookImpl extends Facebook with CirceSupport {
 
   implicit val system = ActorSystem("facebook-actor-system")
   implicit val materializer = ActorMaterializer()
+
+  implicit val timeout = Timeout(5.seconds)
 
   /**
     * Use the TimerBasedThrottler actor to rate-limit messages to Facebook messenger
@@ -66,14 +75,15 @@ class FacebookImpl extends Facebook with CirceSupport {
   ))
   throttler ! SetTarget(Some(facebookActor))
 
-  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Unit = {
-    messages.foreach { message =>
+  def send(messages: List[MessageToFacebook], lowPriority: Boolean = false): Future[List[FacebookMessageResult]] = {
+    val result = messages.map { message =>
       val wrappedMessage = {
         if (lowPriority) FacebookActor.LowPriorityMessage(message)
         else FacebookActor.HighPriorityMessage(message)
       }
-      throttler ! wrappedMessage
+      (throttler ? wrappedMessage).mapTo[FacebookMessageResult]
     }
+    Future.sequence(result)
   }
 
   def getUser(id: String): Future[GetUserResult] = {
@@ -105,7 +115,7 @@ class FacebookImpl extends Facebook with CirceSupport {
     case class LowPriorityMessage(message: MessageToFacebook) extends FacebookMessage
   }
 
-  private class FacebookActor extends Actor {
+  class FacebookActor extends Actor {
 
     /**
       * Use a connection pool to limit the number of open http requests to the configured number,
@@ -121,31 +131,32 @@ class FacebookImpl extends Facebook with CirceSupport {
     private val lowPriorityQueue: MessageQueue = createQueue(5000)
 
     def receive = {
-      case FacebookActor.HighPriorityMessage(message) => processMessage(message, highPriorityQueue)
-      case FacebookActor.LowPriorityMessage(message) => processMessage(message, lowPriorityQueue)
+      case FacebookActor.HighPriorityMessage(message) => sender ! processMessage(message, highPriorityQueue)
+      case FacebookActor.LowPriorityMessage(message) => sender ! processMessage(message, lowPriorityQueue)
     }
 
-    private def processMessage(message: MessageToFacebook, queue: MessageQueue): Unit = {
+    private def processMessage(message: MessageToFacebook, queue: MessageQueue): Future[FacebookMessageResult] = {
       val responseFuture = for {
         entity <- Marshal(message).to[RequestEntity]
         strict <- entity.toStrict(5.seconds)
         response <- enqueue(strict, queue)
       } yield response
 
-      responseFuture.onComplete {
-        case Success(response) =>
-          //Always read the entire stream to avoid blocking the connection
-          response.entity.toStrict(5.seconds).foreach { strictEntity =>
-            appLogger.debug(s"Messenger response: $strictEntity")
+      responseFuture.flatMap { response =>
+        //Always read the entire stream to avoid blocking the connection
+        response.entity.toStrict(5.seconds).flatMap { strictEntity =>
+          appLogger.debug(s"Messenger response: $strictEntity")
 
-            Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].onComplete {
-              case Success(facebookResponse: FacebookErrorResponse) =>
-                appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
-              case Success(_) =>  //No error response, do nothing
-              case Failure(error) => appLogger.error(s"Error unmarshalling facebook response: ${error.getMessage}", error)
-            }
+          Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].map {
+            case facebookResponse: FacebookErrorResponse =>
+              appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
+              FacebookMessageFailure()
+            case other => FacebookMessageSuccess()
           }
-        case Failure(error) => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
+        }
+      } recover { case error =>
+        appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
+        FacebookMessageFailure()
       }
     }
 
@@ -161,6 +172,7 @@ class FacebookImpl extends Facebook with CirceSupport {
       val promise = Promise[HttpResponse]
 
       queue.offer(request -> promise).flatMap {
+        //This future completes when the request is consumed by the stream or if the queue rejects it
         case QueueOfferResult.Enqueued => promise.future
         case QueueOfferResult.Failure(e) => Future.failed(e)
         case QueueOfferResult.Dropped => Future.failed(EnqueueException(QueueOfferResult.Dropped))
