@@ -7,10 +7,10 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, Message, ReceiveMessageRequest}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{logBriefing, Poll}
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{Poll, logBriefing}
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.Facebook._
-import com.gu.facebook_news_bot.services.{Capi, Facebook, SQS, SQSMessageBody}
+import com.gu.facebook_news_bot.services.Facebook.{FacebookMessageResult, GetUserError, GetUserNoDataResponse, GetUserSuccessResponse}
+import com.gu.facebook_news_bot.services._
 import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
@@ -30,9 +30,12 @@ object MorningBriefingPoller {
 
   case object Poll
 
-  case class BriefingEventLog(id: String, event: String = "morning-briefing", variant: String)
-  def logBriefing(id: String, variant: String): Unit =
-    logEvent(JsonHelpers.encodeJson(BriefingEventLog(id = id, variant = variant)))
+  case class BriefingEventLog(id: String, event: String = "morning-briefing", _eventName: String = "morning-briefing", variant: String) extends LogEvent
+  def logBriefing(id: String, variant: String): Unit = {
+    val eventLog = BriefingEventLog(id = id, variant = variant)
+    logEvent(JsonHelpers.encodeJson(eventLog))
+    FacebookEvents.logEvent(eventLog)
+  }
 }
 
 class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook) extends Actor {

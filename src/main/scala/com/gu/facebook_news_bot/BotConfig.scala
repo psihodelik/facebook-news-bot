@@ -45,6 +45,8 @@ object BotConfig {
     val secret = getMandatoryString("facebook.secret")
     //Facebook must be https, but if running locally against a test service we need the option
     val protocol = if (stage == Mode.Dev) "http" else "https"
+    val appId = getMandatoryString("facebook.appId")
+    val pageId = getMandatoryString("facebook.pageId")
   }
 
   object capi {

@@ -1,7 +1,7 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.{Capi, Facebook}
+import com.gu.facebook_news_bot.models.{MessageFromFacebook, User}
+import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText}
 import com.gu.facebook_news_bot.utils.Loggers._
@@ -20,12 +20,10 @@ trait State {
     * Each State can optionally perform additional logging using an object with type LogEvent.
     * It will be logged as JSON
     */
-  protected trait LogEvent {
-    val id: String    //user's ID
-    val event: String  //the name of the event being logged
-  }
   protected def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
-    logEvent(JsonHelpers.encodeJson(event))
+    val json = JsonHelpers.encodeJson(event)
+    logEvent(json)
+    FacebookEvents.logEvent(event)
   }
 }
 
