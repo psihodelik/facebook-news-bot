@@ -5,6 +5,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.pattern.ask
+import akka.pattern.pipe
 import akka.stream.{ActorMaterializer, OverflowStrategy, QueueOfferResult}
 import com.gu.facebook_news_bot.models.FacebookUser
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -15,6 +17,7 @@ import akka.contrib.throttle.TimerBasedThrottler
 import scala.concurrent.duration._
 import akka.contrib.throttle.Throttler.{RateInt, SetTarget}
 import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.util.Timeout
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.BotConfig
 
@@ -29,7 +32,7 @@ import io.circe.Decoder
 import scala.util.{Failure, Success}
 
 trait Facebook {
-  def send(messages: List[MessageToFacebook]): Unit
+  def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]]
 
   def getUser(id: String): Future[GetUserResult]
 }
@@ -49,12 +52,19 @@ object Facebook {
   case class GetUserSuccessResponse(user: FacebookUser) extends GetUserResult
   case object GetUserNoDataResponse extends GetUserResult
   case class GetUserError(errorResponse: FacebookErrorResponse) extends GetUserResult
+
+
+  sealed trait FacebookMessageResult
+  case object FacebookMessageSuccess extends FacebookMessageResult
+  case object FacebookMessageFailure extends FacebookMessageResult
 }
 
 class FacebookImpl extends Facebook with CirceSupport {
 
   implicit val system = ActorSystem("facebook-actor-system")
   implicit val materializer = ActorMaterializer()
+
+  implicit val timeout = Timeout(5.seconds)
 
   /**
     * Use the TimerBasedThrottler actor to rate-limit messages to Facebook messenger
@@ -66,8 +76,11 @@ class FacebookImpl extends Facebook with CirceSupport {
   ))
   throttler ! SetTarget(Some(facebookActor))
 
-  def send(messages: List[MessageToFacebook]): Unit = {
-    messages.foreach(throttler ! _)
+  def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]] = {
+    val result = messages.map { message =>
+      (facebookActor ? message).mapTo[FacebookMessageResult]
+    }
+    Future.sequence(result)
   }
 
   def getUser(id: String): Future[GetUserResult] = {
@@ -112,28 +125,32 @@ class FacebookImpl extends Facebook with CirceSupport {
       .run
 
     def receive = {
-      case message: MessageToFacebook =>
-        val responseFuture = for {
-          entity <- Marshal(message).to[RequestEntity]
-          strict <- entity.toStrict(5.seconds)
-          response <- enqueue(strict)
-        } yield response
+      case message: MessageToFacebook => processMessage(message) pipeTo sender
+    }
 
-        responseFuture.onComplete {
-          case Success(response) =>
-            //Always read the entire stream to avoid blocking the connection
-            response.entity.toStrict(5.seconds).foreach { strictEntity =>
-              appLogger.debug(s"Messenger response: $strictEntity")
+    private def processMessage(message: MessageToFacebook): Future[FacebookMessageResult] = {
+      val responseFuture = for {
+        entity <- Marshal(message).to[RequestEntity]
+        strict <- entity.toStrict(5.seconds)
+        response <- enqueue(strict)
+      } yield response
 
-              Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].onComplete {
-                case Success(facebookResponse: FacebookErrorResponse) =>
-                  appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
-                case Success(_) =>  //No error response, do nothing
-                case Failure(error) => appLogger.error(s"Error unmarshalling facebook response: ${error.getMessage}", error)
-              }
-            }
-          case Failure(error) => appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
+      responseFuture.flatMap { response =>
+        //Always read the entire stream to avoid blocking the connection
+        response.entity.toStrict(5.seconds).flatMap { strictEntity =>
+          appLogger.debug(s"Messenger response: $strictEntity")
+
+          Unmarshal(strictEntity.withContentType(ContentTypes.`application/json`)).to[FacebookResponse].map {
+            case facebookResponse: FacebookErrorResponse =>
+              appLogger.warn(s"Error response from Facebook for user ${message.recipient.id}: $facebookResponse")
+              FacebookMessageFailure
+            case other => FacebookMessageSuccess
+          }
         }
+      } recover { case error =>
+        appLogger.error(s"Error sending message $message to facebook: ${error.getMessage}", error)
+        FacebookMessageFailure
+      }
     }
 
     private case class EnqueueException(result: QueueOfferResult) extends Throwable
