@@ -17,4 +17,3 @@ deployments:
         AmigoStage: PROD
       cloudFormationStackName: facebook-news-bot
       prependStackToCloudFormationStackName: false
-      cloudFormationStackByTags: false
