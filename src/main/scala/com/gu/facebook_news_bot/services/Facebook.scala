@@ -27,7 +27,8 @@ import com.gu.facebook_news_bot.services.Facebook._
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.JsonHelpers._
 import io.circe.generic.auto._
-import io.circe.Decoder
+import io.circe._
+import io.circe.ObjectEncoder
 
 import scala.util.{Failure, Success}
 
@@ -57,6 +58,50 @@ object Facebook {
   sealed trait FacebookMessageResult
   case object FacebookMessageSuccess extends FacebookMessageResult
   case object FacebookMessageFailure extends FacebookMessageResult
+}
+
+object FacebookEvents extends CirceSupport {
+  implicit val system = ActorSystem("facebook-events-actor-system")
+  implicit val materializer = ActorMaterializer()
+
+  // https://developers.facebook.com/docs/app-events/bots-for-messenger
+  private case class EventRequest[T <: LogEvent : ObjectEncoder](event: String, custom_events: List[T], extinfo: List[String], page_id: String, page_scoped_user_id: String, advertiser_tracking_enabled: Int, application_tracking_enabled: Int)
+  private object EventRequest {
+    def apply[T <: LogEvent : ObjectEncoder](eventData: T): EventRequest[T] = {
+      EventRequest(
+        event = "CUSTOM_APP_EVENTS",
+        custom_events = List(eventData),
+        extinfo = List("mb1"),
+        page_id = BotConfig.facebook.pageId,
+        page_scoped_user_id = eventData.id,
+        advertiser_tracking_enabled = 0,
+        application_tracking_enabled = 0
+      )
+    }
+  }
+
+  def logEvent[T <: LogEvent : ObjectEncoder](eventData: T): Unit = {
+    if (BotConfig.stage != Mode.Dev) {
+      val eventRequest = EventRequest(eventData)
+
+      Marshal(eventRequest).to[RequestEntity] map { requestEntity =>
+        val responseFuture = Http().singleRequest(
+          HttpRequest(
+            method = HttpMethods.POST,
+            uri = s"https://graph.facebook.com/${BotConfig.facebook.appId}/activities",
+            entity = requestEntity
+          )
+        )
+
+        responseFuture onComplete {
+          case Success(response) =>
+            response.entity.toStrict(5.seconds) //Always read the entire stream
+            if (response.status != StatusCodes.OK) appLogger.warn(s"Unexpected status received after sending event log to FB analytics. Response was: $response")
+          case Failure(error) => appLogger.warn(s"Error sending event log to FB analytics: ${error.getMessage}", error)
+        }
+      }
+    }
+  }
 }
 
 class FacebookImpl extends Facebook with CirceSupport {

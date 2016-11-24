@@ -6,6 +6,7 @@ import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, ResponseText}
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.{CarouselSize, contentToCarousel}
+import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import io.circe.generic.auto._
 
 import scala.concurrent.Future
@@ -15,8 +16,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 case object MainState extends State {
   val Name = "MAIN"
 
-  private case class ContentLogEvent(id: String, event: String, topic: String, offset: Int) extends LogEvent
-  private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe") extends LogEvent
+  private case class ContentLogEvent(id: String, event: String, _eventName: String, topic: String, offset: Int) extends LogEvent
+  private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe", _eventName: String = "unsubscribe") extends LogEvent
 
   private object Patterns {
     val headlines = """(^|\W)(headlines|news)($|\W)""".r.unanchored
@@ -83,7 +84,7 @@ case object MainState extends State {
       case NewContentEvent(maybeContentType, maybeTopic) =>
         //Either have a new contentType, or use an existing contentType
         maybeContentType.orElse(user.contentType.flatMap(ContentType.fromString)) map { contentType =>
-          log(ContentLogEvent(user.ID, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
+          log(ContentLogEvent(user.ID, contentType.name, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
 
           carousel(user, contentType, maybeTopic, 0, capi)
         }
@@ -93,7 +94,7 @@ case object MainState extends State {
         user.contentType.flatMap(ContentType.fromString).map { contentType =>
           val offset = user.contentOffset.getOrElse(0) + CarouselSize
 
-          log(ContentLogEvent(user.ID, contentType.name, user.contentTopic.getOrElse(""), offset))
+          log(ContentLogEvent(user.ID, contentType.name, contentType.name, user.contentTopic.getOrElse(""), offset))
 
           carousel(
             user = user,

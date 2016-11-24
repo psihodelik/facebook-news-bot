@@ -3,6 +3,7 @@ package com.gu.facebook_news_bot.state
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import com.gu.facebook_news_bot.utils.ResponseText
 import io.circe.generic.auto._
 
@@ -18,7 +19,7 @@ case object EditionQuestionState extends State {
 
   val Editions = Seq("au", "uk", "us", "international")
 
-  private case class EditionEvent(id: String, event: String = "change_edition", edition: String) extends LogEvent
+  private case class EditionEvent(id: String, event: String = "change_edition", _eventName: String = "change_edition", edition: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
     messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {

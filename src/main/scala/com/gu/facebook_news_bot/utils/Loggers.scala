@@ -5,6 +5,13 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
 object Loggers {
+
+  trait LogEvent {
+    val id: String    //user's ID
+    val event: String  //the name of the event being logged (for compatiblity with kibana data)
+    val _eventName: String  //the name of the event for facebook analytics
+  }
+
   /**
     * eventLogger - populates the event.log file, which contains json-formatted event logging to be sent to logstash
     */
