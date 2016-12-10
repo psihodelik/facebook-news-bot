@@ -22,15 +22,13 @@ case object EditionQuestionState extends State {
   private case class EditionEvent(id: String, event: String = "change_edition", _eventName: String = "change_edition", edition: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
-    messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {
-      if (user.state.contains(Name)) {
-        //There should be valid edition in either the text or quick_reply fields
-        val maybeEd = Editions.find(ed => State.getUserInput(messaging).map(_.toLowerCase).exists(u => u.contains(ed)))
-        maybeEd.map(ed => success(user, ed)).getOrElse(question(user))
-      } else {
-        //New state
-        question(user)
-      }
+    if (user.state.contains(Name)) {
+      //There should be valid edition in either the text or quick_reply fields
+      val maybeEd = Editions.find(ed => State.getUserInput(messaging).map(_.toLowerCase).exists(u => u.contains(ed)))
+      maybeEd.map(ed => success(user, ed)).getOrElse(question(user))
+    } else {
+      //New state
+      question(user)
     }
   }
 
@@ -60,7 +58,7 @@ case object EditionQuestionState extends State {
   }
 
   private def success(user: User, edition: String): Future[Result] = {
-    log(EditionEvent(id = user.ID, edition = edition))
+    State.log(EditionEvent(id = user.ID, edition = edition))
     val response = MessageToFacebook.textMessage(user.ID, ResponseText.editionChanged(frontToUserFriendly(edition)))
     val updatedUser = user.copy(state = Some(MainState.Name), front = edition)
     Future.successful((updatedUser, List(response)))

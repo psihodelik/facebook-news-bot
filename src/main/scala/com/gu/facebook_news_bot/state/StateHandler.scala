@@ -1,12 +1,15 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.Facebook.{GetUserError, GetUserNoDataResponse, GetUserResult, GetUserSuccessResponse}
+import com.gu.facebook_news_bot.services.Facebook.{GetUserResult, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
-import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.state.StateHandler.{ReferralEvent, Result}
+import com.gu.facebook_news_bot.state.football.FootballTransferSubscribeQuestionState
+import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import io.circe.generic.auto._
 
 object StateHandler {
   def apply(facebook: Facebook, capi: Capi) = new StateHandler(facebook, capi)
@@ -14,6 +17,8 @@ object StateHandler {
   type Result = (User, List[MessageToFacebook])
 
   val NewUserStateName = "NEW_USER"
+
+  private case class ReferralEvent(id: String, event: String = "referral", _eventName: String = "referral", referrer: String) extends LogEvent
 }
 
 class StateHandler(facebook: Facebook, capi: Capi) {
@@ -25,8 +30,43 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     */
   def process(userOpt: Option[User], message: MessageFromFacebook.Messaging): Future[Result] = {
     userOpt.map(Future.successful).getOrElse(newUser(message.sender.id)) flatMap { user =>
-      val state = user.state.map(getStateFromString) getOrElse MainState
-      state.transition(user, message, capi, facebook)
+
+      message.postback.map(postback => processPostback(postback, user))
+        .orElse(message.referral.flatMap(referral => processReferral(referral, user)))
+        .getOrElse {
+          if (user.state.contains(StateHandler.NewUserStateName)) SubscribeQuestionState.question(user)
+          else {
+            val state = user.state.map(getStateFromString) getOrElse MainState
+            state.transition(user, message, capi, facebook)
+          }
+        }
+    }
+  }
+
+  /**
+    * A postback with the "start" payload indicates either:
+    * 1. A new user, who may or may not have been referred from somewhere
+    * 2. An existing user who has been referred from somewhere (e.g. the football transfers interactive page)
+    *
+    * Any other kind of postback will be a button click, and should be handled in the MAIN state.
+    */
+  private def processPostback(postback: MessageFromFacebook.Postback, user: User): Future[Result] = {
+    if (postback.payload.toLowerCase.contains("start")) {
+      postback.referral.flatMap(ref => processReferral(ref, user))
+        .orElse(user.state.collect { case StateHandler.NewUserStateName => SubscribeQuestionState.question(user) })
+        .getOrElse(State.greeting(user))
+    } else MainState.onMenuButtonClick(user, postback, capi, facebook)
+  }
+
+  /**
+    * A referral field may be present inside or outside of a postback.
+    * Either way, we want to log the referrer, and potentially update the state based on the referrer.
+    */
+  private def processReferral(referral: MessageFromFacebook.Referral, user: User): Option[Future[Result]] = {
+    State.log(ReferralEvent(id = user.ID, referrer = referral.ref))
+    referral.ref match {
+      case "football_transfers" => Some(FootballTransferSubscribeQuestionState.question(user))
+      case _ => None
     }
   }
 

@@ -85,7 +85,8 @@ object MessageFromFacebook {
                        recipient: Id,
                        timestamp: Long,
                        message: Option[Message],
-                       postback: Option[Postback])
+                       postback: Option[Postback],
+                       referral: Option[Referral])
 
   case class Message(mid: String,
                      seq: Int,

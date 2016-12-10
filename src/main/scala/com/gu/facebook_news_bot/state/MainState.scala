@@ -1,6 +1,5 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
@@ -62,10 +61,12 @@ case object MainState extends State {
   }
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
-    //Should have either a message or a postback
-    messaging.message.fold(messaging.postback.flatMap(processButtonPostback))(processMessage).map { event =>
-      processEvent(user, event, capi, facebook)
-    } getOrElse State.unknown(user)
+    val result = for {
+      message <- messaging.message
+      event <- processMessage(message)
+    } yield processEvent(user, event, capi, facebook)
+
+    result.getOrElse(State.unknown(user))
   }
 
   //Clicking a menu button brings the user into the MAIN state - other states can call this after receiving a postback
@@ -84,7 +85,7 @@ case object MainState extends State {
       case NewContentEvent(maybeContentType, maybeTopic) =>
         //Either have a new contentType, or use an existing contentType
         maybeContentType.orElse(user.contentType.flatMap(ContentType.fromString)) map { contentType =>
-          log(ContentLogEvent(user.ID, contentType.name, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
+          State.log(ContentLogEvent(user.ID, contentType.name, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
 
           carousel(user, contentType, maybeTopic, 0, capi)
         }
@@ -94,7 +95,7 @@ case object MainState extends State {
         user.contentType.flatMap(ContentType.fromString).map { contentType =>
           val offset = user.contentOffset.getOrElse(0) + CarouselSize
 
-          log(ContentLogEvent(user.ID, contentType.name, contentType.name, user.contentTopic.getOrElse(""), offset))
+          State.log(ContentLogEvent(user.ID, contentType.name, contentType.name, user.contentTopic.getOrElse(""), offset))
 
           carousel(
             user = user,
@@ -234,7 +235,7 @@ case object MainState extends State {
   }
 
   private def unsubscribe(user: User): Future[Result] = {
-    log(UnsubscribeLogEvent(user.ID))
+    State.log(UnsubscribeLogEvent(user.ID))
 
     val updatedUser = user.copy(
       notificationTime = "-",

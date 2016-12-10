@@ -19,7 +19,7 @@ object FeedbackState extends State {
       message <- messaging.message
       text <- message.text
     } yield {
-      log(LogFeedback(id = user.ID, feedback = text))
+      State.log(LogFeedback(id = user.ID, feedback = text))
       Future.successful(State.changeState(user, MainState.Name), List(MessageToFacebook.textMessage(user.ID, "Thank you for the feedback")))
     }
 

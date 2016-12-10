@@ -26,15 +26,13 @@ case object BriefingTimeQuestionState extends State {
   private case class BriefingTimeEvent(id: String, event: String = "subscribe", _eventName: String = "subscribe", time: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
-    messaging.postback.map(MainState.onMenuButtonClick(user, _, capi, facebook)) getOrElse {
-      if (user.state.contains(Name)) {
-        //There should be valid time in either the text or quick_reply fields
-        val maybeTime = ValidTimes.find(time => State.getUserInput(messaging).exists(u => u.contains(time)))
-        maybeTime.map(time => success(user, time, facebook)).getOrElse(question(user))
-      } else {
-        //New state
-        question(user)
-      }
+    if (user.state.contains(Name)) {
+      //There should be valid time in either the text or quick_reply fields
+      val maybeTime = ValidTimes.find(time => State.getUserInput(messaging).exists(u => u.contains(time)))
+      maybeTime.map(time => success(user, time, facebook)).getOrElse(question(user))
+    } else {
+      //New state
+      question(user)
     }
   }
 
@@ -46,7 +44,7 @@ case object BriefingTimeQuestionState extends State {
   }
 
   private def success(user: User, time: String, facebook: Facebook): Future[Result] = {
-    log(BriefingTimeEvent(id = user.ID, time = time))
+    State.log(BriefingTimeEvent(id = user.ID, time = time))
 
     facebook.getUser(user.ID) flatMap {
       case GetUserSuccessResponse(fbData) =>

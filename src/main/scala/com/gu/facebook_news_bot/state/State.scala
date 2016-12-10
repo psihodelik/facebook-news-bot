@@ -15,16 +15,6 @@ trait State {
     * Define the user's state transition, and build any messages to be sent to user
     */
   def transition(user: User, message: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result]
-
-  /**
-    * Each State can optionally perform additional logging using an object with type LogEvent.
-    * It will be logged as JSON
-    */
-  protected def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
-    val json = JsonHelpers.encodeJson(event)
-    logEvent(json)
-    FacebookEvents.logEvent(event)
-  }
 }
 
 object State {
@@ -39,5 +29,11 @@ object State {
       message <- messaging.message
       value = message.quick_reply.map(_.payload).getOrElse(message.text.getOrElse(""))
     } yield value
+  }
+
+  def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
+    val json = JsonHelpers.encodeJson(event)
+    logEvent(json)
+    FacebookEvents.logEvent(event)
   }
 }
