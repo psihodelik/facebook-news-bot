@@ -34,10 +34,12 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
   val dynamoClient: AmazonDynamoDBAsyncClient
   val capi: Capi
   val facebook: Facebook
-  val stateHandler: StateHandler
   val usersTable: String
+  val userTeamTable: String
 
-  lazy val userStore = new UserStore(dynamoClient, usersTable)
+  lazy val userStore = new UserStore(dynamoClient, usersTable, userTeamTable)
+
+  lazy val stateHandler = StateHandler(facebook, capi, userStore)
 
   implicit val rejectionHandler = RejectionHandler.newBuilder()
     .handle { case r =>
@@ -74,7 +76,7 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
                   case Success(messagings) =>
                     messagings foreach { messaging =>
                       //For now, ignore message receipts
-                      if (messaging.message.isDefined || messaging.postback.isDefined) processMessaging(messaging)
+                      if (messaging.message.isDefined || messaging.postback.isDefined || messaging.referral.isDefined) processMessaging(messaging)
                     }
                   case Failure(error) => appLogger.error(s"Failed to unmarshal messagings: ${error.getMessage}", error)
                 }
@@ -153,8 +155,8 @@ object Bot extends App with BotService {
 
   override val capi = CapiImpl
   override val facebook = new FacebookImpl()
-  override val stateHandler = StateHandler(facebook, capi)
   override val usersTable = BotConfig.aws.usersTable
+  override val userTeamTable = BotConfig.aws.userTeamTable
 
   override val dynamoClient: AmazonDynamoDBAsyncClient = {
     if (BotConfig.stage == Mode.Dev) {

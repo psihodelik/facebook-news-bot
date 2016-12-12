@@ -26,10 +26,11 @@ object MessageToFacebook {
     )
   }
 
+  private val MaxQuickReplies = 10
   def quickRepliesMessage(id: String, quickReplies: Seq[QuickReply], text: String): MessageToFacebook = {
     val message = MessageToFacebook.Message(
       text = Some(text),
-      quick_replies = Some(quickReplies)
+      quick_replies = Some(quickReplies.take(MaxQuickReplies))
     )
     MessageToFacebook(
       recipient = Id(id),

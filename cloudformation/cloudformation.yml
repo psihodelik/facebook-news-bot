@@ -45,6 +45,9 @@ Parameters:
     DynamodbTableName:
         Description: Name of dynamodb table used to store user data
         Type: String
+    UserTeamDynamodbTableName:
+        Description: Name of dynamodb table used to store football transfer subscription data
+        Type: String
     MorningBriefingSnsTopicArn:
         Description: ARN of the morning briefings SNS topic
         Type: String
@@ -119,6 +122,24 @@ Resources:
                         - dynamodb:Query
                     Resource:
                         !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamodbTableName}*
+            Roles:
+                - !Ref FacebookNewsBotRole
+
+    UserTeamDynamoPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: user-team-dynamo-policy
+            PolicyDocument:
+                Statement:
+                    Effect: Allow
+                    Action:
+                        - dynamodb:GetItem
+                        - dynamodb:PutItem
+                        - dynamodb:UpdateItem
+                        - dynamodb:Query
+                        - dynamodb:DeleteItem
+                    Resource:
+                        !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${UserTeamDynamodbTableName}*
             Roles:
                 - !Ref FacebookNewsBotRole
 

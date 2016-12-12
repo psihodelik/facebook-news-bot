@@ -4,7 +4,7 @@ import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, 
 import com.gu.facebook_news_bot.services.Facebook.{GetUserResult, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.{ReferralEvent, Result}
-import com.gu.facebook_news_bot.state.football.FootballTransferSubscribeQuestionState
+import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 import io.circe.generic.auto._
 
 object StateHandler {
-  def apply(facebook: Facebook, capi: Capi) = new StateHandler(facebook, capi)
+  def apply(facebook: Facebook, capi: Capi, store: UserStore) = new StateHandler(facebook, capi, store)
 
   type Result = (User, List[MessageToFacebook])
 
@@ -21,7 +21,7 @@ object StateHandler {
   private case class ReferralEvent(id: String, event: String = "referral", _eventName: String = "referral", referrer: String) extends LogEvent
 }
 
-class StateHandler(facebook: Facebook, capi: Capi) {
+class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
 
   /**
     * @param userOpt  user from dynamodb
@@ -30,14 +30,13 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     */
   def process(userOpt: Option[User], message: MessageFromFacebook.Messaging): Future[Result] = {
     userOpt.map(Future.successful).getOrElse(newUser(message.sender.id)) flatMap { user =>
-
       message.postback.map(postback => processPostback(postback, user))
         .orElse(message.referral.flatMap(referral => processReferral(referral, user)))
         .getOrElse {
           if (user.state.contains(StateHandler.NewUserStateName)) SubscribeQuestionState.question(user)
           else {
             val state = user.state.map(getStateFromString) getOrElse MainState
-            state.transition(user, message, capi, facebook)
+            state.transition(user, message, capi, facebook, store)
           }
         }
     }
@@ -55,7 +54,7 @@ class StateHandler(facebook: Facebook, capi: Capi) {
       postback.referral.flatMap(ref => processReferral(ref, user))
         .orElse(user.state.collect { case StateHandler.NewUserStateName => SubscribeQuestionState.question(user) })
         .getOrElse(State.greeting(user))
-    } else MainState.onMenuButtonClick(user, postback, capi, facebook)
+    } else MainState.onMenuButtonClick(user, postback, capi, facebook, store)
   }
 
   /**
@@ -65,7 +64,7 @@ class StateHandler(facebook: Facebook, capi: Capi) {
   private def processReferral(referral: MessageFromFacebook.Referral, user: User): Option[Future[Result]] = {
     State.log(ReferralEvent(id = user.ID, referrer = referral.ref))
     referral.ref match {
-      case "football_transfers" => Some(FootballTransferSubscribeQuestionState.question(user))
+      case "football_transfers" => Some(FootballTransferStates.InitialQuestionState.question(user))
       case _ => None
     }
   }
@@ -86,6 +85,11 @@ class StateHandler(facebook: Facebook, capi: Capi) {
     case BriefingTimeQuestionState.Name => BriefingTimeQuestionState
     case EditionQuestionState.Name => EditionQuestionState
     case FeedbackState.Name => FeedbackState
+    case ManageMorningBriefingState.Name => ManageMorningBriefingState
+    case FootballTransferStates.InitialQuestionState.Name => FootballTransferStates.InitialQuestionState
+    case FootballTransferStates.EnterTeamsState.Name => FootballTransferStates.EnterTeamsState
+    case FootballTransferStates.ManageFootballTransfersState.Name => FootballTransferStates.ManageFootballTransfersState
+    case FootballTransferStates.RemoveTeamState.Name => FootballTransferStates.RemoveTeamState
     case _ => MainState
   }
 

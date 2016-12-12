@@ -1,0 +1,22 @@
+{
+  "entry" : [
+    {
+      "id" : "blah",
+      "time" : 0,
+      "messaging" : [
+        {
+          "sender" : {
+            "id" : "football_transfers_test"
+          },
+          "recipient" : {
+            "id" : "1"
+          },
+          "timestamp" : 0,
+          "postback" : {
+            "payload" : "manage_football_transfers"
+          }
+        }
+      ]
+    }
+  ]
+}

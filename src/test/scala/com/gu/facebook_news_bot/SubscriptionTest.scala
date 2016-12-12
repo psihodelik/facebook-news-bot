@@ -13,7 +13,7 @@ import io.circe.generic.auto._
 
 class SubscriptionTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
   val TestName = "subscription_test"
-  LocalDynamoDB.createTable(TestName)
+  LocalDynamoDB.createUsersTable(TestName)
 
   it("should ask a new user if they want to subscribe") {
     val service = new TestService(TestName)
@@ -51,14 +51,14 @@ class SubscriptionTest extends FunSpec with Matchers with ScalatestRouteTest wit
     }
   }
 
-  it("should include subscription time in response to manage_subscription") {
+  it("should include subscription time in response to manage_morning_briefing") {
     val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/manageSubscription.json"))
+    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/manageMorningBriefing.json"))
 
     request ~> service.routes ~> check {
       status should equal(OK)
 
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/manageSubscription.json")
+      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/manageMorningBriefing.json")
       verify(service.facebook, timeout(5000)).send(List(expectedMessage))
     }
   }

@@ -1,0 +1,25 @@
+{
+  "recipient":{
+    "id":"football_transfers_test"
+  },
+  "message":{
+    "text":"What would you like to change?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"Unsubscribe",
+        "payload":"unsubscribe"
+      },
+      {
+        "content_type":"text",
+        "title":"Add teams",
+        "payload":"add"
+      },
+      {
+        "content_type":"text",
+        "title":"Remove teams",
+        "payload":"remove"
+      }
+    ]
+  }
+}

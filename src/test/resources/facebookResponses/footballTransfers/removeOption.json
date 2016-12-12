@@ -1,0 +1,15 @@
+{
+  "recipient":{
+    "id":"football_transfers_test"
+  },
+  "message":{
+    "text":"Which team shall I remove?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"Manchester United",
+        "payload":"Manchester United"
+      }
+    ]
+  }
+}

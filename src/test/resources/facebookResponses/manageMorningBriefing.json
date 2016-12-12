@@ -1,0 +1,25 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Your edition is currently set to UK and your morning briefing time is 06:00.\n\nWhat would you like to change?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"Change time",
+        "payload":"time"
+      },
+      {
+        "content_type":"text",
+        "title":"Change edition",
+        "payload":"edition"
+      },
+      {
+        "content_type":"text",
+        "title":"Unsubscribe",
+        "payload":"unsubscribe"
+      }
+    ]
+  }
+}
