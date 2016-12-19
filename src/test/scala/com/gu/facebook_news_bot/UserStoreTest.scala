@@ -12,8 +12,8 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(15, Millis))
 
   val TableName = "user-store-test"
-  LocalDynamoDB.createTable(TableName)
-  val userStore = new UserStore(LocalDynamoDB.client, TableName)
+  LocalDynamoDB.createUsersTable(TableName)
+  val userStore = new UserStore(LocalDynamoDB.client, TableName, s"$TableName-teams")
 
   it("should return None for new user") {
     userStore.getUser("1").futureValue should be(None)

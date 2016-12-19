@@ -9,9 +9,14 @@ import scala.collection.convert.decorateAsJava._
 //Totally stolen from https://github.com/guardian/scanamo/blob/master/src/test/scala/com/gu/scanamo/LocalDynamoDB.scala
 object LocalDynamoDB {
 
-  def createTable(name: String) = {
-    println(s"Creating table $name")
-    withTableWithSecondaryIndex(name, "notificationTimeUTC-ID-index")('ID -> S)('notificationTimeUTC -> S,'ID -> S)
+  def createUsersTable(name: String) = {
+    println(s"Creating users table $name")
+    tableWithSecondaryIndex(name, "notificationTimeUTC-ID-index")('ID -> S)('notificationTimeUTC -> S,'ID -> S)
+  }
+
+  def createUserTeamTable(name: String) = {
+    println(s"Creating user-team table $name")
+    tableWithSecondaryIndex(name, "team-ID-index")('ID -> S, 'team -> S)('team -> S, 'ID -> S)
   }
 
   val client = {
@@ -20,7 +25,7 @@ object LocalDynamoDB {
     c
   }
 
-  def withTableWithSecondaryIndex(tableName: String, secondaryIndexName: String)
+  def tableWithSecondaryIndex(tableName: String, secondaryIndexName: String)
                                  (primaryIndexAttributes: (Symbol, ScalarAttributeType)*)(secondaryIndexAttributes: (Symbol, ScalarAttributeType)*) = {
     client.createTable(
       new CreateTableRequest().withTableName(tableName)

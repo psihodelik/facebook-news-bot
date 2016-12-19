@@ -6,14 +6,16 @@
       "messaging" : [
         {
           "sender" : {
-            "id" : "subscription_test"
+            "id" : "football_transfers_test"
           },
           "recipient" : {
-            "id" : "3"
+            "id" : "1"
           },
           "timestamp" : 0,
-          "postback" : {
-            "payload" : "manage_subscription"
+          "message" : {
+            "mid" : "",
+            "seq" : 0,
+            "text" : "man utd"
           }
         }
       ]

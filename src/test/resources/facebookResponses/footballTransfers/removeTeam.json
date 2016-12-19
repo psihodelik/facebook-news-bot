@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"football_transfers_test"
+  },
+  "message":{
+    "text":"You will no longer receive transfer updates for Manchester United"
+  }
+}

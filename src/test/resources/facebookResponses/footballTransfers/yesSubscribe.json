@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"football_transfers_test"
+  },
+  "message":{
+    "text":"OK, which team are you interested in?"
+  }
+}

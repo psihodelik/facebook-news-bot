@@ -24,6 +24,7 @@ object BotConfig {
 
   object aws {
     val usersTable = getMandatoryString("aws.dynamo.usersTableName")
+    val userTeamTable = getMandatoryString("aws.dynamo.userTeamTableName")
     val region = getStringOrDefault("aws.region", "eu-west-1")
 
     val loggingKinesisStreamName: Option[String] = Try(config.getString("aws.logging.kinesisStreamName")).toOption
@@ -51,6 +52,10 @@ object BotConfig {
 
   object capi {
     val key = getMandatoryString("capi.key")
+  }
+
+  object football {
+    val api = getMandatoryString("football.sheetsApi")
   }
 
   val nextGenApiUrl = {

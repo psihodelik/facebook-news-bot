@@ -15,7 +15,7 @@ import StatusCodes._
 class HeadlinesTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
 
   val TableName = "headlines_test"
-  LocalDynamoDB.createTable(TableName)
+  LocalDynamoDB.createUsersTable(TableName)
 
   it("should return uk headlines") {
     val service = new TestService(TableName, true)

@@ -1,9 +1,9 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, ResponseText}
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.{CarouselSize, contentToCarousel}
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
@@ -49,6 +49,8 @@ case object MainState extends State {
   private case object GoodbyeEvent extends Event
   private case object FeedbackEvent extends Event
   private case object SupportEvent extends Event
+  private case object ManageMorningBriefingEvent extends Event
+  private case object ManageFootballTransfersEvent extends Event
 
   private sealed trait ContentType { val name: String }
   private case object HeadlinesType extends ContentType { val name = "headlines" }
@@ -61,17 +63,19 @@ case object MainState extends State {
     }
   }
 
-  def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result] = {
-    //Should have either a message or a postback
-    messaging.message.fold(messaging.postback.flatMap(processButtonPostback))(processMessage).map { event =>
-      processEvent(user, event, capi, facebook)
-    } getOrElse State.unknown(user)
+  def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+    val result = for {
+      message <- messaging.message
+      event <- processMessage(message)
+    } yield processEvent(user, event, capi, facebook, store)
+
+    result.getOrElse(State.unknown(user))
   }
 
   //Clicking a menu button brings the user into the MAIN state - other states can call this after receiving a postback
-  def onMenuButtonClick(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook): Future[Result] = {
+  def onMenuButtonClick(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     val result = processButtonPostback(postback) map { event =>
-      processEvent(user, event, capi, facebook)
+      processEvent(user, event, capi, facebook, store)
     }
     result getOrElse State.unknown(user)
   }
@@ -79,12 +83,12 @@ case object MainState extends State {
   //For use by morning briefing, which for now just uses editors-picks and leaves the user in the MAIN state
   def getHeadlines(user: User, capi: Capi, variant: Option[String] = None): Future[Result] = carousel(user, HeadlinesType, None, 0, capi, variant)
 
-  private def processEvent(user: User, event: Event, capi: Capi, facebook: Facebook): Future[Result] = {
+  private def processEvent(user: User, event: Event, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     val result = event match {
       case NewContentEvent(maybeContentType, maybeTopic) =>
         //Either have a new contentType, or use an existing contentType
         maybeContentType.orElse(user.contentType.flatMap(ContentType.fromString)) map { contentType =>
-          log(ContentLogEvent(user.ID, contentType.name, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
+          State.log(ContentLogEvent(user.ID, contentType.name, contentType.name, maybeTopic.map(_.name).getOrElse(""), 0))
 
           carousel(user, contentType, maybeTopic, 0, capi)
         }
@@ -94,7 +98,7 @@ case object MainState extends State {
         user.contentType.flatMap(ContentType.fromString).map { contentType =>
           val offset = user.contentOffset.getOrElse(0) + CarouselSize
 
-          log(ContentLogEvent(user.ID, contentType.name, contentType.name, user.contentTopic.getOrElse(""), offset))
+          State.log(ContentLogEvent(user.ID, contentType.name, contentType.name, user.contentTopic.getOrElse(""), offset))
 
           carousel(
             user = user,
@@ -106,7 +110,7 @@ case object MainState extends State {
 
       case GreetingEvent => Some(State.greeting(user))
       case MenuEvent(text) => Some(menu(user, text))
-      case ManageSubscriptionEvent => Some(manageSubscription(user))
+      case ManageSubscriptionEvent => Some(manageSubscriptions(user))
       case SubscribeYesEvent => Some(BriefingTimeQuestionState.question(user))
       case UnsubscribeEvent => Some(unsubscribe(user))
       case ChangeEditionEvent => Some(EditionQuestionState.question(user))
@@ -115,6 +119,8 @@ case object MainState extends State {
       case GoodbyeEvent => Some(goodbyeResponse(user))
       case FeedbackEvent => Some(FeedbackState.question(user))
       case SupportEvent => Some(supportUsResponse(user))
+      case ManageMorningBriefingEvent => Some(ManageMorningBriefingState.question(user))
+      case ManageFootballTransfersEvent => Some(FootballTransferStates.ManageFootballTransfersState.question(user, store))
     }
 
     result.getOrElse(State.unknown(user))
@@ -134,6 +140,8 @@ case object MainState extends State {
     else if (postback.payload.contains("change_front_menu")) Some(ChangeEditionEvent)
     else if (postback.payload.contains("unsubscribe")) Some(UnsubscribeEvent)
     else if (postback.payload.contains("start")) Some(GreetingEvent)
+    else if (postback.payload.contains("manage_morning_briefing")) Some(ManageMorningBriefingEvent)
+    else if (postback.payload.contains("manage_football_transfers")) Some(ManageFootballTransfersEvent)
     else None
   }
 
@@ -191,18 +199,10 @@ case object MainState extends State {
   }
 
   def menu(user: User, text: String): Future[Result] = {
-    def getSubscriptionQuickReply = (user: User) => {
-      if (user.notificationTime != "-") {
-        MessageToFacebook.QuickReply(title = Some("Manage subscription"), payload = Some("subscription"))
-      } else {
-        MessageToFacebook.QuickReply(title = Some("Subscribe"), payload = Some("subscribe"))
-      }
-    }
-
     val quickReplies = Seq(
       MessageToFacebook.QuickReply(title = Some("Headlines"), payload = Some("headlines")),
       MessageToFacebook.QuickReply(title = Some("Most popular"),payload = Some("popular")),
-      getSubscriptionQuickReply(user),
+      MessageToFacebook.QuickReply(title = Some("Manage subscriptions"),payload = Some("subscription")),
       MessageToFacebook.QuickReply(title = Some("Suggest something"),payload = Some("suggest")),
       MessageToFacebook.QuickReply(title = Some("Give us feedback"),payload = Some("feedback")),
       FacebookMessageBuilder.supportUsQuickReply
@@ -213,28 +213,20 @@ case object MainState extends State {
     Future.successful((State.changeState(user, MainState.Name), List(message)))
   }
 
-  private def manageSubscription(user: User): Future[Result] = {
-    if (user.notificationTime == "-") {
-      SubscribeQuestionState.question(user)
-    } else {
-      val buttons = Seq(
-        MessageToFacebook.Button("postback", Some("Change time"), payload = Some("subscribe_yes")),
-        MessageToFacebook.Button("postback", Some("Change edition"), payload = Some("change_front_menu")),
-        MessageToFacebook.Button("postback", Some("Unsubscribe"), payload = Some("unsubscribe"))
-      )
-
-      val message = MessageToFacebook.buttonsMessage(
-        user.ID,
-        buttons,
-        ResponseText.manageSubscription(EditionQuestionState.frontToUserFriendly(user.front), user.notificationTime)
-      )
-
-      Future.successful((user, List(message)))
-    }
+  private def manageSubscriptions(user: User): Future[Result] = {
+    val message = MessageToFacebook.buttonsMessage(
+      user.ID,
+      Seq(
+        MessageToFacebook.Button("postback", Some("Morning briefing"), payload = Some("manage_morning_briefing")),
+        MessageToFacebook.Button("postback", Some("Football transfers"), payload = Some("manage_football_transfers"))
+      ),
+      "Which subscription would you like to manage?"
+    )
+    Future.successful((user, List(message)))
   }
 
-  private def unsubscribe(user: User): Future[Result] = {
-    log(UnsubscribeLogEvent(user.ID))
+  def unsubscribe(user: User): Future[Result] = {
+    State.log(UnsubscribeLogEvent(user.ID))
 
     val updatedUser = user.copy(
       notificationTime = "-",

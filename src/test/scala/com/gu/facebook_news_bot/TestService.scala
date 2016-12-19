@@ -6,7 +6,6 @@ import akka.stream.ActorMaterializer
 import com.gu.facebook_news_bot.models.{FacebookUser, User}
 import com.gu.facebook_news_bot.services.Facebook
 import com.gu.facebook_news_bot.services.Facebook.GetUserSuccessResponse
-import com.gu.facebook_news_bot.state.StateHandler
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -18,9 +17,9 @@ class TestService(testName: String, createUser: Boolean = false) extends BotServ
   override val facebook = mock[Facebook]
   when(facebook.getUser(anyString())).thenReturn(Future.successful(GetUserSuccessResponse(FacebookUser("en_GB", 1.25))))
   override val capi = DummyCapi
-  override val stateHandler = StateHandler(facebook, capi)
   override val dynamoClient = LocalDynamoDB.client
-  override val usersTable = testName  
+  override val usersTable = testName
+  override val userTeamTable = s"$testName-teams"
 
   override implicit val system = ActorSystem("facebook-news-bot-actor-system")
   override implicit val executor = system.dispatcher

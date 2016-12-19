@@ -3,6 +3,7 @@ package com.gu.facebook_news_bot.state
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents}
 import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText}
 import com.gu.facebook_news_bot.utils.Loggers._
 import io.circe.ObjectEncoder
@@ -14,17 +15,7 @@ trait State {
   /**
     * Define the user's state transition, and build any messages to be sent to user
     */
-  def transition(user: User, message: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook): Future[Result]
-
-  /**
-    * Each State can optionally perform additional logging using an object with type LogEvent.
-    * It will be logged as JSON
-    */
-  protected def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
-    val json = JsonHelpers.encodeJson(event)
-    logEvent(json)
-    FacebookEvents.logEvent(event)
-  }
+  def transition(user: User, message: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result]
 }
 
 object State {
@@ -39,5 +30,11 @@ object State {
       message <- messaging.message
       value = message.quick_reply.map(_.payload).getOrElse(message.text.getOrElse(""))
     } yield value
+  }
+
+  def log[T <: LogEvent : ObjectEncoder](event: T): Unit = {
+    val json = JsonHelpers.encodeJson(event)
+    logEvent(json)
+    FacebookEvents.logEvent(event)
   }
 }
