@@ -15,6 +15,8 @@ import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText, SQSPoller}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
+import io.circe.generic.auto._
+
 import scala.concurrent.Future
 
 object MorningBriefingPoller {
@@ -30,7 +32,7 @@ object MorningBriefingPoller {
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
   val SQSName = BotConfig.aws.morningBriefingSQSName
-
+  
   override def process(messageBody: SQSMessageBody): Future[List[FacebookMessageResult]] =
     JsonHelpers.decodeJson[User](messageBody.Message).map(user => processUser(user.ID)) getOrElse Future.successful(Nil)
 

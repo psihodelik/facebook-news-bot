@@ -10,6 +10,7 @@ import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.state.Teams.TeamData
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.{LogEvent, appLogger}
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -22,7 +23,7 @@ import org.joda.time.format.DateTimeFormat
 
 object FootballTransferStates {
 
-  private val teams: Map[String,String] = Teams.getTeams
+  val teams: Map[String,TeamData] = Teams.getTeams
 
   private val rumoursNotificationTime = DateTimeFormat.forPattern("HH").parseDateTime("12")
 
@@ -80,7 +81,7 @@ object FootballTransferStates {
         case other =>
           teams.get(other.trim.replaceAll("[.,!?]", "")) match {
             case Some(team) =>
-              store.addTeam(user.ID, team)
+              store.addTeam(user.ID, team.name)
 
               val updatedUser = {
                 if (!user.footballTransfers.contains(true)) {
@@ -95,7 +96,7 @@ object FootballTransferStates {
 
               question(
                 updatedUser,
-                Some(s"You're now following $team. Is there another team you’re interested in?")
+                Some(s"You're now following ${team.name}. Is there another team you’re interested in?")
               )
             case None => unknown(user)
           }
@@ -107,6 +108,8 @@ object FootballTransferStates {
 
   case object ManageFootballTransfersState extends State {
     val Name = "MANAGE_FOOTBALL_TRANSFERS"
+
+    private case class UnsubscribeEvent(id: String, event: String = "football_transfers_unsubscribe", _eventName: String = "football_transfers_unsubscribe") extends LogEvent
 
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging).flatMap { text =>
@@ -144,6 +147,8 @@ object FootballTransferStates {
       store.getTeams(user.ID).map { currentTeams =>
         currentTeams.foreach(store.removeTeam(user.ID, _))
 
+        State.log(UnsubscribeEvent(user.ID))
+
         val message = MessageToFacebook.textMessage(user.ID, "You'll no longer receive football transfer window updates.")
         val updatedUser = user.copy(
           state = Some(MainState.Name),
@@ -162,7 +167,7 @@ object FootballTransferStates {
       val result = for {
         text <- State.getUserInput(messaging)
         team <- teams.get(text.toLowerCase.trim)
-      } yield removeTeam(user, team, store)
+      } yield removeTeam(user, team.name, store)
 
       result.getOrElse(State.unknown(user))
     }
@@ -197,15 +202,17 @@ object FootballTransferStates {
   * Gets the list of teams and their aliases from the api.
   * We do this once on startup, so getTeams is blocking.
   */
-private object Teams extends CirceSupport {
+object Teams extends CirceSupport {
   implicit val system = ActorSystem("teams-actor-system")
   implicit val materializer = ActorMaterializer()
 
+  case class TeamData(name: String, imageUrl: Option[String])
+
   private case class SheetsData(sheets: Sheets)
   private case class Sheets(team_list: Seq[Team])
-  private case class Team(Team: String, Alternative_spellings: String)
+  private case class Team(Team: String, Alternative_spellings: String, image_url: Option[String])
 
-  def getTeams: Map[String,String] = {
+  def getTeams: Map[String,TeamData] = {
     if (BotConfig.stage != Mode.Dev) {
       Await.result({
         val responseFuture = Http().singleRequest(
@@ -225,27 +232,32 @@ private object Teams extends CirceSupport {
             Map()
           } else {
             data.sheets.team_list.flatMap { team =>
+              val teamData = TeamData(team.Team, team.image_url.collect { case url if url.nonEmpty => url })
               val aliases = team.Alternative_spellings.split(",").toList.filterNot(_ == "").map { alias =>
-                alias.trim.toLowerCase -> team.Team
+                alias.trim.toLowerCase -> teamData
               }
-              val names = (team.Team.toLowerCase -> team.Team) :: aliases
-              getAlternateNames(team.Team) ::: names
+              val names = (team.Team.toLowerCase -> teamData) :: aliases
+              val altNames = getAlternateNames(team.Team).map(_ -> teamData)
+              altNames ::: names
             }.toMap
           }
         }
       }, 5.seconds)
     } else {
       //Need some test data
-      Map("man utd" -> "Manchester United")
+      Map(
+        "man utd" -> TeamData("Manchester United", Some("fake-url/file.png")),
+        "manchester united" -> TeamData("Manchester United", Some("fake-url/file.png"))
+      )
     }
   }
 
   private val cityPattern = """(.*) City$""".r.unanchored
   private val unitedPattern = """(.*) United$""".r.unanchored
-  private def getAlternateNames(name: String): List[(String,String)] = {
+  private def getAlternateNames(name: String): List[String] = {
     name match {
-      case cityPattern(start) => List(start.toLowerCase -> name)
-      case unitedPattern(start) => List(start.toLowerCase -> name, s"${start.toLowerCase} utd" -> name)
+      case cityPattern(start) => List(start.toLowerCase)
+      case unitedPattern(start) => List(start.toLowerCase, s"${start.toLowerCase} utd")
       case _ => Nil
     }
   }

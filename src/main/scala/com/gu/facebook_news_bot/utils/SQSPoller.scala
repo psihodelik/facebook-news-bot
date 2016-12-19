@@ -7,7 +7,6 @@ import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessag
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services._
-import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.SQSPoller.Poll
 import io.circe.generic.auto._
@@ -22,9 +21,6 @@ object SQSPoller {
 }
 
 trait SQSPoller extends Actor {
-
-  val userStore: UserStore
-  val capi: Capi
   val facebook: Facebook
 
   val PollPeriod: FiniteDuration = 500.millis

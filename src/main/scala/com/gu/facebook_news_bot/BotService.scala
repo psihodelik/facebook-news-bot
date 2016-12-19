@@ -12,6 +12,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller
+import com.gu.facebook_news_bot.football_transfers.FootballTransfersPoller
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, CapiImpl, Facebook, FacebookImpl}
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -174,8 +175,12 @@ object Bot extends App with BotService {
     case None => appLogger.warn(s"No kinesis stream name found for logging.")
   }
 
-  val poller = PartialFunction.condOpt(BotConfig.stage != Mode.Dev) {
+  val morningBriefingPoller = PartialFunction.condOpt(BotConfig.stage != Mode.Dev) {
     case true => system.actorOf(MorningBriefingPoller.props(userStore, capi, facebook))
+  }
+
+  val transfersPoller = PartialFunction.condOpt(BotConfig.football.enabled) {
+    case true => system.actorOf(FootballTransfersPoller.props(facebook))
   }
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
