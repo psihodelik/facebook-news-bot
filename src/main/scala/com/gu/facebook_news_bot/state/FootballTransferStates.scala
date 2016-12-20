@@ -26,7 +26,7 @@ object FootballTransferStates {
   case object InitialQuestionState extends YesOrNoState {
     val Name = "FOOTBALL_TRANSFER_INITIAL_QUESTION"
 
-    val Question = "Would you like to receive team updates during the January football transfer window?"
+    val Question = "Would you like to receive team updates and rumours during the January football transfer window?"
     protected def getQuestionText(user: User) = {
       if (user.version.contains(0)) s"Hi, I'm the Guardian chatbot. $Question"
       else Question

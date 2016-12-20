@@ -3,7 +3,7 @@
     "id":"football_transfers_test"
   },
   "message":{
-    "text":"Hi, I'm the Guardian chatbot. Would you like to receive team updates during the January football transfer window?",
+    "text":"Hi, I'm the Guardian chatbot. Would you like to receive team updates and rumours during the January football transfer window?",
     "quick_replies":[
       {
         "content_type":"text",
