@@ -45,7 +45,6 @@ object CapiImpl extends Capi {
   private def basicItemQuery(item: String) = ItemQuery(item)
     .showFields("standfirst")
     .tag("type/article")
-    .tag("-tone/minutebyminute")
     .showElements("image")
     .pageSize(25)   //Matches the number of editors-picks/most-viewed, in case they aren't available
 }
