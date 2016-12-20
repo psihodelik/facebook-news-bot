@@ -18,10 +18,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import io.circe.generic.auto._
+import org.joda.time.format.DateTimeFormat
 
 object FootballTransferStates {
 
   private val teams: Map[String,String] = Teams.getTeams
+
+  private val rumoursNotificationTime = DateTimeFormat.forPattern("HH").parseDateTime("12")
 
   case object InitialQuestionState extends YesOrNoState {
     val Name = "FOOTBALL_TRANSFER_INITIAL_QUESTION"
@@ -78,11 +81,20 @@ object FootballTransferStates {
           teams.get(other.trim.replaceAll("[.,!?]", "")) match {
             case Some(team) =>
               store.addTeam(user.ID, team)
-              //Only log the event if it's their first subscription
-              if (!user.footballTransfers.contains(true)) State.log(NewSubscriberEvent(user.ID))
+
+              val updatedUser = {
+                if (!user.footballTransfers.contains(true)) {
+                  State.log(NewSubscriberEvent(user.ID))
+
+                  user.copy(
+                    footballTransfers = Some(true),
+                    footballRumoursTimeUTC = Some(rumoursNotificationTime.minusMinutes((user.offsetHours * 60).toInt).toString("HH:mm"))
+                  )
+                } else user
+              }
 
               question(
-                user.copy(footballTransfers = Some(true)),
+                updatedUser,
                 Some(s"You're now following $team. Is there another team you’re interested in?")
               )
             case None => unknown(user)
@@ -133,7 +145,11 @@ object FootballTransferStates {
         currentTeams.foreach(store.removeTeam(user.ID, _))
 
         val message = MessageToFacebook.textMessage(user.ID, "You'll no longer receive football transfer window updates.")
-        val updatedUser = user.copy(state = Some(MainState.Name), footballTransfers = Some(false))
+        val updatedUser = user.copy(
+          state = Some(MainState.Name),
+          footballTransfers = Some(false),
+          footballRumoursTimeUTC = Some("-")
+        )
         (updatedUser, List(message))
       }
     }

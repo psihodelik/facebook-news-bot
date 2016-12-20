@@ -17,6 +17,8 @@ Resources:
           AttributeType: S
         - AttributeName: notificationTimeUTC
           AttributeType: S
+        - AttributeName: footballRumoursTimeUTC
+          AttributeType: S
       KeySchema:
         - AttributeName: ID
           KeyType: HASH
@@ -31,6 +33,17 @@ Resources:
             ProjectionType: ALL
           ProvisionedThroughput:
             ReadCapacityUnits: '5'
+            WriteCapacityUnits: '1'
+        - IndexName: footballRumoursTimeUTC-ID-index
+          KeySchema:
+            - AttributeName: footballRumoursTimeUTC
+              KeyType: HASH
+            - AttributeName: ID
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: '2'
             WriteCapacityUnits: '1'
       ProvisionedThroughput:
         ReadCapacityUnits: '5'

@@ -14,4 +14,5 @@ case class User(ID: String,
                 contentOffset: Option[Int] = None,
                 contentType: Option[String] = None,
                 daysUncontactable: Option[Int] = None,
-                footballTransfers: Option[Boolean] = None)
+                footballTransfers: Option[Boolean] = None,
+                footballRumoursTimeUTC: Option[String] = None)
