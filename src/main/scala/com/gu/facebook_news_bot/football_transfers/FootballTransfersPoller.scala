@@ -73,6 +73,7 @@ object FootballTransfersPoller {
       case "loan" => s"${t.player} has joined ${t.toClub} on loan from ${t.fromClub}"
       case "fee" if t.fee.isDefined =>
         s"${t.player} has joined ${t.toClub} from ${t.fromClub} for ${FootballTransfersPoller.prettifyFee(t.fee.get)}"
+      case "free agent" => s"${t.player} has joined ${t.toClub} as a free agent"
       case _ => s"${t.player} has joined ${t.toClub} from ${t.fromClub}"
     }
   }
