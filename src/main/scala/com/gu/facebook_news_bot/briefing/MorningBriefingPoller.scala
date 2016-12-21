@@ -66,7 +66,8 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       val decodedMessages = messages.flatMap(message => JsonHelpers.decodeJson[SQSMessageBody](message.getBody))
       if (decodedMessages.nonEmpty) {
         Future.sequence(decodedMessages.flatMap { decodedMessage =>
-          JsonHelpers.decodeJson[User](decodedMessage.Message).map(processUser)
+          //TODO - change the lambda to only send the ID, as we don't want to rely on its User model being up to date
+          JsonHelpers.decodeJson[User](decodedMessage.Message).map(user => processUser(user.ID))
         }).foreach { result =>
           //Resume polling only once the requests have been sent
           self ! Poll
@@ -88,8 +89,16 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
       appLogger.warn("Unknown message received by MorningBriefingPoller")
   }
 
-  private def processUser(user: User): Future[List[FacebookMessageResult]] = {
-    facebook.getUser(user.ID) flatMap {
+  private def processUser(userId: String): Future[List[FacebookMessageResult]] = {
+    for {
+      maybeUser <- userStore.getUser(userId)
+      fbResult <- facebook.getUser(userId)
+      result <- maybeUser.map(user => processUserResults(user, fbResult)).getOrElse(Future.successful(Nil))
+    } yield result
+  }
+
+  private def processUserResults(user: User, fbResult: Facebook.GetUserResult) = {
+    fbResult match {
       case GetUserSuccessResponse(fbUser) =>
         if (fbUser.timezone == user.offsetHours) {
           getMorningBriefing(user).flatMap { case (updatedUser, fbMessages) =>
@@ -109,7 +118,7 @@ class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook
           * Facebook returned a 200 but will not give us the user's data, which generally means they've deleted the conversation.
           * Mark them as uncontactable
           */
-        val daysUncontactable = user.daysUncontactable.map(_+1).getOrElse(1)
+        val daysUncontactable = user.daysUncontactable.map(_ + 1).getOrElse(1)
         userStore.updateUser(user.copy(daysUncontactable = Some(daysUncontactable)))
         Future.successful(Nil)
 
