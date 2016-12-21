@@ -55,7 +55,11 @@ object BotConfig {
   }
 
   object football {
+    val enabled = getBoolOrDefault("football.enabled", false)
+    val interactiveUrl = getMandatoryString("football.interactiveUrl")
     val api = getMandatoryString("football.sheetsApi")
+    val transfersSQSName = getMandatoryString("football.transfersSQSName")
+    val defaultImageUrl = getMandatoryString("football.defaultImageUrl")
   }
 
   val nextGenApiUrl = {
@@ -80,5 +84,8 @@ object BotConfig {
   }
   private def getDoubleOrDefault(name: String, default: Double): Double = {
     Try(config.getDouble(name)).getOrElse(default)
+  }
+  private def getBoolOrDefault(name: String, default: Boolean): Boolean = {
+    Try(config.getBoolean(name)).getOrElse(default)
   }
 }

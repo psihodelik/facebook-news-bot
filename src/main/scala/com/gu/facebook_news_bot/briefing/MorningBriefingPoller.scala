@@ -1,34 +1,26 @@
 package com.gu.facebook_news_bot.briefing
 
-import java.util.concurrent.Executors
-
-import akka.actor.{Actor, Props}
+import akka.actor.Props
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
-import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, Message, ReceiveMessageRequest}
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.{Poll, logBriefing}
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.logBriefing
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.{FacebookMessageResult, GetUserError, GetUserNoDataResponse, GetUserSuccessResponse}
-import com.gu.facebook_news_bot.services._
+import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
-import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
-import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText}
 import com.gu.facebook_news_bot.utils.Loggers._
-import io.circe.generic.auto._
+import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText, SQSPoller}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
-import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import io.circe.generic.auto._
+
+import scala.concurrent.Future
 
 object MorningBriefingPoller {
   def props(userStore: UserStore, capi: Capi, facebook: Facebook) = Props(new MorningBriefingPoller(userStore, capi, facebook))
-
-  case object Poll
 
   case class BriefingEventLog(id: String, event: String = "morning-briefing", _eventName: String = "morning-briefing", variant: String) extends LogEvent
   def logBriefing(id: String, variant: String): Unit = {
@@ -38,56 +30,11 @@ object MorningBriefingPoller {
   }
 }
 
-class MorningBriefingPoller(userStore: UserStore, capi: Capi, facebook: Facebook) extends Actor {
-
-  private val MaxBatchSize = 10 //Max allowed by SQS
-  private val PollPeriod = 500.millis
-
-  implicit val exec = ExecutionContext.fromExecutorService(
-    Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("morning-briefing-poller-%d").build())
-  )
-
-  override def preStart(): Unit = self ! Poll
-
-  def receive = {
-    case Poll =>
-
-      val request = new ReceiveMessageRequest(BotConfig.aws.morningBriefingSQSName)
-        .withMaxNumberOfMessages(MaxBatchSize)
-        .withWaitTimeSeconds(10)
-
-      val messages: Seq[Message] = Try(SQS.client.receiveMessage(request)) match {
-        case Success(result) => result.getMessages.asScala
-        case Failure(e) =>
-          appLogger.error(s"Error polling SQS queue: ${e.getMessage}", e)
-          Nil
-      }
-
-      val decodedMessages = messages.flatMap(message => JsonHelpers.decodeJson[SQSMessageBody](message.getBody))
-      if (decodedMessages.nonEmpty) {
-        Future.sequence(decodedMessages.flatMap { decodedMessage =>
-          //TODO - change the lambda to only send the ID, as we don't want to rely on its User model being up to date
-          JsonHelpers.decodeJson[User](decodedMessage.Message).map(user => processUser(user.ID))
-        }).foreach { result =>
-          //Resume polling only once the requests have been sent
-          self ! Poll
-        }
-      } else context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
-
-      //Delete items from the queue
-      if (messages.nonEmpty) {
-        val deleteRequest = new DeleteMessageBatchRequest(
-          BotConfig.aws.morningBriefingSQSName,
-          messages.map(message => new DeleteMessageBatchRequestEntry(message.getMessageId, message.getReceiptHandle)).asJava
-        )
-        Try(SQS.client.deleteMessageBatch(deleteRequest)) recover {
-          case e => appLogger.warn(s"Failed to delete messages from queue: ${e.getMessage}", e)
-        }
-      }
-
-    case _ =>
-      appLogger.warn("Unknown message received by MorningBriefingPoller")
-  }
+class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
+  val SQSName = BotConfig.aws.morningBriefingSQSName
+  
+  override def process(messageBody: SQSMessageBody): Future[List[FacebookMessageResult]] =
+    JsonHelpers.decodeJson[User](messageBody.Message).map(user => processUser(user.ID)) getOrElse Future.successful(Nil)
 
   private def processUser(userId: String): Future[List[FacebookMessageResult]] = {
     for {

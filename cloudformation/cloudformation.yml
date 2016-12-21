@@ -51,6 +51,9 @@ Parameters:
     MorningBriefingSnsTopicArn:
         Description: ARN of the morning briefings SNS topic
         Type: String
+    FootballTransfersSnsTopicArn:
+        Description: ARN of the football transfers SNS topic
+        Type: String
 
 Mappings:
     StageMap:
@@ -201,6 +204,7 @@ Resources:
                           - sqs:DeleteMessageBatch
                       Resource:
                           - !GetAtt MorningBriefingSQS.Arn
+                          - !GetAtt FootballTransfersSQS.Arn
             Roles:
                 - !Ref FacebookNewsBotRole
 
@@ -220,6 +224,23 @@ Resources:
                       Condition:
                           ArnEquals:
                               aws:SourceArn: !Ref MorningBriefingSnsTopicArn
+
+    FootballTransfersSQSPolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            Queues:
+                - !Ref FootballTransfersSQS
+            PolicyDocument:
+                Statement:
+                    - Sid: allow-sqs-sendmessage
+                      Effect: Allow
+                      Principal:
+                          AWS: "*"
+                      Action: SQS:SendMessage
+                      Resource: !GetAtt FootballTransfersSQS.Arn
+                      Condition:
+                          ArnEquals:
+                              aws:SourceArn: !Ref FootballTransfersSnsTopicArn
 
     InstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -363,6 +384,11 @@ Resources:
         Type: AWS::SQS::Queue
         Properties:
             QueueName: !Sub facebook-news-bot-morning-briefing-${Stage}
+
+    FootballTransfersSQS:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub facebook-news-bot-football-transfers-${Stage}
 
     LaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
