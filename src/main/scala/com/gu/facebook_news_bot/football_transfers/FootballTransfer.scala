@@ -11,3 +11,5 @@ case class FootballTransfer(
    fee: Option[Int])
 
 case class UserFootballTransfer(userId: String, transfer: FootballTransfer)
+
+case class UserFootballTransferRumour(userId: String, articleId: String)

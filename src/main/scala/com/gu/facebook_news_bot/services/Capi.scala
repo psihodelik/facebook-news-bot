@@ -16,6 +16,8 @@ trait Capi {
   def getHeadlines(edition: String, topic: Option[Topic]): Future[Seq[Content]]
 
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]]
+
+  def getArticle(id: String): Future[Option[Content]]
 }
 
 object CapiImpl extends Capi {
@@ -27,6 +29,13 @@ object CapiImpl extends Capi {
 
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]] =
     doQuery(basicItemQuery(topic.map(_.getPath(edition)).getOrElse(edition)).showMostViewed(), _.mostViewed)
+
+  def getArticle(id: String): Future[Option[Content]] = {
+    val query = ItemQuery(id).showFields("standfirst").showElements("image")
+    client.getResponse(query) map { response =>
+      response.content
+    }
+  }
 
   private def doQuery(query: ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
     CapiCache.get(query.toString).map(cached => Future.successful(cached)).getOrElse {
