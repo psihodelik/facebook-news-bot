@@ -12,7 +12,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.cm.Mode
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller
-import com.gu.facebook_news_bot.football_transfers.FootballTransfersPoller
+import com.gu.facebook_news_bot.football_transfers.{FootballTransferRumoursPoller, FootballTransfersPoller}
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, CapiImpl, Facebook, FacebookImpl}
 import de.heikoseeberger.akkahttpcirce.CirceSupport
@@ -181,6 +181,10 @@ object Bot extends App with BotService {
 
   val transfersPoller = PartialFunction.condOpt(BotConfig.football.enabled) {
     case true => system.actorOf(FootballTransfersPoller.props(facebook))
+  }
+  
+  val rumoursPoller = PartialFunction.condOpt(BotConfig.football.enabled) {
+    case true => system.actorOf(FootballTransferRumoursPoller.props(facebook, capi))
   }
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)

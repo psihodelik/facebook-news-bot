@@ -60,6 +60,7 @@ object BotConfig {
     val api = getMandatoryString("football.sheetsApi")
     val transfersSQSName = getMandatoryString("football.transfersSQSName")
     val defaultImageUrl = getMandatoryString("football.defaultImageUrl")
+    val rumoursSQSName = getMandatoryString("football.rumoursSQSName")
   }
 
   val nextGenApiUrl = {

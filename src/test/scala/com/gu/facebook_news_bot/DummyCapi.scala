@@ -17,6 +17,8 @@ object DummyCapi extends Capi {
     getFromFile("mostviewed", edition, topic)
   }
 
+  def getArticle(id: String): Future[Option[Content]] = Future.successful(None)
+
   private def getFromFile(`type`: String, edition: String, topic: Option[Topic]): Future[Seq[Content]] = {
     val file = s"src/test/resources/capiResponses/${`type`}-${topic.map(_.getPath(edition).replace("/","-")).getOrElse(edition)}.json"
     val result = JsonHelpers.decodeFromFile[Seq[Content]](file)

@@ -64,7 +64,7 @@ object FacebookMessageBuilder {
     s"$webUrl?CMP=${BotConfig.campaignCode}${variant.map(v => s"&variant=$v").getOrElse("")}"
 
   // Look for widest image up to MaxImageWidth
-  private def getImageUrl(content: Content): String = {
+  def getImageUrl(content: Content): String = {
     val widestImageAsset = for {
       elements <- content.elements
       mainElement <- elements.find(_.relation == "main").orElse(elements.headOption)
