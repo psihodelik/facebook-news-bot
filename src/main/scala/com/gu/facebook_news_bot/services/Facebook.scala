@@ -122,10 +122,12 @@ class FacebookImpl extends Facebook with CirceSupport {
   throttler ! SetTarget(Some(facebookActor))
 
   def send(messages: List[MessageToFacebook]): Future[List[FacebookMessageResult]] = {
-    val result = messages.map { message =>
-      (facebookActor ? message).mapTo[FacebookMessageResult]
+    messages match {
+      case message :: tail => (facebookActor ? message).mapTo[FacebookMessageResult].flatMap { result =>
+        send(tail).map(result :: _)
+      }
+      case Nil => Future.successful(Nil)
     }
-    Future.sequence(result)
   }
 
   def getUser(id: String): Future[GetUserResult] = {
