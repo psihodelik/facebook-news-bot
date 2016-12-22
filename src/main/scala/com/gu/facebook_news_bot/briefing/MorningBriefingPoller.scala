@@ -3,18 +3,17 @@ package com.gu.facebook_news_bot.briefing
 import akka.actor.Props
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.briefing.MorningBriefingPoller.logBriefing
+import com.gu.facebook_news_bot.briefing.MorningBriefingPoller._
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.{FacebookMessageResult, GetUserError, GetUserNoDataResponse, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
-import com.gu.facebook_news_bot.state.MainState
+import com.gu.facebook_news_bot.state.{FootballTransferStates, MainState}
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.{JsonHelpers, ResponseText, SQSPoller}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
-
 import io.circe.generic.auto._
 
 import scala.concurrent.Future
@@ -28,6 +27,17 @@ object MorningBriefingPoller {
     logEvent(JsonHelpers.encodeJson(eventLog))
     FacebookEvents.logEvent(eventLog)
   }
+
+
+  private def morningMessage(user: User) = {
+    val message = {
+      if (isNewYear(DateTime.now(DateTimeZone.UTC))) "Happy new year! Here are the top stories today"
+      else ResponseText.morningBriefing
+    }
+    MessageToFacebook.textMessage(user.ID, message)
+  }
+
+  private def isNewYear(dateTime: DateTime) = dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
 }
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
@@ -96,8 +106,20 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
         val variant = s"editors-picks-${user.front}"
         logBriefing(user.ID, variant)
 
-        MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-          (updatedUser, morningMessage(updatedUser) :: messages)
+        //TODO - revert after 2017-01-01
+        if (isNewYear(DateTime.now(DateTimeZone.UTC)) && !user.footballTransfers.contains(true)) {
+          //Send morning briefing then ask about football transfers subscription
+          for {
+            (_, headlinesMessages) <- MainState.getHeadlines(user, capi, Some(variant))
+            (updatedUser, transfersMessages) <- FootballTransferStates.InitialQuestionState.question(
+              user,
+              Some("Today the January football transfer window opens! I can send you the rumours and confirmed transfers for your favourite teams. Would you like to subscribe to these updates?")
+            )
+          } yield (updatedUser, morningMessage(updatedUser) :: headlinesMessages ::: transfersMessages)
+        } else {
+          MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
+            (updatedUser, morningMessage(updatedUser) :: messages)
+          }
         }
       }
     }
@@ -135,6 +157,4 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
       )
     }
   }
-
-  private def morningMessage(user: User) = MessageToFacebook.textMessage(user.ID, ResponseText.morningBriefing)
 }

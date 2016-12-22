@@ -30,6 +30,8 @@ object FootballTransferStates {
   case object InitialQuestionState extends YesOrNoState {
     val Name = "FOOTBALL_TRANSFER_INITIAL_QUESTION"
 
+    private case class NoEvent(id: String, event: String = "football_transfers_subscribe_no", _eventName: String = "football_transfers_subscribe_no") extends LogEvent
+
     val Question = "Would you like to receive team updates and rumours during the January football transfer window?"
     protected def getQuestionText(user: User) = {
       if (user.version.contains(0)) s"Hi, I'm the Guardian chatbot. $Question"
@@ -38,7 +40,10 @@ object FootballTransferStates {
 
     protected def yes(user: User, facebook: Facebook): Future[Result] = EnterTeamsState.question(user)
 
-    protected def no(user: User): Future[Result] = MainState.menu(user, "Ok. Is there anything else I can help you with?")
+    protected def no(user: User): Future[Result] = {
+      State.log(NoEvent(id = user.ID))
+      MainState.menu(user, "Ok. Is there anything else I can help you with?")
+    }
   }
 
   /**

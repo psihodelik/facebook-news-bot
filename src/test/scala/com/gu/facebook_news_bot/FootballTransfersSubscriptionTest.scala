@@ -11,7 +11,7 @@ import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.mockito.MockitoSugar
 import io.circe.generic.auto._
 
-class FootballTransfersTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
+class FootballTransfersSubscriptionTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
   val TestName = "football_transfers_test"
   LocalDynamoDB.createUsersTable(TestName)
   LocalDynamoDB.createUserTeamTable(s"$TestName-teams")
