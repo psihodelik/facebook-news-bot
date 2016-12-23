@@ -13,6 +13,7 @@ import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.state.Teams.TeamData
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.{LogEvent, appLogger}
+import com.gu.facebook_news_bot.utils.ResponseText
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +33,7 @@ object FootballTransferStates {
 
     private case class NoEvent(id: String, event: String = "football_transfers_subscribe_no", _eventName: String = "football_transfers_subscribe_no") extends LogEvent
 
-    val Question = "Would you like to receive team updates and rumours during the January football transfer window?"
+    val Question = "Would you like to receive updates for your favourite teams plus a regular rumours round-up throughout the January football transfer window?"
     protected def getQuestionText(user: User) = {
       if (user.version.contains(0)) s"Hi, I'm the Guardian chatbot. $Question"
       else Question
@@ -77,11 +78,13 @@ object FootballTransferStates {
         case YesOrNoState.YesPattern(_) => question(user)
 
         case NoPattern(_) =>
-          val message = {
-            if (user.footballTransfers.contains(true)) "Thanks for signing up. You’ll receive updates throughout the January window.\nIs there anything else I can help you with?"
-            else "Is there anything else I can help you with?"
+          val firstSentence = {
+            if (user.footballTransfers.contains(true)) "Thanks for signing up. You’ll receive updates throughout the January window.\n"
+            else ""
           }
-          MainState.menu(user, message)
+
+          if (user.notificationTimeUTC == "-") SubscribeQuestionState.question(user, Some(firstSentence + "Would you like to subscribe to the Guardian's daily morning news briefing?"))
+          else MainState.menu(user, firstSentence + "Is there anything else I can help you with?")
 
         case other =>
           teams.get(other.trim.replaceAll("[.,!?]", "")) match {
@@ -108,7 +111,7 @@ object FootballTransferStates {
       }
     }
 
-    private def unknown(user: User): Future[Result] = question(user, Some("Sorry, I didn’t understand that. Would you like to enter another team?"))
+    private def unknown(user: User): Future[Result] = question(user, Some("Sorry, I don't have data for that team. I have teams from the English Premier League, La Liga, Serie A, Bundesliga and Ligue 1. Would you like to enter another team?"))
   }
 
   case object ManageFootballTransfersState extends State {

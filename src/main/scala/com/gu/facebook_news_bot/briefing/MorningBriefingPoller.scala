@@ -113,7 +113,7 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
             (_, headlinesMessages) <- MainState.getHeadlines(user, capi, Some(variant))
             (updatedUser, transfersMessages) <- FootballTransferStates.InitialQuestionState.question(
               user,
-              Some("Today the January football transfer window opens! I can send you the rumours and confirmed transfers for your favourite teams. Would you like to subscribe to these updates?")
+              Some("Today the football transfer window opens! I can send you updates for your favourite teams plus a regular rumours round-up. Would you like to subscribe to these updates?")
             )
           } yield (updatedUser, morningMessage(updatedUser) :: headlinesMessages ::: transfersMessages)
         } else {
