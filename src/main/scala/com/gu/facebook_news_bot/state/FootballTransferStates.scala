@@ -30,7 +30,7 @@ object FootballTransferStates {
   case object InitialQuestionState extends YesOrNoState {
     val Name = "FOOTBALL_TRANSFER_INITIAL_QUESTION"
 
-    private case class NoEvent(id: String, event: String = "football_transfers_subscribe_no", _eventName: String = "football_transfers_subscribe_no") extends LogEvent
+    private case class NoEvent(id: String, event: String = "football_transfers_subscribe_no", _eventName: String = "football_transfers_subscribe_no", isSubscriber: Boolean) extends LogEvent
 
     val Question = "Would you like to receive team updates and rumours during the January football transfer window?"
     protected def getQuestionText(user: User) = {
@@ -41,7 +41,7 @@ object FootballTransferStates {
     protected def yes(user: User, facebook: Facebook): Future[Result] = EnterTeamsState.question(user)
 
     protected def no(user: User): Future[Result] = {
-      State.log(NoEvent(id = user.ID))
+      State.log(NoEvent(id = user.ID, isSubscriber = user.notificationTimeUTC != "-"))
       MainState.menu(user, "Ok. Is there anything else I can help you with?")
     }
   }
@@ -58,7 +58,7 @@ object FootballTransferStates {
     
     private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 
-    private case class NewSubscriberEvent(id: String, event: String = "football_transfers_subscribe", _eventName: String = "football_transfers_subscribe") extends LogEvent
+    private case class NewSubscriberEvent(id: String, event: String = "football_transfers_subscribe", _eventName: String = "football_transfers_subscribe", isSubscriber: Boolean) extends LogEvent
 
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging) match {
@@ -90,7 +90,7 @@ object FootballTransferStates {
 
               val updatedUser = {
                 if (!user.footballTransfers.contains(true)) {
-                  State.log(NewSubscriberEvent(user.ID))
+                  State.log(NewSubscriberEvent(user.ID, isSubscriber = user.notificationTimeUTC != "-"))
 
                   user.copy(
                     footballTransfers = Some(true),
