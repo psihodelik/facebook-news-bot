@@ -31,13 +31,22 @@ object MorningBriefingPoller {
 
   private def morningMessage(user: User) = {
     val message = {
-      if (isNewYear(DateTime.now(DateTimeZone.UTC))) "Happy new year! Here are the top stories today"
+      if (isNewYear(user.offsetHours)) "Happy new year! Here are the top stories today"
       else ResponseText.morningBriefing
     }
     MessageToFacebook.textMessage(user.ID, message)
   }
 
-  private def isNewYear(dateTime: DateTime) = dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
+  def isNewYear(offset: Double): Boolean = {
+    val tokens = offset.toString.split("""\.""")
+    tokens.headOption exists { hoursString =>
+      val hours = hoursString.toInt
+      val mins = if (tokens.length == 2) tokens(1).toInt else 0
+
+      val dateTime = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
+      dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
+    }
+  }
 }
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
@@ -107,7 +116,7 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
         logBriefing(user.ID, variant)
 
         //TODO - revert after 2017-01-01
-        if (isNewYear(DateTime.now(DateTimeZone.UTC)) && !user.footballTransfers.contains(true)) {
+        if (isNewYear(user.offsetHours) && !user.footballTransfers.contains(true)) {
           //Send morning briefing then ask about football transfers subscription
           for {
             (_, headlinesMessages) <- MainState.getHeadlines(user, capi, Some(variant))
