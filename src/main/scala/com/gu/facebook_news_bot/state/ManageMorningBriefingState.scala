@@ -4,19 +4,23 @@ import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, 
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
+import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import com.gu.facebook_news_bot.utils.ResponseText
+import io.circe.generic.auto._
 
 import scala.concurrent.Future
 
 object ManageMorningBriefingState extends State {
   val Name = "MANAGE_MORNING_BRIEFING"
 
+  private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe", _eventName: String = "unsubscribe") extends LogEvent
+
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     State.getUserInput(messaging).flatMap { text =>
       val lower = text.toLowerCase
       if (lower.contains("time")) Some(BriefingTimeQuestionState.question(user))
       else if (lower.contains("edition")) Some(EditionQuestionState.question(user))
-      else if (lower.contains("unsubscribe")) Some(MainState.unsubscribe(user))
+      else if (lower.contains("unsubscribe")) Some(unsubscribe(user))
       else None
     } getOrElse State.unknown(user)
   }
@@ -39,5 +43,17 @@ object ManageMorningBriefingState extends State {
 
       Future.successful((State.changeState(user, Name), List(message)))
     }
+  }
+
+  def unsubscribe(user: User): Future[Result] = {
+    State.log(UnsubscribeLogEvent(user.ID))
+
+    val updatedUser = user.copy(
+      state = Some(MainState.Name),
+      notificationTime = "-",
+      notificationTimeUTC = "-"
+    )
+    val response = MessageToFacebook.textMessage(user.ID, ResponseText.unsubscribe)
+    Future.successful((updatedUser, List(response)))
   }
 }

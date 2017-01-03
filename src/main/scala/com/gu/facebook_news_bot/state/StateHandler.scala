@@ -90,6 +90,7 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
     case FootballTransferStates.EnterTeamsState.Name => FootballTransferStates.EnterTeamsState
     case FootballTransferStates.ManageFootballTransfersState.Name => FootballTransferStates.ManageFootballTransfersState
     case FootballTransferStates.RemoveTeamState.Name => FootballTransferStates.RemoveTeamState
+    case UnsubscribeState.Name => UnsubscribeState
     case _ => MainState
   }
 

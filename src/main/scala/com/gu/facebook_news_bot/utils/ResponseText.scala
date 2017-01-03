@@ -46,7 +46,7 @@ object ResponseText {
 
   def editionQuestion = "Please choose an edition. You can choose from UK, US, Australia or International."
 
-  def editionChanged(edition: String) = s"Your edition has been updated to $edition"
+  def editionChanged(edition: String) = s"Your edition has been set to $edition"
 
   def morningBriefing = random(List(
     "Good morning! Here are the top stories today",
