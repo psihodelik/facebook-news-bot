@@ -33,6 +33,8 @@ trait SQSPoller extends Actor {
 
   override def preStart(): Unit = self ! Poll
 
+  override def postStop(): Unit = appLogger.warn(s"SQSPoller actor for queue $SQSName is stopping")
+
   def receive = {
     case Poll =>
 
@@ -49,9 +51,12 @@ trait SQSPoller extends Actor {
 
       val decodedMessages = messages.flatMap(message => JsonHelpers.decodeJson[SQSMessageBody](message.getBody))
       if (decodedMessages.nonEmpty) {
-        Future.sequence(decodedMessages.map(process)).foreach { result =>
+        Future.sequence(decodedMessages.map(process)).onComplete {
           //Resume polling only once the requests have been sent
-          self ! Poll
+          case Success(result) => self ! Poll
+          case Failure(e) =>
+            appLogger.warn(s"Error processing messages from queue $SQSName: ${e.getMessage}", e)
+            self ! Poll
         }
       } else context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
 
