@@ -2,7 +2,7 @@ package com.gu.facebook_news_bot.utils
 
 import java.util.concurrent.Executors
 
-import akka.actor.Actor
+import akka.actor.{Actor, Kill}
 import com.amazonaws.services.sqs.model.{DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, Message, ReceiveMessageRequest}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
@@ -55,19 +55,42 @@ trait SQSPoller extends Actor {
         }
       } else context.system.scheduler.scheduleOnce(PollPeriod, self, Poll)
 
-      //Delete items from the queue
-      if (messages.nonEmpty) {
-        val deleteRequest = new DeleteMessageBatchRequest(
-          SQSName,
-          messages.map(message => new DeleteMessageBatchRequestEntry(message.getMessageId, message.getReceiptHandle)).asJava
-        )
-        Try(SQS.client.deleteMessageBatch(deleteRequest)) recover {
-          case e => appLogger.warn(s"Failed to delete messages from queue: ${e.getMessage}", e)
-        }
-      }
+      if (messages.nonEmpty) deleteMessages(messages)
 
     case _ => appLogger.warn("Unknown message received by SQS Poller")
   }
 
   protected def process(messageBody: SQSMessageBody): Future[List[FacebookMessageResult]]
+
+  private def deleteMessages(messages: Seq[Message], retry: Int = 0): Unit = {
+    val deleteRequest = new DeleteMessageBatchRequest(
+      SQSName,
+      messages.map(message => new DeleteMessageBatchRequestEntry(message.getMessageId, message.getReceiptHandle)).asJava
+    )
+
+    def onFailure(failedMessages: Seq[Message]): Unit = {
+      if (retry < 3) {
+        deleteMessages(failedMessages, retry + 1)
+      } else {
+        //If we can't delete messages from SQS then we risk spamming users - kill the actor
+        appLogger.error(s"Killing SQSPoller for queue $SQSName because attempts to delete messages have repeatedly failed.")
+        self ! Kill
+      }
+    }
+
+    Try(SQS.client.deleteMessageBatch(deleteRequest)) match {
+      case Success(result) =>
+        val failures = result.getFailed.asScala.toList
+        if (failures.nonEmpty) {
+          appLogger.warn(s"${failures.length} failures while trying to delete from queue $SQSName")
+          val failedMessages = failures.flatMap { failure =>
+            messages.find(_.getMessageId == failure.getId)
+          }
+          onFailure(failedMessages)
+        }
+      case Failure(e) =>
+        appLogger.warn(s"Exception trying to delete messages from queue $SQSName: ${e.getMessage}", e)
+        onFailure(messages)
+    }
+  }
 }
