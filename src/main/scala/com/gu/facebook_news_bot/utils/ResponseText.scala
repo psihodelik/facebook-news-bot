@@ -44,7 +44,7 @@ object ResponseText {
 
   def manageSubscription(edition: String, time: String) = s"Your edition is currently set to $edition and your morning briefing time is $time.\n\nWhat would you like to change?"
 
-  def editionQuestion = "Please choose a new edition:"
+  def editionQuestion = "Please choose an edition. You can choose from UK, US, Australia or International."
 
   def editionChanged(edition: String) = s"Your edition has been updated to $edition"
 

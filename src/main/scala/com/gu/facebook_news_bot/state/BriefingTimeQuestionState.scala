@@ -38,9 +38,13 @@ case object BriefingTimeQuestionState extends State {
   }
 
   //Ask the user what time they'd like the briefing
-  def question(user: User): Future[Result] = {
+  def question(user: User, initialMessage: Option[String] = None): Future[Result] = {
     val replies = ValidTimes.map(t => MessageToFacebook.QuickReply("text", Some(s"${t}am"), Some(s"$t")))
-    val message = MessageToFacebook.quickRepliesMessage(user.ID, replies, ResponseText.briefingTimeQuestion)
+    val message = MessageToFacebook.quickRepliesMessage(
+      user.ID,
+      replies,
+      s"${initialMessage.map(msg => s"$msg.\n\n").getOrElse("")}${ResponseText.briefingTimeQuestion}"
+    )
     Future.successful((State.changeState(user, Name), List(message)))
   }
 

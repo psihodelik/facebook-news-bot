@@ -60,8 +60,17 @@ case object EditionQuestionState extends State {
 
   private def success(user: User, edition: String): Future[Result] = {
     State.log(EditionEvent(id = user.ID, edition = edition))
-    val response = MessageToFacebook.textMessage(user.ID, ResponseText.editionChanged(frontToUserFriendly(edition)))
-    val updatedUser = user.copy(state = Some(MainState.Name), front = edition)
-    Future.successful((updatedUser, List(response)))
+
+    if (user.notificationTimeUTC == "-") {
+      //New subscription
+      BriefingTimeQuestionState.question(
+        user.copy(front = edition),
+        Some(ResponseText.editionChanged(frontToUserFriendly(edition)))
+      )
+    } else {
+      val response = MessageToFacebook.textMessage(user.ID, ResponseText.editionChanged(frontToUserFriendly(edition)))
+      val updatedUser = user.copy(state = Some(MainState.Name), front = edition)
+      Future.successful((updatedUser, List(response)))
+    }
   }
 }

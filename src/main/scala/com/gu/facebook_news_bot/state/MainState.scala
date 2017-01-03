@@ -111,7 +111,7 @@ case object MainState extends State {
       case GreetingEvent => Some(State.greeting(user))
       case MenuEvent(text) => Some(menu(user, text))
       case ManageSubscriptionEvent => Some(manageSubscriptions(user))
-      case SubscribeYesEvent => Some(BriefingTimeQuestionState.question(user))
+      case SubscribeYesEvent => Some(EditionQuestionState.question(user))
       case UnsubscribeEvent => Some(unsubscribe(user))
       case ChangeEditionEvent => Some(EditionQuestionState.question(user))
       case SuggestEvent => Some(suggest(user))
