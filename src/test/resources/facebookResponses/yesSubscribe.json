@@ -3,22 +3,27 @@
     "id":"subscription_test"
   },
   "message":{
-    "text":"When would you like your morning briefing delivered? You can choose from 6, 7 or 8am.",
+    "text":"Please choose an edition. You can choose from UK, US, Australia or International.",
     "quick_replies":[
       {
         "content_type":"text",
-        "title":"6am",
-        "payload":"6"
+        "title":"UK",
+        "payload":"uk"
       },
       {
         "content_type":"text",
-        "title":"7am",
-        "payload":"7"
+        "title":"US",
+        "payload":"us"
       },
       {
         "content_type":"text",
-        "title":"8am",
-        "payload":"8"
+        "title":"Australian",
+        "payload":"au"
+      },
+      {
+        "content_type":"text",
+        "title":"International",
+        "payload":"international"
       }
     ]
   }

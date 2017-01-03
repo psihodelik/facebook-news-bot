@@ -1,0 +1,25 @@
+{
+  "recipient":{
+    "id":"subscription_test"
+  },
+  "message":{
+    "text":"Which service would you like to unsubscribe from?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"Morning briefing",
+        "payload":"morning"
+      },
+      {
+        "content_type":"text",
+        "title":"All",
+        "payload":"all"
+      },
+      {
+        "content_type":"text",
+        "title":"Cancel",
+        "payload":"cancel"
+      }
+    ]
+  }
+}

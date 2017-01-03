@@ -9,13 +9,11 @@
             "id" : "subscription_test"
           },
           "recipient" : {
-            "id" : "1"
+            "id" : "3"
           },
           "timestamp" : 0,
-          "message" : {
-            "mid" : "",
-            "seq" : 0,
-            "text" : "morning briefing"
+          "postback" : {
+            "payload" : "unsubscribe"
           }
         }
       ]
