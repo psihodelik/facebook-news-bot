@@ -46,8 +46,10 @@ object FootballTransfersPoller {
     else s"£$fee"
   }
 
-  private def getImageUrl(name: String): String = {
-    FootballTransferStates.teams.get(name.toLowerCase).flatMap(_.imageUrl)
+  private def getImageUrl(transfer: FootballTransfer): String = {
+    FootballTransferStates.teams.get(transfer.toClub.toLowerCase)
+      .orElse(FootballTransferStates.teams.get(transfer.fromClub.toLowerCase))
+      .flatMap(_.imageUrl)
       .getOrElse(BotConfig.football.defaultImageUrl)
   }
 
@@ -85,7 +87,7 @@ object FootballTransfersPoller {
       url = Some(s"${BotConfig.football.interactiveUrl}?CMP=${BotConfig.campaignCode}"),
       title = Some("See more transfers")
     )
-    val imageUrl = getImageUrl(userFootballTransfer.transfer.toClub)
+    val imageUrl = getImageUrl(userFootballTransfer.transfer)
 
     val attachment = MessageToFacebook.Attachment.genericAttachment(Seq(
       MessageToFacebook.Element(
