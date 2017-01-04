@@ -24,7 +24,7 @@ case object SubscribeQuestionState extends YesOrNoState {
 
   protected def yes(user: User, facebook: Facebook): Future[Result] = {
     State.log(SubscribeYesEvent(user.ID))
-    BriefingTimeQuestionState.question(user)
+    EditionQuestionState.question(user)
   }
 
   protected def no(user: User): Future[Result] = {

@@ -3,6 +3,23 @@
     "id":"subscription_test"
   },
   "message":{
-    "text":"Your edition has been updated to UK"
+    "text":"Your edition has been set to UK.\n\nWhen would you like your morning briefing delivered? You can choose from 6, 7 or 8am.",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"6am",
+        "payload":"6"
+      },
+      {
+        "content_type":"text",
+        "title":"7am",
+        "payload":"7"
+      },
+      {
+        "content_type":"text",
+        "title":"8am",
+        "payload":"8"
+      }
+    ]
   }
 }

@@ -13,7 +13,6 @@ import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.state.Teams.TeamData
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.{LogEvent, appLogger}
-import com.gu.facebook_news_bot.utils.ResponseText
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -151,7 +150,7 @@ object FootballTransferStates {
       result.recoverWith { case _ => InitialQuestionState.question(user) }
     }
 
-    private def unsubscribe(user: User, store: UserStore): Future[Result] = {
+    def unsubscribe(user: User, store: UserStore): Future[Result] = {
       store.getTeams(user.ID).map { currentTeams =>
         currentTeams.foreach(store.removeTeam(user.ID, _))
 

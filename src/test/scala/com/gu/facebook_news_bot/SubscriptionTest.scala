@@ -15,87 +15,64 @@ class SubscriptionTest extends FunSpec with Matchers with ScalatestRouteTest wit
   val TestName = "subscription_test"
   LocalDynamoDB.createUsersTable(TestName)
 
-  it("should ask a new user if they want to subscribe") {
+  private def routeTest(inputFile: String, outputFile: String) = {
     val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/newUser.json"))
+    val request = service.getRequest(loadFile(inputFile))
 
     request ~> service.routes ~> check {
       status should equal(OK)
 
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/newUser.json")
+      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook](outputFile)
       verify(service.facebook, timeout(5000)).send(List(expectedMessage))
     }
   }
 
-  it("should ask what time if user says yes") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/yesSubscribe.json"))
+  it("should ask a new user if they want to subscribe") {
+    routeTest(
+      "src/test/resources/facebookRequests/newUser.json",
+      "src/test/resources/facebookResponses/newUser.json"
+    )
+  }
 
-    request ~> service.routes ~> check {
-      status should equal(OK)
+  it("should ask which edition if user says yes") {
+    routeTest(
+      "src/test/resources/facebookRequests/yesSubscribe.json",
+      "src/test/resources/facebookResponses/yesSubscribe.json"
+    )
+  }
 
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/yesSubscribe.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
+  it("should ask what time after setting edition") {
+    routeTest(
+      "src/test/resources/facebookRequests/changeFront.json",
+      "src/test/resources/facebookResponses/changeFront.json"
+    )
   }
 
   it("should respond to time of 6") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/briefingTime.json"))
-
-    request ~> service.routes ~> check {
-      status should equal(OK)
-
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/briefingTime.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
+    routeTest(
+      "src/test/resources/facebookRequests/briefingTime.json",
+      "src/test/resources/facebookResponses/briefingTime.json"
+    )
   }
 
   it("should include subscription time in response to manage_morning_briefing") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/manageMorningBriefing.json"))
-
-    request ~> service.routes ~> check {
-      status should equal(OK)
-
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/manageMorningBriefing.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
+    routeTest(
+      "src/test/resources/facebookRequests/manageMorningBriefing.json",
+      "src/test/resources/facebookResponses/manageMorningBriefing.json"
+    )
   }
 
-  it("should list editions in response to change_front_menu") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/changeFrontMenu.json"))
-
-    request ~> service.routes ~> check {
-      status should equal(OK)
-
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/changeFrontMenu.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
-  }
-
-  it("should update front") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/changeFront.json"))
-
-    request ~> service.routes ~> check {
-      status should equal(OK)
-
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/changeFront.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
+  it("should display unsubscribe menu") {
+    routeTest(
+      "src/test/resources/facebookRequests/unsubscribeMenu.json",
+      "src/test/resources/facebookResponses/unsubscribeMenu.json"
+    )
   }
 
   it("should unsubscribe") {
-    val service = new TestService(TestName)
-    val request = service.getRequest(loadFile("src/test/resources/facebookRequests/unsubscribe.json"))
-
-    request ~> service.routes ~> check {
-      status should equal(OK)
-
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageToFacebook]("src/test/resources/facebookResponses/unsubscribe.json")
-      verify(service.facebook, timeout(5000)).send(List(expectedMessage))
-    }
+    routeTest(
+      "src/test/resources/facebookRequests/unsubscribe.json",
+      "src/test/resources/facebookResponses/unsubscribe.json"
+    )
   }
 }

@@ -17,7 +17,6 @@ case object MainState extends State {
   val Name = "MAIN"
 
   private case class ContentLogEvent(id: String, event: String, _eventName: String, topic: String, offset: Int) extends LogEvent
-  private case class UnsubscribeLogEvent(id: String, event: String = "unsubscribe", _eventName: String = "unsubscribe") extends LogEvent
 
   private object Patterns {
     val headlines = """(^|\W)(headlines|news)($|\W)""".r.unanchored
@@ -114,8 +113,8 @@ case object MainState extends State {
       case GreetingEvent => Some(State.greeting(user))
       case MenuEvent(text) => Some(menu(user, text))
       case ManageSubscriptionEvent => Some(manageSubscriptions(user))
-      case SubscribeYesEvent => Some(BriefingTimeQuestionState.question(user))
-      case UnsubscribeEvent => Some(unsubscribe(user))
+      case SubscribeYesEvent => Some(EditionQuestionState.question(user))
+      case UnsubscribeEvent => Some(UnsubscribeState.question(user))
       case ChangeEditionEvent => Some(EditionQuestionState.question(user))
       case SuggestEvent => Some(suggest(user))
       case ThanksEvent => Some(thanksResponse(user))
@@ -226,17 +225,6 @@ case object MainState extends State {
       "Which subscription would you like to manage?"
     )
     Future.successful((user, List(message)))
-  }
-
-  def unsubscribe(user: User): Future[Result] = {
-    State.log(UnsubscribeLogEvent(user.ID))
-
-    val updatedUser = user.copy(
-      notificationTime = "-",
-      notificationTimeUTC = "-"
-    )
-    val response = MessageToFacebook.textMessage(user.ID, ResponseText.unsubscribe)
-    Future.successful((updatedUser, List(response)))
   }
 
   private def suggest(user: User): Future[Result] = {
