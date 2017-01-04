@@ -38,14 +38,10 @@ object MorningBriefingPoller {
   }
 
   def isNewYear(offset: Double): Boolean = {
-    val tokens = offset.toString.split("""\.""")
-    tokens.headOption exists { hoursString =>
-      val hours = hoursString.toInt
-      val mins = if (tokens.length == 2) tokens(1).toInt else 0
-
-      val dateTime = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
-      dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
-    }
+    val hours = math.floor(offset).toInt
+    val mins = ((offset * 60) % 60).toInt
+    val dateTime = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
+    dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
   }
 }
 
@@ -115,20 +111,8 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
         val variant = s"editors-picks-${user.front}"
         logBriefing(user.ID, variant)
 
-        //TODO - revert after 2017-01-01
-        if (isNewYear(user.offsetHours) && !user.footballTransfers.contains(true)) {
-          //Send morning briefing then ask about football transfers subscription
-          for {
-            (_, headlinesMessages) <- MainState.getHeadlines(user, capi, Some(variant))
-            (updatedUser, transfersMessages) <- FootballTransferStates.InitialQuestionState.question(
-              user,
-              Some("Today the football transfer window opens! I can send you updates for your favourite teams plus a regular rumours round-up. Would you like to subscribe to these updates?")
-            )
-          } yield (updatedUser, morningMessage(updatedUser) :: headlinesMessages ::: transfersMessages)
-        } else {
-          MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-            (updatedUser, morningMessage(updatedUser) :: messages)
-          }
+        MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
+          (updatedUser, morningMessage(updatedUser) :: messages)
         }
       }
     }
