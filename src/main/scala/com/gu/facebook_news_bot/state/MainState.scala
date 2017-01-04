@@ -69,7 +69,10 @@ case object MainState extends State {
       event <- processMessage(message)
     } yield processEvent(user, event, capi, facebook, store)
 
-    result.getOrElse(State.unknown(user))
+    result.getOrElse {
+      if (messaging.referral.nonEmpty) State.greeting(user)
+      else State.unknown(user)
+    }
   }
 
   //Clicking a menu button brings the user into the MAIN state - other states can call this after receiving a postback
