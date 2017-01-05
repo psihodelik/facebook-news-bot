@@ -25,7 +25,7 @@ object FootballTransferStates {
 
   val teams: Map[String,TeamData] = Teams.getTeams
 
-  private val rumoursNotificationTime = DateTimeFormat.forPattern("HH").parseDateTime("12")
+  val rumoursNotificationTime = DateTimeFormat.forPattern("HH").parseDateTime("12")
 
   case object InitialQuestionState extends YesOrNoState {
     val Name = "FOOTBALL_TRANSFER_INITIAL_QUESTION"

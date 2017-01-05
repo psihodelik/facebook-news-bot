@@ -6,13 +6,14 @@ import akka.actor.Props
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.gu.contentapi.client.model.v1.Content
 import com.gu.facebook_news_bot.BotConfig
-import com.gu.facebook_news_bot.models.{Id, MessageToFacebook}
+import com.gu.facebook_news_bot.models.{Id, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
-import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, JsonHelpers, SQSPoller}
+import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, JsonHelpers, Notifier, SQSPoller}
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.football_transfers.FootballTransferRumoursPoller._
+import com.gu.facebook_news_bot.stores.UserStore
 import org.jsoup.Jsoup
 import io.circe.generic.auto._
 
@@ -25,16 +26,27 @@ import scala.concurrent.duration._
   * and whether an article is fresh (newer than 24 hours).
   */
 
-class FootballTransferRumoursPoller(val facebook: Facebook, val capi: Capi) extends SQSPoller {
+class FootballTransferRumoursPoller(val facebook: Facebook, val capi: Capi, val userStore: UserStore) extends SQSPoller {
   val SQSName = BotConfig.football.rumoursSQSName
   override val PollPeriod = 2000.millis
 
   protected def process(messageBody: SQSMessageBody): Future[List[FacebookMessageResult]] = {
-    JsonHelpers.decodeJson[UserFootballTransferRumour](messageBody.Message).map(processRumour) getOrElse Future.successful(Nil)
+    JsonHelpers.decodeJson[UserFootballTransferRumour](messageBody.Message).map { rumour =>
+
+      val futureMaybeUserMessages: Future[(Option[User], scala.List[MessageToFacebook])] = for {
+        maybeUser <- Notifier.getUser(rumour.userId, facebook, userStore)
+        messages <- getMessages(rumour)
+      } yield (maybeUser, messages)
+
+      futureMaybeUserMessages.flatMap {
+        case (Some(user), messages @ (x :: tail)) => Notifier.sendAndUpdate(user, messages, facebook, userStore)
+        case _ => Future.successful(Nil)
+      }
+    }.getOrElse(Future.successful(Nil))
   }
 
-  private def processRumour(rumour: UserFootballTransferRumour): Future[List[FacebookMessageResult]] = {
-    val futureMaybeMessage: Future[Option[MessageToFacebook.Message]] = FootballTransferRumoursCache.get(rumour.articleId).map(m => Future.successful(Some(m)))
+  def getMessages(rumour: UserFootballTransferRumour): Future[List[MessageToFacebook]] = {
+    val futureMaybeMessage = FootballTransferRumoursCache.get(rumour.articleId).map(m => Future.successful(Some(m)))
       .getOrElse {
         //Not already cached - get the article from CAPI and build a message
         capi.getArticle(rumour.articleId) map { maybeContent =>
@@ -47,18 +59,16 @@ class FootballTransferRumoursPoller(val facebook: Facebook, val capi: Capi) exte
         }
       }
 
-    futureMaybeMessage.flatMap {
-      case Some(message) =>
-        logNotification(rumour.userId, rumour.articleId)
-        facebook.send(List(MessageToFacebook(recipient = Id(rumour.userId), message = Some(message))))
-      case None =>
-        Future.successful(Nil)
+    futureMaybeMessage.map { maybeMessage =>
+      maybeMessage
+        .map(message => List(MessageToFacebook(recipient = Id(rumour.userId), message = Some(message))))
+        .getOrElse(Nil)
     }
   }
 }
 
 object FootballTransferRumoursPoller {
-  def props(facebook: Facebook, capi: Capi) = Props(new FootballTransferRumoursPoller(facebook, capi))
+  def props(facebook: Facebook, capi: Capi, userStore: UserStore) = Props(new FootballTransferRumoursPoller(facebook, capi, userStore))
 
   case class NotificationEventLog(id: String, event: String = "football-transfer-rumour-notification", _eventName: String = "football-transfer-rumour-notification", articleId: String) extends LogEvent
 
