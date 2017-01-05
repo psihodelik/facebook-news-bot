@@ -70,7 +70,7 @@ object FootballTransfersPoller {
 
   private def doneDealTitle(t: FootballTransfer): String = {
     t.transferType match {
-      case "release" => s"${t.fromClub} has released ${t.player}"
+      case "released" => s"${t.fromClub} have released ${t.player}"
       case "loan ended" => s"${t.player} returns to ${t.toClub} from ${t.fromClub}"
       case "loan" => s"${t.player} has joined ${t.toClub} on loan from ${t.fromClub}"
       case "fee" if t.fee.isDefined =>
