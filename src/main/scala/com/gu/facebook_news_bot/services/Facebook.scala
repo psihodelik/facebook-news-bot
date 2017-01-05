@@ -109,7 +109,11 @@ class FacebookImpl extends Facebook with CirceSupport {
   implicit val system = ActorSystem("facebook-actor-system")
   implicit val materializer = ActorMaterializer()
 
-  implicit val timeout = Timeout(5.seconds)
+  /**
+    * Wait this long for a response from FB when sending a message.
+    * Note that delays are generally caused by the facebookActor's queue, not the actual http request.
+    */
+  implicit val timeout = Timeout(20.seconds)
 
   /**
     * Use the TimerBasedThrottler actor to rate-limit messages to Facebook messenger
