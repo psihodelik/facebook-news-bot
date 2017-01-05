@@ -97,7 +97,14 @@ object FootballTransfersPoller {
       )
     ))
 
-    val message = MessageToFacebook.Message(attachment = Some(attachment))
+    val message = MessageToFacebook.Message(
+      attachment = Some(attachment),
+      quick_replies = Some(List(
+        MessageToFacebook.QuickReply("text", Some("Headlines"), Some("headlines")),
+        MessageToFacebook.QuickReply("text", Some("Football news"), Some("football"))
+      ))
+    )
+
     MessageToFacebook(
       recipient = Id(userFootballTransfer.userId),
       message = Some(message)

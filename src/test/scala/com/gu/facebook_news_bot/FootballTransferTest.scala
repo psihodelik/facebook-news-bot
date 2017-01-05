@@ -55,6 +55,10 @@ class FootballTransferTest extends FlatSpec with Matchers {
               )
             ))
           )
+        )),
+        quick_replies = Some(List(
+          MessageToFacebook.QuickReply("text", Some("Headlines"), Some("headlines")),
+          MessageToFacebook.QuickReply("text", Some("Football news"), Some("football"))
         ))
       ))
     )
