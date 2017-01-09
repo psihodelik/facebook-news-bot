@@ -85,7 +85,11 @@ object FootballTransferRumoursPoller {
     )
 
     MessageToFacebook.Message(
-      attachment = Some(MessageToFacebook.Attachment.genericAttachment(List(element)))
+      attachment = Some(MessageToFacebook.Attachment.genericAttachment(List(element))),
+      quick_replies = Some(List(
+        MessageToFacebook.QuickReply("text", Some("Headlines"), Some("headlines")),
+        MessageToFacebook.QuickReply("text", Some("Football news"), Some("football"))
+      ))
     )
   }
 }
