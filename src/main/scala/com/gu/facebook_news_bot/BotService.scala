@@ -184,7 +184,7 @@ object Bot extends App with BotService {
   }
   
   val rumoursPoller = PartialFunction.condOpt(BotConfig.football.enabled) {
-    case true => system.actorOf(FootballTransferRumoursPoller.props(facebook, capi))
+    case true => system.actorOf(FootballTransferRumoursPoller.props(facebook, capi, userStore))
   }
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
