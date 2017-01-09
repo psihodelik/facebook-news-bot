@@ -39,7 +39,9 @@ class FootballTransferRumoursPoller(val facebook: Facebook, val capi: Capi, val 
       } yield (maybeUser, messages)
 
       futureMaybeUserMessages.flatMap {
-        case (Some(user), messages @ (x :: tail)) => Notifier.sendAndUpdate(user, messages, facebook, userStore)
+        case (Some(user), messages @ (x :: tail)) =>
+          logNotification(rumour.userId, rumour.articleId)
+          Notifier.sendAndUpdate(user, messages, facebook, userStore)
         case _ => Future.successful(Nil)
       }
     }.getOrElse(Future.successful(Nil))
