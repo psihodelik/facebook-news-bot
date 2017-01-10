@@ -72,9 +72,11 @@ object FootballTransfersPoller {
     t.transferType match {
       case "released" => s"${t.fromClub} have released ${t.player}"
       case "loan ended" => s"${t.player} returns to ${t.toClub} from ${t.fromClub}"
+      case "loan extended" => s"${t.player} has had his loan from ${t.fromClub} to ${t.toClub} extended"
       case "loan" => s"${t.player} has joined ${t.toClub} on loan from ${t.fromClub}"
       case "fee" if t.fee.isDefined =>
         s"${t.player} has joined ${t.toClub} from ${t.fromClub} for ${FootballTransfersPoller.prettifyFee(t.fee.get)}"
+      case "undisclosed fee" => s"${t.player} has joined ${t.toClub} from ${t.fromClub} for an undisclosed fee"
       case "free agent" => s"${t.player} has joined ${t.toClub} as a free agent"
       case _ => s"${t.player} has joined ${t.toClub} from ${t.fromClub}"
     }
