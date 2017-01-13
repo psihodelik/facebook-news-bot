@@ -19,6 +19,32 @@ object StateHandler {
   val NewUserStateName = "NEW_USER"
 
   private case class ReferralEvent(id: String, event: String = "referral", _eventName: String = "referral", referrer: String) extends LogEvent
+
+  private val States: Map[String, State] = List(
+    MainState,
+    SubscribeQuestionState,
+    BriefingTimeQuestionState,
+    EditionQuestionState,
+    FeedbackState,
+    ManageMorningBriefingState,
+    FootballTransferStates.InitialQuestionState,
+    FootballTransferStates.EnterTeamsState,
+    FootballTransferStates.ManageFootballTransfersState,
+    FootballTransferStates.RemoveTeamState,
+    UnsubscribeState)
+    .map((state: State) => (state.Name, state))
+    .toMap + (StateHandler.NewUserStateName -> SubscribeQuestionState)
+  
+  private def getStateFromString(state: String): State = States.getOrElse(state.toUpperCase, MainState)
+
+  private def localToFront(locale: String): String = {
+    locale match {
+      case "en_GB" => "uk"
+      case "en_US" => "us"
+      case "en_UD" => "au"
+      case _ => "international"
+    }
+  }
 }
 
 class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
@@ -35,7 +61,7 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
         .getOrElse {
           if (user.state.contains(StateHandler.NewUserStateName)) SubscribeQuestionState.question(user)
           else {
-            val state = user.state.map(getStateFromString) getOrElse MainState
+            val state = user.state.map(StateHandler.getStateFromString) getOrElse MainState
             state.transition(user, message, capi, facebook, store)
           }
         }
@@ -72,34 +98,10 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
   case class GetUserException(data: GetUserResult) extends Throwable
   private def newUser(id: String): Future[User] = {
     facebook.getUser(id) map {
-      case GetUserSuccessResponse(facebookUser) => User(id, localToFront(facebookUser.locale), facebookUser.timezone, "-", "-", Some(StateHandler.NewUserStateName), Some(0))
+      case GetUserSuccessResponse(facebookUser) => User(id, StateHandler.localToFront(facebookUser.locale), facebookUser.timezone, "-", "-", Some(StateHandler.NewUserStateName), Some(0))
       case other =>
         //Facebook won't give us the user's data for whatever reason. Throwing an exception here will cause the standard error response to be sent.
         throw GetUserException(other)
-    }
-  }
-
-  private def getStateFromString(state: String): State = state.toUpperCase match {
-    case StateHandler.NewUserStateName => SubscribeQuestionState
-    case SubscribeQuestionState.Name => SubscribeQuestionState
-    case BriefingTimeQuestionState.Name => BriefingTimeQuestionState
-    case EditionQuestionState.Name => EditionQuestionState
-    case FeedbackState.Name => FeedbackState
-    case ManageMorningBriefingState.Name => ManageMorningBriefingState
-    case FootballTransferStates.InitialQuestionState.Name => FootballTransferStates.InitialQuestionState
-    case FootballTransferStates.EnterTeamsState.Name => FootballTransferStates.EnterTeamsState
-    case FootballTransferStates.ManageFootballTransfersState.Name => FootballTransferStates.ManageFootballTransfersState
-    case FootballTransferStates.RemoveTeamState.Name => FootballTransferStates.RemoveTeamState
-    case UnsubscribeState.Name => UnsubscribeState
-    case _ => MainState
-  }
-
-  private def localToFront(locale: String): String = {
-    locale match {
-      case "en_GB" => "uk"
-      case "en_US" => "us"
-      case "en_UD" => "au"
-      case _ => "international"
     }
   }
 }
