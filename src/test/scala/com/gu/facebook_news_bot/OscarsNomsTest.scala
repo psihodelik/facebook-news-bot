@@ -14,6 +14,7 @@ import org.scalatest.{FunSpec, Matchers}
 class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
   val TestName = "oscars_noms_test"
   LocalDynamoDB.createUsersTable(TestName)
+  LocalDynamoDB.createUserNomsTable(s"$TestName-oscarNoms")
 
   private def routeTest(inputFile: String, outputFile: String) = {
     val service = new TestService(TestName)
@@ -38,6 +39,13 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
     routeTest(
       "src/test/resources/facebookRequests/oscarsNoms/enterNoms.json",
       "src/test/resources/facebookResponses/oscarsNoms/enterNoms.json"
+    )
+  }
+
+  it("should accept Moonlight and ask user to confirm selection.") {
+    routeTest(
+      "src/test/resources/facebookRequests/oscarsNoms/enterBestFilm.json",
+      "src/test/resources/facebookResponses/oscarsNoms/enterBestFilm.json"
     )
   }
 

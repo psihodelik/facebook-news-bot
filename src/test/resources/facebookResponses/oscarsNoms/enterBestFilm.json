@@ -3,6 +3,6 @@
     "id":"oscars_noms_test"
   },
   "message":{
-    "text":"OK, which film do you think will win best picture?"
+    "text":"You guessed Moonlight for Best Picture."
   }
 }

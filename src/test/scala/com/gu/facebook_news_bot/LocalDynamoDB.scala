@@ -21,7 +21,7 @@ object LocalDynamoDB {
 
   def createUserNomsTable(name: String) = {
     println(s"Creating user-noms table $name")
-    tableWithSecondaryIndex(name, "team-ID-index")('ID -> S, 'team -> S)('nom -> S, 'ID -> S)
+    tableWithSecondaryIndex(name, "film-ID-index")('ID -> S, 'bestFilm -> S)('bestFilm -> S, 'ID -> S)
   }
 
   val client = {

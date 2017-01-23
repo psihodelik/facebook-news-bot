@@ -62,16 +62,33 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
   }
 
   object OscarsStore {
-    def getOscarsNom(id: String): Future[Seq[String]] = {
-      ScanamoAsync.exec(client)(userNomsTable.query('ID -> id)) map { results =>
-        results.flatMap { result =>
-          result.toOption.map(_.bestPicture)
 
+    def getUserNoms(id: String): Future[Option[UserNoms]] = {
+      val futureResult = ScanamoAsync.get[UserNoms](client)(userNomsTableName)('ID -> id)
+      futureResult.map { result =>
+        result.flatMap { parseResult =>
+          //If parsing fails, log the error and we'll have to create a new user
+          parseResult.fold(
+            { error =>
+              appLogger.error(s"Error parsing User data from dynamodb: $error")
+              None
+            }, {
+              Some(_)
+            }
+          )
         }
-
       }
     }
+
+    def addNomination(userNominations: UserNoms): Future[Xor[ConditionalCheckFailedException, PutItemResult]] = {
+      //Conditional update - if user already exists and its version has changed, do not update
+      val currentVersion = userNominations.version.getOrElse(0l)
+      val newUser = userNominations.copy(version = Some(currentVersion + 1))
+      ScanamoAsync.exec(client)(userNomsTable.given(Not(attributeExists('version)) or 'version -> currentVersion).put(newUser))
+    }
+
   }
+
 
 
 }

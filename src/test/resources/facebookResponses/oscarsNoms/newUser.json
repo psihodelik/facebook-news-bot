@@ -3,7 +3,7 @@
     "id":"oscars_noms_test"
   },
   "message":{
-    "text":"Hi, I'm the Guardian chatbot. Would you like to play our Oscars Nomination game?",
+    "text":"Hi, I'm the Guardian chatbot. Would you like to play our Oscars Predictions game?",
     "quick_replies":[
       {
         "content_type":"text",

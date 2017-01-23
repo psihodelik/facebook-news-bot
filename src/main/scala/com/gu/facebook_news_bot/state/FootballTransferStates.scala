@@ -88,7 +88,7 @@ object FootballTransferStates {
         case other =>
           teams.get(other.trim.replaceAll("[.,!?]", "")) match {
             case Some(team) =>
-              store.addTeam(user.ID, team.name)
+              store.TeamStore.addTeam(user.ID, team.name)
 
               val updatedUser = {
                 if (!user.footballTransfers.contains(true)) {
@@ -129,7 +129,7 @@ object FootballTransferStates {
     }
 
     def question(user: User, store: UserStore): Future[Result] = {
-      val result = store.getTeams(user.ID).collect {
+      val result = store.TeamStore.getTeams(user.ID).collect {
         case t if t.nonEmpty =>
           //Already subscribed
           val quickReplies = Seq(
@@ -151,8 +151,8 @@ object FootballTransferStates {
     }
 
     def unsubscribe(user: User, store: UserStore): Future[Result] = {
-      store.getTeams(user.ID).map { currentTeams =>
-        currentTeams.foreach(store.removeTeam(user.ID, _))
+      store.TeamStore.getTeams(user.ID).map { currentTeams =>
+        currentTeams.foreach(store.TeamStore.removeTeam(user.ID, _))
 
         State.log(UnsubscribeEvent(user.ID))
 
@@ -180,7 +180,7 @@ object FootballTransferStates {
     }
 
     def question(user: User, store: UserStore): Future[Result] = {
-      val futureMessage = store.getTeams(user.ID).map { currentTeams =>
+      val futureMessage = store.TeamStore.getTeams(user.ID).map { currentTeams =>
         if (currentTeams.nonEmpty) {
           val quickReplies = currentTeams.toList.map { t =>
             MessageToFacebook.QuickReply(title = Some(t), payload = Some(t))
@@ -197,7 +197,7 @@ object FootballTransferStates {
     }
 
     private def removeTeam(user: User, team: String, store: UserStore): Future[Result] = {
-      store.removeTeam(user.ID, team)
+      store.TeamStore.removeTeam(user.ID, team)
 
       val message = MessageToFacebook.textMessage(user.ID, s"You will no longer receive transfer updates for $team")
       Future.successful((State.changeState(user, MainState.Name), List(message)))

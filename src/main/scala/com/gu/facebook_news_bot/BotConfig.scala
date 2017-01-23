@@ -25,6 +25,7 @@ object BotConfig {
   object aws {
     val usersTable = getMandatoryString("aws.dynamo.usersTableName")
     val userTeamTable = getMandatoryString("aws.dynamo.userTeamTableName")
+    val userNomsTable = getMandatoryString("aws.dynamo.userNomsTableName")
     val region = getStringOrDefault("aws.region", "eu-west-1")
 
     val loggingKinesisStreamName: Option[String] = Try(config.getString("aws.logging.kinesisStreamName")).toOption
