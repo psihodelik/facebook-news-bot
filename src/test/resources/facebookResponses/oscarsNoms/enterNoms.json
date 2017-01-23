@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"oscars_noms_test"
+  },
+  "message":{
+    "text":"Who do you think would win best director?"
+  }
+}

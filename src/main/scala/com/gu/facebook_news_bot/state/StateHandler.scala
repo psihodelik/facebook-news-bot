@@ -65,6 +65,7 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
     State.log(ReferralEvent(id = user.ID, referrer = referral.ref))
     referral.ref match {
       case "football_transfers" => Some(FootballTransferStates.InitialQuestionState.question(user))
+      case "oscars_noms" => Some(OscarsNomsStates.InitialQuestionState.question(user))
       case _ => None
     }
   }
@@ -90,6 +91,8 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
     case FootballTransferStates.EnterTeamsState.Name => FootballTransferStates.EnterTeamsState
     case FootballTransferStates.ManageFootballTransfersState.Name => FootballTransferStates.ManageFootballTransfersState
     case FootballTransferStates.RemoveTeamState.Name => FootballTransferStates.RemoveTeamState
+    case OscarsNomsStates.InitialQuestionState.Name => OscarsNomsStates.InitialQuestionState
+    case OscarsNomsStates.EnterNomsState.Name => OscarsNomsStates.EnterNomsState
     case UnsubscribeState.Name => UnsubscribeState
     case _ => MainState
   }
