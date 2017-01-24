@@ -66,7 +66,7 @@ object OscarsNomsStates {
       text.toLowerCase match {
         case YesOrNoState.YesPattern(_) => question(user)
         case `text` => {
-          val nom = new UserNoms(ID = user.ID, bestDirector = Some(text))
+          val nom = UserNoms(ID = user.ID, bestDirector = Some(text))
           store.OscarsStore.addNomination(nom)
 
           val updatedUser = {
@@ -84,8 +84,6 @@ object OscarsNomsStates {
         }
         case _ => question(user, Some("Sorry I didn't get that, could you please repeat?"))
       }
-
-      question(user)
     }
 
     private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
