@@ -80,20 +80,18 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
       }
     }
 
-    def createUserNominationRecord(id: String, bestFilm: String): Unit = {
-      ScanamoAsync.exec(client)(userNomsTable.put(UserNoms(id, Some(bestFilm))))
+    def createUserNominationsRecord(id: String, bestPicture: String): Unit = {
+      // The bestFilm variable is there because we are going to create the record only when it has been given by the user
+      ScanamoAsync.exec(client)(
+        userNomsTable.put(UserNoms(id, Some(bestPicture)))
+      )
     }
 
-
-//    def addNomination(userNominations: UserNoms): Future[Xor[ConditionalCheckFailedException, PutItemResult]] = {
-//      //Conditional update - if user already exists and its version has changed, do not update
-//      val currentVersion = userNominations.version.getOrElse(0l)
-//      val newUser = userNominations.copy(version = Some(currentVersion + 1))
-//      ScanamoAsync.exec(client)(userNomsTable.given(Not(attributeExists('version)) or 'version -> currentVersion).put(newUser))
-//    }
+    def updateUserNominationsRecord(nominations: UserNoms): Unit = {
+      val table = Table[UserNoms](userNomsTableName)
+      table.update( 'ID -> nominations.ID , set( 'bestPicture -> "Contact" ) )
+    }
 
   }
-
-
 
 }
