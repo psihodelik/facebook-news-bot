@@ -67,6 +67,7 @@ object OscarsNomsStates {
       text.toLowerCase match {
         case YesOrNoState.YesPattern(_) => question(user)
         case `text` => {
+
           store.OscarsStore.createUserNominationsRecord(user.ID, text)
 
           val updatedUser = {
