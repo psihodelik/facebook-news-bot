@@ -13,8 +13,7 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
 
   val TableName = "user-store-test"
   LocalDynamoDB.createUsersTable(TableName)
-  val userStore = new UserStore(LocalDynamoDB.client, TableName, s"$TableName-teams")
-
+  val userStore = new UserStore(LocalDynamoDB.client, TableName, s"$TableName-teams", s"$TableName-oscarNoms")
   it("should return None for new user") {
     userStore.getUser("1").futureValue should be(None)
   }

@@ -20,6 +20,7 @@ class TestService(testName: String, createUser: Boolean = false) extends BotServ
   override val dynamoClient = LocalDynamoDB.client
   override val usersTable = testName
   override val userTeamTable = s"$testName-teams"
+  override val userNomsTable = s"$testName-oscarNoms"
 
   override implicit val system = ActorSystem("facebook-news-bot-actor-system")
   override implicit val executor = system.dispatcher
