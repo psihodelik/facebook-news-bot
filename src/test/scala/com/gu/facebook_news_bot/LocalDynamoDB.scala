@@ -19,6 +19,11 @@ object LocalDynamoDB {
     tableWithSecondaryIndex(name, "team-ID-index")('ID -> S, 'team -> S)('team -> S, 'ID -> S)
   }
 
+  def createUserNomsTable(name: String) = {
+    println(s"Creating user-noms table $name")
+    tableWithSecondaryIndex(name, "film-ID-index")('ID -> S, 'bestFilm -> S)('bestFilm -> S, 'ID -> S)
+  }
+
   val client = {
     val c = new AmazonDynamoDBAsyncClient(new com.amazonaws.auth.BasicAWSCredentials("key", "secret"))
     c.setEndpoint("http://localhost:8000")
