@@ -89,7 +89,13 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
 
     def updateUserNominationsRecord(nominations: UserNoms): Unit = {
       val table = Table[UserNoms](userNomsTableName)
-      table.update( 'ID -> nominations.ID , set( 'bestPicture -> "Contact" ) )
+      table.update(
+        'ID -> nominations.ID,
+        set( 'bestPicture -> nominations.bestPicture ) and
+        set( 'bestDirector -> nominations.bestDirector )and
+        set( 'bestActor -> nominations.bestActor ) and
+        set( 'bestActress -> nominations.bestActress )
+      )
     }
 
   }
