@@ -4,5 +4,5 @@ case class UserNoms(ID: String,
                     bestPicture: Option[String] = None,
                     bestDirector: Option[String] = None,
                     bestActor: Option[String] = None,
-                    bestActress: Option[String] = None,
-                    step: Option[Long] = None)
+                    bestActress: Option[String] = None)
+
