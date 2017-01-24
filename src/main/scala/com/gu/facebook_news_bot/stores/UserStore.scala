@@ -80,7 +80,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
       }
     }
 
-    def addUser(id: String, bestFilm: String): Unit = {
+    def addUser(id: String, bestFilm: String): Future[PutItemResult] = {
       ScanamoAsync.exec(client)(userNomsTable.put(UserNoms(id, Some(bestFilm))))
     }
 
