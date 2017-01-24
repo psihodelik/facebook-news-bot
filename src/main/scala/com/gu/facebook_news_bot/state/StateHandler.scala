@@ -31,6 +31,8 @@ object StateHandler {
     FootballTransferStates.EnterTeamsState,
     FootballTransferStates.ManageFootballTransfersState,
     FootballTransferStates.RemoveTeamState,
+    OscarsNomsStates.InitialQuestionState,
+    OscarsNomsStates.EnterNomsState,
     UnsubscribeState)
     .map((state: State) => (state.Name, state))
     .toMap + (StateHandler.NewUserStateName -> SubscribeQuestionState)

@@ -1,11 +1,12 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User, UserNoms}
+import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import io.circe.generic.auto._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -51,8 +52,8 @@ object OscarsNomsStates {
 
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
-     val test = store.OscarsStore.getUserNoms(user.ID)
-      test.flatMap { result =>
+     val predictions = store.OscarsStore.getUserNoms(user.ID)
+      predictions.flatMap { result =>
         if (result.isEmpty) {
           isPlaying(user, text, store)
         } else {
@@ -66,8 +67,7 @@ object OscarsNomsStates {
       text.toLowerCase match {
         case YesOrNoState.YesPattern(_) => question(user)
         case `text` => {
-          val nom = new UserNoms(ID = user.ID, bestDirector = Some(text))
-          store.OscarsStore.addNomination(nom)
+          store.OscarsStore.addUser(user.ID, text)
 
           val updatedUser = {
             if (!user.oscarsNoms.contains(true)) {
@@ -84,8 +84,6 @@ object OscarsNomsStates {
         }
         case _ => question(user, Some("Sorry I didn't get that, could you please repeat?"))
       }
-
-      question(user)
     }
 
     private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
