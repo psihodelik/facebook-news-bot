@@ -13,6 +13,7 @@ import scala.concurrent.Future
 object OscarsNomsStates {
 
   case object InitialQuestionState extends YesOrNoState {
+
     val Name = "OSCARS_NOMS_INITIAL_QUESTION"
 
     private case class NoEvent(id: String, event: String = "oscars_noms_subscribe_no", _eventName: String = "oscars_noms_subscribe_no") extends LogEvent
@@ -30,6 +31,7 @@ object OscarsNomsStates {
       State.log(NoEvent(id = user.ID))
       MainState.menu(user, "Ok. Is there anything else I can help you with?")
     }
+
   }
 
   case object EnterNomsState extends State {
@@ -46,10 +48,9 @@ object OscarsNomsStates {
     }
 
     def question(user: User, text: Option[String] = None): Future[Result] = {
-      val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win best picture?"))
+      val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
       Future.successful(State.changeState(user, Name), List(message))
     }
-
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
      val predictions = store.OscarsStore.getUserNoms(user.ID)
@@ -60,16 +61,13 @@ object OscarsNomsStates {
           notPlaying(user)
         }
       }
-
     }
 
     private def isPlaying(user: User, text: String, store: UserStore): Future[Result] = {
       text.toLowerCase match {
         case YesOrNoState.YesPattern(_) => question(user)
         case `text` => {
-
           store.OscarsStore.createUserNominationsRecordWithBestPicture(user.ID, text)
-
           val updatedUser = {
             if (!user.oscarsNoms.contains(true)) {
               State.log(NewSubscriberEvent(user.ID))
@@ -78,7 +76,6 @@ object OscarsNomsStates {
               )
             } else user
           }
-
           question(
             updatedUser,
             Some(s"You guessed ${text} for Best Picture."))
@@ -88,5 +85,7 @@ object OscarsNomsStates {
     }
 
     private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
+
   }
+
 }
