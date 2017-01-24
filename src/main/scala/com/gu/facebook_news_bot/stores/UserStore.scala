@@ -80,7 +80,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
       }
     }
 
-    def createUserNominationsRecord(id: String, bestPicture: String): Future[PutItemResult] = {
+    def createUserNominationsRecordWithBestPicture(id: String, bestPicture: String): Future[PutItemResult] = {
       // The bestFilm variable is there because we are going to create the record only when it has been given by the user
       ScanamoAsync.exec(client)(
         userNomsTable.put(UserNoms(id, Some(bestPicture)))

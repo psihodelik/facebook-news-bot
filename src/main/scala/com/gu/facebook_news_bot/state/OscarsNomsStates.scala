@@ -68,7 +68,7 @@ object OscarsNomsStates {
         case YesOrNoState.YesPattern(_) => question(user)
         case `text` => {
 
-          store.OscarsStore.createUserNominationsRecord(user.ID, text)
+          store.OscarsStore.createUserNominationsRecordWithBestPicture(user.ID, text)
 
           val updatedUser = {
             if (!user.oscarsNoms.contains(true)) {
