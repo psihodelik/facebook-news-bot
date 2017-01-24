@@ -37,8 +37,9 @@ trait BotService extends CirceSupport with PredefinedFromEntityUnmarshallers {
   val facebook: Facebook
   val usersTable: String
   val userTeamTable: String
+  val userNomsTable: String
 
-  lazy val userStore = new UserStore(dynamoClient, usersTable, userTeamTable)
+  lazy val userStore = new UserStore(dynamoClient, usersTable, userTeamTable, userNomsTable)
 
   lazy val stateHandler = StateHandler(facebook, capi, userStore)
 
@@ -158,6 +159,7 @@ object Bot extends App with BotService {
   override val facebook = new FacebookImpl()
   override val usersTable = BotConfig.aws.usersTable
   override val userTeamTable = BotConfig.aws.userTeamTable
+  override val userNomsTable = BotConfig.aws.userNomsTable
 
   override val dynamoClient: AmazonDynamoDBAsyncClient = {
     if (BotConfig.stage == Mode.Dev) {
