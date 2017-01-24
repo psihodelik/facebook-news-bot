@@ -5,4 +5,4 @@ case class UserNoms(ID: String,
                     bestDirector: Option[String] = None,
                     bestActor: Option[String] = None,
                     bestActress: Option[String] = None,
-                    version: Option[Long] = None)
+                    step: Option[Long] = None)
