@@ -1,6 +1,6 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
+import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User, UserNoms}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
@@ -55,7 +55,7 @@ object OscarsNomsStates {
     }
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
-     val predictions = store.OscarsStore.getUserNoms(user.ID)
+     val predictions = store.OscarsStore.getUserNominations(user.ID)
       predictions.flatMap { result =>
         if (result.isEmpty) {
           isPlaying(user, text, store)
@@ -70,7 +70,7 @@ object OscarsNomsStates {
         case YesOrNoState.YesPattern(_) => question(user)
         case NoPattern(_) => question(user, Some("Sorry I didn't get that, could you please repeat?"))
         case _ => {
-          store.OscarsStore.createUserNominationsRecordWithBestPicture(user.ID, text)
+          store.OscarsStore. putUserNominations( UserNoms(user.ID, Some(text)) )
           val updatedUser = {
             if (!user.oscarsNoms.contains(true)) {
               State.log(NewSubscriberEvent(user.ID))
