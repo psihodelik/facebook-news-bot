@@ -38,6 +38,8 @@ object OscarsNomsStates {
 
     val Name = "OSCARS_ENTER_NOMS"
 
+    private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
+
     private case class NewSubscriberEvent(id: String, event: String = "oscars_noms_subscribe", _eventName: String = "oscars_noms_subscribe") extends LogEvent
 
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
@@ -66,7 +68,8 @@ object OscarsNomsStates {
     private def isPlaying(user: User, text: String, store: UserStore): Future[Result] = {
       text.toLowerCase match {
         case YesOrNoState.YesPattern(_) => question(user)
-        case `text` => {
+        case NoPattern(_) => question(user, Some("Sorry I didn't get that, could you please repeat?"))
+        case _ => {
           store.OscarsStore.createUserNominationsRecordWithBestPicture(user.ID, text)
           val updatedUser = {
             if (!user.oscarsNoms.contains(true)) {
@@ -80,7 +83,7 @@ object OscarsNomsStates {
             updatedUser,
             Some(s"You guessed ${text} for Best Picture."))
         }
-        case _ => question(user, Some("Sorry I didn't get that, could you please repeat?"))
+
       }
     }
 

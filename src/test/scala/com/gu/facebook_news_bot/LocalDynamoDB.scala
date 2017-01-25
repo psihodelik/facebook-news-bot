@@ -21,13 +21,22 @@ object LocalDynamoDB {
 
   def createUserNomsTable(name: String) = {
     println(s"Creating user-noms table $name")
-    tableWithSecondaryIndex(name, "film-ID-index")('ID -> S, 'bestFilm -> S)('bestFilm -> S, 'ID -> S)
+    createTable(name)('ID -> S)
   }
 
   val client = {
     val c = new AmazonDynamoDBAsyncClient(new com.amazonaws.auth.BasicAWSCredentials("key", "secret"))
     c.setEndpoint("http://localhost:8000")
     c
+  }
+
+  def createTable(tableName: String)(attributes: (Symbol, ScalarAttributeType)*) = {
+    client.createTable(
+      attributeDefinitions(attributes),
+      tableName,
+      keySchema(attributes),
+      arbitraryThroughputThatIsIgnoredByDynamoDBLocal
+    )
   }
 
   def tableWithSecondaryIndex(tableName: String, secondaryIndexName: String)
