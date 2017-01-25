@@ -75,7 +75,7 @@ case object MainState extends State {
   }
 
   //Clicking a menu button brings the user into the MAIN state - other states can call this after receiving a postback
-  def onMenuButtonClick(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+  override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     val result = processButtonPostback(postback) map { event =>
       processEvent(user, event, capi, facebook, store)
     }
