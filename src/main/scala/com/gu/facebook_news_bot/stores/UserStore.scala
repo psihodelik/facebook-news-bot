@@ -25,20 +25,15 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
   private val userNomsTable = Table[UserNoms](userNomsTableName)
 
   def getUser(id: String): Future[Option[User]] = {
-    val futureResult = ScanamoAsync.get[User](client)(usersTableName)('ID -> id)
+    val futureResult = OptionT(ScanamoAsync.get[User](client)(usersTableName)('ID -> id))
     futureResult.map { result =>
-      result.flatMap { parseResult =>
-        //If parsing fails, log the error and we'll have to create a new user
-        parseResult.fold(
-          { error =>
-            appLogger.error(s"Error parsing User data from dynamodb: $error")
-            None
-          }, {
-            Some(_)
-          }
-        )
-      }
-    }
+      result.fold({ error =>
+        appLogger.error(s"Error parsing User data from dynamodb: $error")
+        None
+      }, {
+        Some(_)
+      })
+    }.value.map(_.flatten)
   }
 
   def updateUser(user: User): Future[Xor[ConditionalCheckFailedException, PutItemResult]] = {
