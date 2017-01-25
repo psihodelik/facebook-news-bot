@@ -16,6 +16,13 @@ trait State {
     * Define the user's state transition, and build any messages to be sent to user
     */
   def transition(user: User, message: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result]
+
+  /**
+    * Since buttons persist after the conversation has moved on, we should try to avoid using them for state-specific behaviour.
+    * Where buttons are needed by a state, override this method to define the state transition.
+    */
+  def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] =
+    MainState.onPostback(user, postback, capi, facebook, store)
 }
 
 object State {

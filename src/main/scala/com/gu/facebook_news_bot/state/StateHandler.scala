@@ -80,7 +80,10 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
       postback.referral.flatMap(ref => processReferral(ref, user))
         .orElse(user.state.collect { case StateHandler.NewUserStateName => SubscribeQuestionState.question(user) })
         .getOrElse(State.greeting(user))
-    } else MainState.onMenuButtonClick(user, postback, capi, facebook, store)
+    } else {
+      val state = user.state.map(StateHandler.getStateFromString).getOrElse(MainState)
+      state.onPostback(user, postback, capi, facebook, store)
+    }
   }
 
   /**
