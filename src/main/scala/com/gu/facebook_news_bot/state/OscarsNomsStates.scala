@@ -50,8 +50,26 @@ object OscarsNomsStates {
     }
 
     def question(user: User, text: Option[String] = None): Future[Result] = {
-      val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
-      Future.successful(State.changeState(user, Name), List(message))
+      requestPrediction("BEST_PICTURE", user)
+      //val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
+      //Future.successful(State.changeState(user, Name), List(message))
+    }
+
+    override def onPostback(...): Future[Result] = {
+      //get UserNom
+      //check postback data is valid
+      //update UserNom with new prediction
+      // check if prediction is in list, and send next element as category
+      // list.isEmpty => updateState
+      //requestPrediction(cat)
+    }
+
+    def requestPrediction(category: String, user: User, userNoms: UserNoms): Future[Result] = {
+      // if start of list, send specific message, else confirm & ask.
+      //build carousel
+      // confirm nomination
+
+      Future.successful(State.changeState(user, Name), Nil)
     }
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
