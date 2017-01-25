@@ -1,6 +1,8 @@
 package com.gu.facebook_news_bot.stores
 
 import cats.data.Xor
+import cats.data.OptionT
+import cats.instances.future._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, PutItemResult}
 import com.gu.facebook_news_bot.models.{User, UserNoms, UserTeam}
@@ -63,39 +65,20 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
 
   object OscarsStore {
 
-    def getUserNoms(id: String): Future[Option[UserNoms]] = {
-      val futureResult = ScanamoAsync.get[UserNoms](client)(userNomsTableName)('ID -> id)
-      futureResult.map { result =>
-        result.flatMap { parseResult =>
-          //If parsing fails, log the error and we'll have to create a new user
-          parseResult.fold(
-            { error =>
-              appLogger.error(s"Error parsing User data from dynamodb: $error")
-              None
-            }, {
-              Some(_)
-            }
-          )
-        }
-      }
+    def getUserNominations(id: String): Future[Option[UserNoms]] = {
+      val futureNominations = OptionT(ScanamoAsync.get[UserNoms](client)(userNomsTableName)('ID -> id))
+      futureNominations.map { result =>
+        result.fold({ error =>
+          appLogger.error(s"Error parsing Nominations data from dynamodb: $error")
+          None
+        }, {
+          Some(_)
+        })
+      }.value.map(_.flatten)
     }
 
-    def createUserNominationsRecordWithBestPicture(id: String, bestPicture: String): Future[PutItemResult] = {
-      // The bestFilm variable is there because we are going to create the record only when it has been given by the user
-      ScanamoAsync.exec(client)(
-        userNomsTable.put(UserNoms(id, Some(bestPicture)))
-      )
-    }
-
-    def updateUserNominationsRecord(nominations: UserNoms): Unit = {
-      val table = Table[UserNoms](userNomsTableName)
-      table.update(
-        'ID -> nominations.ID,
-        set( 'bestPicture -> nominations.bestPicture ) and
-        set( 'bestDirector -> nominations.bestDirector )and
-        set( 'bestActor -> nominations.bestActor ) and
-        set( 'bestActress -> nominations.bestActress )
-      )
+    def putUserNominations(nominations: UserNoms): Unit = {
+      Table[UserNoms](userNomsTableName).put(nominations)
     }
 
   }
