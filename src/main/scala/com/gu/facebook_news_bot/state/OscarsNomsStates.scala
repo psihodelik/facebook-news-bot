@@ -78,11 +78,25 @@ object OscarsNomsStates {
 //    }
 
     def missingCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
-      BestPicture
+      if(userNoms.bestPicture.isEmpty){
+        BestPicture
+      }else if(userNoms.bestDirector.isEmpty){
+        BestDirector
+      }else if(userNoms.bestActress.isEmpty){
+        BestActress
+      }else{
+        BestActor
+      }
     }
 
     def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
-      BestPicture
+      if(userNoms.bestDirector.isEmpty){
+        BestPicture
+      }else if(userNoms.bestActress.isEmpty){
+        BestDirector
+      }else{
+        BestActress
+      }
     }
 
     def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
