@@ -76,6 +76,8 @@ object OscarsNomsStates {
       category match {
         case "BEST_PICTURE" => {
           val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
+          buildNominationCarousel("BEST_PICTURE", user)
+          
           Future.successful(State.changeState(user, Name), List(message))
         }
         case _ => {
@@ -94,14 +96,24 @@ object OscarsNomsStates {
 
 
     def buildNominationCarousel(category: String, user: User) = {
-      val carouselContent: List[String] = config.lookUp(category)
-      val tiles = carouselContent.map { content =>
+
+      val carouselContent: List[IndividualNominee] = category match {
+        case "BEST_PICTURE" => Nominees.bestPictureNominees
+        case "BEST_DIRECTOR" => Nominees.bestDirectorNominees
+        case "BEST_ACTRESS" => Nominees.bestActressNominees
+        case "BEST_ACTOR" => Nominees.bestActorNominees
+      }
+
+      val tiles = carouselContent.map { nominee =>
         MessageToFacebook.Element(
-          title = content.categoryNominee,
-          image_url = content.nomineeImage,
+          title = nominee.name,
+          image_url = Some(nominee.pictureUrl),
           buttons = Some(List(MessageToFacebook.Button(`type` = "")))
         )
       }
+
+      val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
+      //Some(MessageToFacebook.Message(attachment))
 
       val response = MessageToFacebook(
         recipient = Id(user.ID),
