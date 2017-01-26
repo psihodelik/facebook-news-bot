@@ -16,11 +16,15 @@ import scala.concurrent.Future
 
 object OscarsNomsStates {
 
+  trait NominationCategory
+  object BestPicture extends NominationCategory
+  object BestDirector extends NominationCategory
+  object BestActress extends NominationCategory
+  object BestActor extends NominationCategory
+
   case object InitialQuestionState extends YesOrNoState {
 
     val Name = "OSCARS_NOMS_INITIAL_QUESTION"
-
-    private case class NoEvent(id: String, event: String = "oscars_noms_subscribe_no", _eventName: String = "oscars_noms_subscribe_no") extends LogEvent
 
     val Question = "Would you like to play our Oscars Predictions game?"
 
@@ -31,18 +35,14 @@ object OscarsNomsStates {
 
     protected def yes(user: User, facebook: Facebook): Future[Result] = EnterNomsState.question(user)
 
+    private case class NoEvent(id: String, event: String = "oscars_noms_subscribe_no", _eventName: String = "oscars_noms_subscribe_no") extends LogEvent
+
     protected def no(user: User): Future[Result] = {
       State.log(NoEvent(id = user.ID))
       MainState.menu(user, "Ok. Is there anything else I can help you with?")
     }
 
   }
-
-  trait NominationCategory
-  object BestPicture extends NominationCategory
-  object BestDirector extends NominationCategory
-  object BestActress extends NominationCategory
-  object BestActor extends NominationCategory
 
   case object EnterNomsState extends State {
 
@@ -54,6 +54,7 @@ object OscarsNomsStates {
 
     private case class NewSubscriberEvent(id: String, event: String = "oscars_noms_subscribe", _eventName: String = "oscars_noms_subscribe") extends LogEvent
 
+    //user should not type things while in this state
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging) match {
         case Some(text) => enterPredictions(user, store, text)
