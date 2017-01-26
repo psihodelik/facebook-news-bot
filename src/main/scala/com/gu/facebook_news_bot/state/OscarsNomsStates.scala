@@ -1,11 +1,15 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User, UserNoms}
-import com.gu.facebook_news_bot.services.{Capi, Facebook}
+import com.gu.contentapi.client.model.v1.Content
+import com.gu.facebook_news_bot.models._
+import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
+import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.contentToCarousel
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
+import com.gu.facebook_news_bot.utils.ResponseText
 import io.circe.generic.auto._
+import org.jsoup.Jsoup
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,6 +42,8 @@ object OscarsNomsStates {
 
     val Name = "OSCARS_ENTER_NOMS"
 
+    val Predictions = List("BEST_PICTURE", "BEST_DIRECTOR", "BEST_ACTRESS", "BEST_ACTOR")
+
     private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 
     private case class NewSubscriberEvent(id: String, event: String = "oscars_noms_subscribe", _eventName: String = "oscars_noms_subscribe") extends LogEvent
@@ -50,13 +56,14 @@ object OscarsNomsStates {
     }
 
     def question(user: User, text: Option[String] = None): Future[Result] = {
-      requestPrediction("BEST_PICTURE", user)
+      requestPrediction("BEST_PICTURE", user, UserNoms(user.ID))
       //val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
       //Future.successful(State.changeState(user, Name), List(message))
     }
 
-    override def onPostback(...): Future[Result] = {
+    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       //get UserNom
+      val submittedPredictions = store.OscarsStore.getUserNominations(user.ID)
       //check postback data is valid
       //update UserNom with new prediction
       // check if prediction is in list, and send next element as category
@@ -66,10 +73,42 @@ object OscarsNomsStates {
 
     def requestPrediction(category: String, user: User, userNoms: UserNoms): Future[Result] = {
       // if start of list, send specific message, else confirm & ask.
+      category match {
+        case "BEST_PICTURE" => {
+          val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
+          Future.successful(State.changeState(user, Name), List(message))
+        }
+        case _ => {
+          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${prediction} for ${category-1}. Who do you think will win ${category}?")
+
+        }
+      }
       //build carousel
+
+
+
       // confirm nomination
 
-      Future.successful(State.changeState(user, Name), Nil)
+      Future.successful(State.changeState(user, Name), List(message))
+    }
+
+
+    def buildNominationCarousel(category: String, user: User) = {
+      val carouselContent: List[String] = config.lookUp(category)
+      val tiles = carouselContent.map { content =>
+        MessageToFacebook.Element(
+          title = content.categoryNominee,
+          image_url = content.nomineeImage,
+          buttons = Some(List(MessageToFacebook.Button(`type` = "")))
+        )
+      }
+
+      val response = MessageToFacebook(
+        recipient = Id(user.ID),
+        message = Some(MessageToFacebook.Attachment.genericAttachment(tiles))
+      )
+
+      (user, List(response))
     }
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {

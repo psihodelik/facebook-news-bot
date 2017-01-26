@@ -1,0 +1,116 @@
+{
+  "awardCategory" : {
+    "BEST_PICTURE" : {
+      "nominees" : [
+        {
+          "name" : "Arrival",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Fences",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Hacksaw Ridge",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Hell or High Water",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Hidden Figures",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "La La Land",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Lion",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Manchester by the Sea",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Moonlight",
+          "pictureUrl" : "xxx"
+        }
+      ]
+    },
+    "BEST_DIRECTOR" : {
+      "nominees" : [
+        {
+          "name" : "Damien Chazelle for La La Land",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Mel Gibson for Hacksaw Ridge",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Barry Jenkins for Moonlight",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Kenneth Lonergan for Manchester by the Sea",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Denis Villeneuve for Arrival",
+          "pictureUrl" : "xxx"
+        }
+      ]
+    },
+    "BEST_ACTRESS" : {
+      "nominees" : [
+        {
+          "name" : "Isabelle Huppert in Elle",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Ruth Negga in Loving",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Natalie Portman in Jackie",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Emma Stone in La La Land",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Meryl Streep in Florence Foster Jenkins",
+          "pictureUrl" : "xxx"
+        }
+      ]
+    },
+    "BEST_ACTOR" : {
+      "nominees" : [
+        {
+          "name" : "Casey Affleck in Manchester by the Sea",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Andrew Garfield in Hacksaw Ridge",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Ryan Gosling in La La Land",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Viggo Mortensen in Captain Fantastic",
+          "pictureUrl" : "xxx"
+        },
+        {
+          "name" : "Denzel Washington in Fences",
+          "pictureUrl" : "xxx"
+        }
+      ]
+    }
+  }
+}
