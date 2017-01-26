@@ -56,46 +56,51 @@ object OscarsNomsStates {
     }
 
     def question(user: User, text: Option[String] = None): Future[Result] = {
-      requestPrediction("BEST_PICTURE", user, UserNoms(user.ID))
+      requestPrediction(user, UserNoms(user.ID))
       //val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
       //Future.successful(State.changeState(user, Name), List(message))
     }
 
-    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+//    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       //get UserNom
-      val submittedPredictions = store.OscarsStore.getUserNominations(user.ID)
+//      val submittedPredictions = store.OscarsStore.getUserNominations(user.ID)
       //check postback data is valid
       //update UserNom with new prediction
       // check if prediction is in list, and send next element as category
       // list.isEmpty => updateState
       //requestPrediction(cat)
+//    }
+
+    def missingCategoryFromUserNominations(userNoms : UserNoms): String = {
+      "BEST_PICTURE"
     }
 
-    def requestPrediction(category: String, user: User, userNoms: UserNoms): Future[Result] = {
-      // if start of list, send specific message, else confirm & ask.
-      category match {
+    def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): String = {
+      "BEST_PICTURE"
+    }
+
+    def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
+      "Arrival"
+    }
+
+    def requestPrediction(user: User, userNoms: UserNoms): Future[Result] = {
+      missingCategoryFromUserNominations(userNoms) match {
         case "BEST_PICTURE" => {
           val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
-          buildNominationCarousel("BEST_PICTURE", user)
-          
-          Future.successful(State.changeState(user, Name), List(message))
+          val categoryNominees = buildNominationCarousel("BEST_PICTURE", user)
+          Future.successful(State.changeState(user, Name), List(message,categoryNominees))
         }
-        case _ => {
-          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${prediction} for ${category-1}. Who do you think will win ${category}?")
-
+        case other => {
+          val userAnswerFromPreviousQuestion = previousUserChoiceFromUserNominations(userNoms)
+          val previousQuestionCategory = previousQuestionCategoryFromUserNominations(userNoms)
+          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${other}?")
+          val categoryNominees = buildNominationCarousel(other, user)
+          Future.successful(State.changeState(user, Name), List(message,categoryNominees))
         }
       }
-      //build carousel
-
-
-
-      // confirm nomination
-
-      Future.successful(State.changeState(user, Name), List(message))
     }
 
-
-    def buildNominationCarousel(category: String, user: User) = {
+    def buildNominationCarousel(category: String, user: User): MessageToFacebook = {
 
       val carouselContent: List[IndividualNominee] = category match {
         case "BEST_PICTURE" => Nominees.bestPictureNominees
@@ -113,14 +118,15 @@ object OscarsNomsStates {
       }
 
       val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
-      //Some(MessageToFacebook.Message(attachment))
 
-      val response = MessageToFacebook(
-        recipient = Id(user.ID),
-        message = Some(MessageToFacebook.Attachment.genericAttachment(tiles))
-      )
+      val message = MessageToFacebook.Message(
+        text =  None,
+        attachment = Some(attachment),
+        quick_replies = None,
+        metadata = None)
 
-      (user, List(response))
+      MessageToFacebook( Id(user.ID), Some(message) )
+
     }
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
