@@ -38,11 +38,17 @@ object OscarsNomsStates {
 
   }
 
+  trait NominationCategory
+  object BestPicture extends NominationCategory
+  object BestDirector extends NominationCategory
+  object BestActress extends NominationCategory
+  object BestActor extends NominationCategory
+
   case object EnterNomsState extends State {
 
     val Name = "OSCARS_ENTER_NOMS"
 
-    val Predictions = List("BEST_PICTURE", "BEST_DIRECTOR", "BEST_ACTRESS", "BEST_ACTOR")
+    val Predictions = List(BestPicture, BestDirector, BestActress, BestActor)
 
     private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 
@@ -71,12 +77,12 @@ object OscarsNomsStates {
       //requestPrediction(cat)
 //    }
 
-    def missingCategoryFromUserNominations(userNoms : UserNoms): String = {
-      "BEST_PICTURE"
+    def missingCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
+      BestPicture
     }
 
-    def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): String = {
-      "BEST_PICTURE"
+    def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
+      BestPicture
     }
 
     def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
@@ -85,28 +91,28 @@ object OscarsNomsStates {
 
     def requestPrediction(user: User, userNoms: UserNoms): Future[Result] = {
       missingCategoryFromUserNominations(userNoms) match {
-        case "BEST_PICTURE" => {
+        case BestPicture => {
           val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
-          val categoryNominees = buildNominationCarousel("BEST_PICTURE", user)
+          val categoryNominees = buildNominationCarousel(BestPicture, user)
           Future.successful(State.changeState(user, Name), List(message,categoryNominees))
         }
         case other => {
           val userAnswerFromPreviousQuestion = previousUserChoiceFromUserNominations(userNoms)
           val previousQuestionCategory = previousQuestionCategoryFromUserNominations(userNoms)
-          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${other}?")
+          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${other.toString}?")
           val categoryNominees = buildNominationCarousel(other, user)
           Future.successful(State.changeState(user, Name), List(message,categoryNominees))
         }
       }
     }
 
-    def buildNominationCarousel(category: String, user: User): MessageToFacebook = {
+    def buildNominationCarousel(category: NominationCategory, user: User): MessageToFacebook = {
 
       val carouselContent: List[IndividualNominee] = category match {
-        case "BEST_PICTURE" => Nominees.bestPictureNominees
-        case "BEST_DIRECTOR" => Nominees.bestDirectorNominees
-        case "BEST_ACTRESS" => Nominees.bestActressNominees
-        case "BEST_ACTOR" => Nominees.bestActorNominees
+        case BestPicture => Nominees.bestPictureNominees
+        case BestDirector => Nominees.bestDirectorNominees
+        case BestActress => Nominees.bestActressNominees
+        case BestActor => Nominees.bestActorNominees
       }
 
       val tiles = carouselContent.map { nominee =>
