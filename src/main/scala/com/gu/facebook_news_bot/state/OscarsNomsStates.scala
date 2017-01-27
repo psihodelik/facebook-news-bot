@@ -87,7 +87,6 @@ object OscarNomsStatesHelper {
       case BestActor => userNoms.copy(bestActor = Some(userChoice))
     }
   }
-  // todo: implement this
 
 }
 
