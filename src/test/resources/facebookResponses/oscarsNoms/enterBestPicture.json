@@ -1,0 +1,8 @@
+{
+  "recipient":{
+    "id":"oscars_noms_test"
+  },
+  "message":{
+    "text":"Which of the following do you think will win Best Picture?"
+  }
+}

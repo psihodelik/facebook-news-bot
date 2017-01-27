@@ -35,18 +35,19 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
     )
   }
 
-  it("should respond positively if a user wants to play the Oscars game") {
+  it("should ask a user how else they can help if user does not want to play") {
     routeTest(
-      "src/test/resources/facebookRequests/oscarsNoms/enterNoms.json",
-      "src/test/resources/facebookResponses/oscarsNoms/enterNoms.json"
+      "src/test/resources/facebookRequests/oscarsNoms/userDecline.json",
+      "src/test/resources/facebookResponses/oscarsNoms/userDecline.json"
     )
   }
 
-  it("should accept Moonlight and ask user to confirm selection.") {
+  it("should ask a user who they think will win the Best Picture category") {
     routeTest(
-      "src/test/resources/facebookRequests/oscarsNoms/enterBestFilm.json",
-      "src/test/resources/facebookResponses/oscarsNoms/enterBestFilm.json"
+      "src/test/resources/facebookRequests/oscarsNoms/enterBestPicture.json",
+      "src/test/resources/facebookResponses/oscarsNoms/enterBestPicture.json"
     )
   }
+
 
 }

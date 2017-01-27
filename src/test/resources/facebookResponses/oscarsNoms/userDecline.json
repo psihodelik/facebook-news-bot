@@ -1,0 +1,41 @@
+{
+  "recipient":{
+    "id":"oscars_noms_test"
+  },
+  "message":{
+    "text":"Ok. Is there anything else I can help you with?",
+    "quick_replies":[
+      {
+        "content_type":"text",
+        "title":"Headlines",
+        "payload":"headlines"
+      },
+      {
+        "content_type":"text",
+        "title":"Most popular",
+        "payload":"popular"
+      },
+      {
+        "content_type":"text",
+        "title":"Manage subscriptions",
+        "payload":"subscription"
+      },
+      {
+        "content_type":"text",
+        "title":"Suggest something",
+        "payload":"suggest"
+      },
+      {
+        "content_type":"text",
+        "title":"Give us feedback",
+        "payload":"feedback"
+      },
+      {
+        "content_type" : "text",
+        "title" : "Support the Guardian",
+        "payload" : "support",
+        "image_url" : null
+      }
+    ]
+  }
+}
