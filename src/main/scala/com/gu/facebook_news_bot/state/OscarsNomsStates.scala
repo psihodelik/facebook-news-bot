@@ -45,7 +45,12 @@ object OscarNomsStatesHelper {
   }
 
   def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
-    "Arrival"
+    previousQuestionCategoryFromUserNominations(userNoms) match {
+      case BestPicture => userNoms.bestPicture.getOrElse("")
+      case BestDirector => userNoms.bestDirector.getOrElse("")
+      case BestActress => userNoms.bestActress.getOrElse("")
+      case BestActor => userNoms.bestActor.getOrElse("")
+    }
   }
 
   def buildNominationCarousel(category: NominationCategory, user: User): MessageToFacebook = {
@@ -112,30 +117,40 @@ object OscarsNomsStates {
     private case class NewSubscriberEvent(id: String, event: String = "oscars_noms_subscribe", _eventName: String = "oscars_noms_subscribe") extends LogEvent
 
     def question(user: User, text: Option[String] = None): Future[Result] = {
-      requestPrediction(user, UserNoms(user.ID))
+      requestBestPicture(user)
     }
 
-    // This function is called when the user writes something in this state
-    // Which they should not.
+    def requestBestPicture(user: User): Future[Result] = {
+      val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
+      val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(BestPicture, user)
+      Future.successful(State.changeState(user, Name), List(message,categoryNominees))
+    }
+
+    // This function is called when the user writes something in this state, which they should not.
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging) match {
-        case Some(text) => enterPredictions(user, store, text)
+        case Some(text) => requestBestPicture(user) // todo: change that, there is no point to ask the user to start fro scratch
         case None => notPlaying(user)
       }
     }
 
     // This function handles the answer from the carousel choice (buttons)
+    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+        requestFollowUpPrediction(user, UserNoms(user.ID)) // todo: correct this to take account and store the user's choice
+    }
 
-    //    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
-    //get UserNom
-    //      val submittedPredictions = store.OscarsStore.getUserNominations(user.ID)
-    //check postback data is valid
-    //update UserNom with new prediction
-    // check if prediction is in list, and send next element as category
-    // list.isEmpty => updateState
-    //requestPrediction(cat)
-    //    }
+    def requestFollowUpPrediction(user: User, userNoms: UserNoms): Future[Result] = {
+      val category = OscarNomsStatesHelper.missingCategoryFromUserNominations(userNoms)
+      val userAnswerFromPreviousQuestion = OscarNomsStatesHelper.previousUserChoiceFromUserNominations(userNoms)
+      val previousQuestionCategory = OscarNomsStatesHelper.previousQuestionCategoryFromUserNominations(userNoms)
+      val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${category.toString}?")
+      val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(category, user)
+      Future.successful(State.changeState(user, Name), List(message,categoryNominees))
+    }
 
+    private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
+
+    /*
 
     def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
       val predictions = store.OscarsStore.getUserNominations(user.ID)
@@ -170,24 +185,7 @@ object OscarsNomsStates {
       }
     }
 
-    private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
-
-    def requestPrediction(user: User, userNoms: UserNoms): Future[Result] = {
-      OscarNomsStatesHelper.missingCategoryFromUserNominations(userNoms) match {
-        case BestPicture => {
-          val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
-          val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(BestPicture, user)
-          Future.successful(State.changeState(user, Name), List(message,categoryNominees))
-        }
-        case other => {
-          val userAnswerFromPreviousQuestion = OscarNomsStatesHelper.previousUserChoiceFromUserNominations(userNoms)
-          val previousQuestionCategory = OscarNomsStatesHelper.previousQuestionCategoryFromUserNominations(userNoms)
-          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${other.toString}?")
-          val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(other, user)
-          Future.successful(State.changeState(user, Name), List(message,categoryNominees))
-        }
-      }
-    }
+    */
 
   }
 
