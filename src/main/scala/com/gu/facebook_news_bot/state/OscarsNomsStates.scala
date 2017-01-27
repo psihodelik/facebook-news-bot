@@ -14,13 +14,43 @@ import org.jsoup.Jsoup
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object OscarsNomsStates {
+trait NominationCategory
+object BestPicture extends NominationCategory
+object BestDirector extends NominationCategory
+object BestActress extends NominationCategory
+object BestActor extends NominationCategory
 
-  trait NominationCategory
-  object BestPicture extends NominationCategory
-  object BestDirector extends NominationCategory
-  object BestActress extends NominationCategory
-  object BestActor extends NominationCategory
+object OscarNomsStatesHelper {
+
+  def missingCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
+    if(userNoms.bestPicture.isEmpty){
+      BestPicture
+    }else if(userNoms.bestDirector.isEmpty){
+      BestDirector
+    }else if(userNoms.bestActress.isEmpty){
+      BestActress
+    }else{
+      BestActor
+    }
+  }
+
+  def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
+    if(userNoms.bestDirector.isEmpty){
+      BestPicture
+    }else if(userNoms.bestActress.isEmpty){
+      BestDirector
+    }else{
+      BestActress
+    }
+  }
+
+  def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
+    "Arrival"
+  }
+
+}
+
+object OscarsNomsStates {
 
   case object InitialQuestionState extends YesOrNoState {
 
@@ -78,42 +108,16 @@ object OscarsNomsStates {
       //requestPrediction(cat)
 //    }
 
-    def missingCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
-      if(userNoms.bestPicture.isEmpty){
-        BestPicture
-      }else if(userNoms.bestDirector.isEmpty){
-        BestDirector
-      }else if(userNoms.bestActress.isEmpty){
-        BestActress
-      }else{
-        BestActor
-      }
-    }
-
-    def previousQuestionCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
-      if(userNoms.bestDirector.isEmpty){
-        BestPicture
-      }else if(userNoms.bestActress.isEmpty){
-        BestDirector
-      }else{
-        BestActress
-      }
-    }
-
-    def previousUserChoiceFromUserNominations(userNoms : UserNoms): String = {
-      "Arrival"
-    }
-
     def requestPrediction(user: User, userNoms: UserNoms): Future[Result] = {
-      missingCategoryFromUserNominations(userNoms) match {
+      OscarNomsStatesHelper.missingCategoryFromUserNominations(userNoms) match {
         case BestPicture => {
           val message = MessageToFacebook.textMessage(user.ID, "Which of the following do you think will win Best Picture?")
           val categoryNominees = buildNominationCarousel(BestPicture, user)
           Future.successful(State.changeState(user, Name), List(message,categoryNominees))
         }
         case other => {
-          val userAnswerFromPreviousQuestion = previousUserChoiceFromUserNominations(userNoms)
-          val previousQuestionCategory = previousQuestionCategoryFromUserNominations(userNoms)
+          val userAnswerFromPreviousQuestion = OscarNomsStatesHelper.previousUserChoiceFromUserNominations(userNoms)
+          val previousQuestionCategory = OscarNomsStatesHelper.previousQuestionCategoryFromUserNominations(userNoms)
           val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${other.toString}?")
           val categoryNominees = buildNominationCarousel(other, user)
           Future.successful(State.changeState(user, Name), List(message,categoryNominees))
