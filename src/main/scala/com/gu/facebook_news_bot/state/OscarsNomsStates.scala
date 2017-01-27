@@ -107,8 +107,6 @@ object OscarsNomsStates {
 
     val Name = "OSCARS_ENTER_NOMS"
 
-    val Predictions = List(BestPicture, BestDirector, BestActress, BestActor)
-
     private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 
     private case class NewSubscriberEvent(id: String, event: String = "oscars_noms_subscribe", _eventName: String = "oscars_noms_subscribe") extends LogEvent
