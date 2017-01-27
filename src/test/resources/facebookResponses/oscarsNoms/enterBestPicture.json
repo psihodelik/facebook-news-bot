@@ -1,8 +1,165 @@
 {
-  "recipient":{
-    "id":"oscars_noms_test"
-  },
-  "message":{
-    "text":"Which of the following do you think will win Best Picture?"
-  }
+  "data": [
+    {
+      "recipient": {
+        "id": "oscars_noms_test"
+      },
+      "message": {
+        "text": "Which of the following do you think will win Best Picture?",
+        "attachment": null,
+        "quick_replies": null,
+        "metadata": null
+      },
+      "sender_action": null,
+      "notification_type": null
+    },
+    {
+      "recipient": {
+        "id": "oscars_noms_test"
+      },
+      "message": {
+        "text": null,
+        "attachment": {
+          "type": "template",
+          "payload": {
+            "template_type": "generic",
+            "text": null,
+            "elements": [
+              {
+                "title": "Arrival",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Fences",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Hacksaw Ridge",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Hell or High Water",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Hidden Figures",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "La La Land",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Lion",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Manchester by the Sea",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              },
+              {
+                "title": "Moonlight",
+                "item_url": null,
+                "image_url": "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq",
+                "subtitle": null,
+                "buttons": [
+                  {
+                    "type": "",
+                    "title": null,
+                    "url": null,
+                    "payload": null
+                  }
+                ]
+              }
+            ],
+            "buttons": null
+          }
+        },
+        "quick_replies": null,
+        "metadata": null
+      },
+      "sender_action": null,
+      "notification_type": null
+    }
+  ]
 }
