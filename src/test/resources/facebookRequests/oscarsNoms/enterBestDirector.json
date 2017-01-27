@@ -12,10 +12,8 @@
             "id" : "1"
           },
           "timestamp" : 0,
-          "message" : {
-            "mid" : "",
-            "seq" : 0,
-            "text" : "Moonlight"
+          "postback" : {
+            "payload" : "La La Land"
           }
         }
       ]
