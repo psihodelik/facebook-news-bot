@@ -136,7 +136,19 @@ object OscarsNomsStates {
 
     // This function handles the answer from the carousel choice (buttons)
     override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
-        requestFollowUpPrediction(user, UserNoms(user.ID)) // todo: correct this to take account and store the user's choice
+      val futureMaybeExistingUserNominations = store.OscarsStore.getUserNominations(user.ID)
+      futureMaybeExistingUserNominations.flatMap{ maybeExistinguserNominations =>
+        maybeExistinguserNominations match {
+          case Some(existingUserNomination) => {
+            val newUserNominations = existingUserNomination.copy( bestPicture = Some("Alice") )
+            requestFollowUpPrediction(user, newUserNominations)
+          }
+          case None => {
+            val newUserNominations = UserNoms(user.ID,Some("Alice"))
+            requestFollowUpPrediction(user, newUserNominations)
+          }
+        }
+      }
     }
 
     def requestFollowUpPrediction(user: User, userNoms: UserNoms): Future[Result] = {
