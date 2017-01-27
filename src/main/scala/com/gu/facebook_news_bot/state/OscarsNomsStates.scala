@@ -62,7 +62,7 @@ object OscarNomsStatesHelper {
       MessageToFacebook.Element(
         title = nominee.name,
         image_url = Some(nominee.pictureUrl),
-        buttons = Some(List(MessageToFacebook.Button(`type` = "")))
+        buttons = Some(List(MessageToFacebook.Button(`type` = "vote")))
       )
     }
 
