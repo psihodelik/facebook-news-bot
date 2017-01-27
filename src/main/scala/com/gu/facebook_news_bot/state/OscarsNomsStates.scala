@@ -92,10 +92,43 @@ object OscarsNomsStates {
       }
     }
 
+    def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
+      val predictions = store.OscarsStore.getUserNominations(user.ID)
+      predictions.flatMap { result =>
+        if (result.isEmpty) {
+          isPlaying(user, text, store)
+        } else {
+          notPlaying(user)
+        }
+      }
+    }
+
+    private def isPlaying(user: User, text: String, store: UserStore): Future[Result] = {
+      text.toLowerCase match {
+        case YesOrNoState.YesPattern(_) => question(user)
+        case NoPattern(_) => question(user, Some("Sorry I didn't get that, could you please repeat?"))
+        case _ => {
+          store.OscarsStore. putUserNominations( UserNoms(user.ID, Some(text)) )
+          val updatedUser = {
+            if (!user.oscarsNoms.contains(true)) {
+              State.log(NewSubscriberEvent(user.ID))
+              user.copy(
+                oscarsNoms = Some(true)
+              )
+            } else user
+          }
+          question(
+            updatedUser,
+            Some(s"You guessed ${text} for Best Picture."))
+        }
+
+      }
+    }
+
+    private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
+
     def question(user: User, text: Option[String] = None): Future[Result] = {
       requestPrediction(user, UserNoms(user.ID))
-      //val message = MessageToFacebook.textMessage(user.ID, text.getOrElse("OK, which film do you think will win Best Picture?"))
-      //Future.successful(State.changeState(user, Name), List(message))
     }
 
 //    override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
@@ -153,41 +186,6 @@ object OscarsNomsStates {
       MessageToFacebook( Id(user.ID), Some(message) )
 
     }
-
-    def enterPredictions(user: User, store: UserStore, text: String): Future[Result] = {
-     val predictions = store.OscarsStore.getUserNominations(user.ID)
-      predictions.flatMap { result =>
-        if (result.isEmpty) {
-          isPlaying(user, text, store)
-        } else {
-          notPlaying(user)
-        }
-      }
-    }
-
-    private def isPlaying(user: User, text: String, store: UserStore): Future[Result] = {
-      text.toLowerCase match {
-        case YesOrNoState.YesPattern(_) => question(user)
-        case NoPattern(_) => question(user, Some("Sorry I didn't get that, could you please repeat?"))
-        case _ => {
-          store.OscarsStore. putUserNominations( UserNoms(user.ID, Some(text)) )
-          val updatedUser = {
-            if (!user.oscarsNoms.contains(true)) {
-              State.log(NewSubscriberEvent(user.ID))
-              user.copy(
-                oscarsNoms = Some(true)
-              )
-            } else user
-          }
-          question(
-            updatedUser,
-            Some(s"You guessed ${text} for Best Picture."))
-        }
-
-      }
-    }
-
-    private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
 
   }
 
