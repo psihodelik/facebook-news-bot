@@ -1,15 +1,11 @@
 package com.gu.facebook_news_bot.state
 
-import com.gu.contentapi.client.model.v1.Content
 import com.gu.facebook_news_bot.models._
-import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
+import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
-import com.gu.facebook_news_bot.utils.FacebookMessageBuilder.contentToCarousel
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
-import com.gu.facebook_news_bot.utils.ResponseText
 import io.circe.generic.auto._
-import org.jsoup.Jsoup
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -82,7 +78,15 @@ object OscarNomsStatesHelper {
 
   }
   
-  def makeUpdatedUserNominations(userNoms: UserNoms, userChoice: String): UserNoms = userNoms
+  def updateUserNominations(userNoms: UserNoms, userChoice: String): UserNoms = {
+    val awardCategory = previousQuestionCategoryFromUserNominations(userNoms)
+    awardCategory match {
+      case BestPicture => userNoms.copy(bestPicture = Some(userChoice))
+      case BestDirector => userNoms.copy(bestDirector = Some(userChoice))
+      case BestActress => userNoms.copy(bestActress = Some(userChoice))
+      case BestActor => userNoms.copy(bestActor = Some(userChoice))
+    }
+  }
   // todo: implement this
 
 }
@@ -139,8 +143,8 @@ object OscarsNomsStates {
       val userChoice = postback.payload
       val futureMaybeExistingUserNominations = store.OscarsStore.getUserNominations(user.ID)
       futureMaybeExistingUserNominations.flatMap{ maybeExistinguserNominations =>
-        val existingUserNominations =  maybeExistinguserNominations.getOrElse(UserNoms(user.ID)
-        val newUserNominations = OscarNomsStatesHelper.makeUpdatedUserNominations(existingUserNominations, userChoice)
+        val existingUserNominations =  maybeExistinguserNominations.getOrElse(UserNoms(user.ID))
+        val newUserNominations = OscarNomsStatesHelper.updateUserNominations(existingUserNominations, userChoice)
         // todo: store the newUserNominations
         requestFollowUpPrediction(user, Some(newUserNominations))
       }
