@@ -11,7 +11,6 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
 
-case class MessageList(data: Seq[MessageToFacebook])
 
 class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with MockitoSugar with CirceSupport {
   val TestName = "oscars_noms_test"
@@ -25,8 +24,8 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
     request ~> service.routes ~> check {
       status should equal(OK)
 
-      val expectedMessage = JsonHelpers.decodeFromFile[MessageList](outputFile)
-      verify(service.facebook, timeout(5000)).send(expectedMessage.data.toList)
+      val expectedMessage = JsonHelpers.decodeFromFile[Seq[MessageToFacebook]](outputFile)
+      verify(service.facebook, timeout(5000)).send(expectedMessage.toList)
     }
   }
 

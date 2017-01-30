@@ -1,5 +1,4 @@
-{
-  "data": [
+[
   {
     "recipient": {
       "id": "oscars_noms_test"
@@ -21,4 +20,3 @@
     }
   }
 ]
-}
