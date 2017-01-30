@@ -6,7 +6,6 @@ import com.gu.facebook_news_bot.models.MessageToFacebook
 import com.gu.facebook_news_bot.util.JsonHelpers
 import com.gu.facebook_news_bot.util.JsonHelpers._
 import de.heikoseeberger.akkahttpcirce.CirceSupport
-import io.circe.generic.auto._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
@@ -36,13 +35,6 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
     )
   }
 
-//  it("should ask a user how else they can help if user does not want to play") {
-//    routeTest(
-//      "src/test/resources/facebookRequests/oscarsNoms/userDecline.json",
-//      "src/test/resources/facebookResponses/oscarsNoms/userDecline.json"
-//    )
-//  }
-
   it("should ask a user who they think will win the Best Picture category") {
     routeTest(
       "src/test/resources/facebookRequests/oscarsNoms/enterBestPicture.json",
@@ -50,11 +42,11 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
     )
   }
 
-  /*it("should confirm a user's submission for Best Picture and ask who they think will win Best Director") {
+  it("should confirm a user's submission for Best Picture and ask who they think will win Best Director") {
     routeTest(
       "src/test/resources/facebookRequests/oscarsNoms/enterBestDirector.json",
       "src/test/resources/facebookResponses/oscarsNoms/enterBestDirector.json"
     )
-  }*/
+  }
 
 }
