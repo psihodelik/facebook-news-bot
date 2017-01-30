@@ -16,7 +16,7 @@ object BestDirector extends NominationCategory
 object BestActress extends NominationCategory
 object BestActor extends NominationCategory
 
-object OscarNomsStatesHelper {
+object OscarsNomsStatesHelper {
 
   def missingCategoryFromUserNominations(userNoms : UserNoms): NominationCategory = {
     if(userNoms.bestPicture.isEmpty){
@@ -77,7 +77,7 @@ object OscarNomsStatesHelper {
     MessageToFacebook( Id(user.ID), Some(message) )
 
   }
-  
+
   def updateUserNominations(userNoms: UserNoms, userChoice: String): UserNoms = {
     val awardCategory = previousQuestionCategoryFromUserNominations(userNoms)
     awardCategory match {
@@ -124,7 +124,7 @@ object OscarsNomsStates {
 
     def requestBestPicture(user: User): Future[Result] = {
       val message = MessageToFacebook.textMessage(user.ID, "Great. Let’s start with Best Picture. Which of these deserves the Oscar?")
-      val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(BestPicture, user)
+      val categoryNominees = OscarsNomsStatesHelper.buildNominationCarousel(BestPicture, user)
       Future.successful(State.changeState(user, Name), List(message,categoryNominees))
     }
 
@@ -143,7 +143,7 @@ object OscarsNomsStates {
       val futureMaybeExistingUserNominations = store.OscarsStore.getUserNominations(user.ID)
       futureMaybeExistingUserNominations.flatMap{ maybeExistinguserNominations =>
         val existingUserNominations =  maybeExistinguserNominations.getOrElse(UserNoms(user.ID))
-        val newUserNominations = OscarNomsStatesHelper.updateUserNominations(existingUserNominations, userChoice)
+        val newUserNominations = OscarsNomsStatesHelper.updateUserNominations(existingUserNominations, userChoice)
         store.OscarsStore.putUserNominations(newUserNominations)
         requestFollowUpPrediction(user, Some(newUserNominations))
       }
@@ -151,11 +151,11 @@ object OscarsNomsStates {
 
     def requestFollowUpPrediction(user: User, maybeUserNoms: Option[UserNoms]): Future[Result] = {
       val userNoms = maybeUserNoms.getOrElse(UserNoms(user.ID))
-      val category = OscarNomsStatesHelper.missingCategoryFromUserNominations(userNoms)
-      val userAnswerFromPreviousQuestion = OscarNomsStatesHelper.previousUserChoiceFromUserNominations(userNoms)
-      val previousQuestionCategory = OscarNomsStatesHelper.previousQuestionCategoryFromUserNominations(userNoms)
+      val category = OscarsNomsStatesHelper.missingCategoryFromUserNominations(userNoms)
+      val userAnswerFromPreviousQuestion = OscarsNomsStatesHelper.previousUserChoiceFromUserNominations(userNoms)
+      val previousQuestionCategory = OscarsNomsStatesHelper.previousQuestionCategoryFromUserNominations(userNoms)
       val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${category.toString}?")
-      val categoryNominees = OscarNomsStatesHelper.buildNominationCarousel(category, user)
+      val categoryNominees = OscarsNomsStatesHelper.buildNominationCarousel(category, user)
       Future.successful(State.changeState(user, Name), List(message,categoryNominees))
     }
 
