@@ -143,13 +143,65 @@ object OscarsNomsStates {
       val category = missingCategoryFromUserNominations(userNoms)
       val userAnswerFromPreviousQuestion = previousUserChoiceFromUserNominations(userNoms)
       val previousQuestionCategory = previousQuestionCategoryFromUserNominations(userNoms)
-      val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${category.toString}?")
-      val categoryNominees = buildNominationCarousel(category, user)
-      Future.successful(State.changeState(user, Name), List(message,categoryNominees))
+      previousQuestionCategory match {
+        case BestActor => {
+          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}.")
+          Future.successful(State.changeState(user, Name), List(message))
+          UpdateTypeState.question(user)
+
+        }
+        case _ => {
+          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${userAnswerFromPreviousQuestion} for ${previousQuestionCategory}. Who do you think will win ${category.toString}?")
+          val categoryNominees = buildNominationCarousel(category, user)
+          Future.successful(State.changeState(user, Name), List(message,categoryNominees))
+        }
+      }
     }
 
     private def notPlaying(user: User): Future[Result] = question(user, Some("Is there anything else I can help you with?"))
 
   }
 
+
+  case object UpdateTypeState extends State {
+
+    val Name = "OSCARS_UPDATE_TYPE_QUESTION"
+
+    def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+      State.getUserInput(messaging).flatMap { text =>
+        val lower = text.toLowerCase
+        if (lower.contains("rolling-updates")) Some(updateUserUpdateType(user, true))
+        else if (lower.contains("morning-briefing")) Some(updateUserUpdateType(user, false))
+        else None
+      } getOrElse State.unknown(user)
+    }
+
+    def question(user: User, text: Option[String] = None): Future[Result] = {
+
+      val quickReplies = Seq(
+        MessageToFacebook.QuickReply(title = Some("Rolling updates"), payload = Some("rolling-updates")),
+        MessageToFacebook.QuickReply(title = Some("Morning briefing"), payload = Some("morning-briefing"))
+      )
+
+      val message = MessageToFacebook.quickRepliesMessage(
+        user.ID,
+        quickReplies,
+        "When would you like your Oscar winner updates?"
+      )
+
+      Future.successful(State.changeState(user, Name), List(message))
+    }
+
+    def updateUserUpdateType(user: User, rollingUpdates: Boolean): Future[Result] = {
+      val updatedUser = user.copy(
+        state = Some(MainState.Name),
+        oscarsNoms = Some(true),
+        oscarsNomsUpdateType = Some(rollingUpdates)
+      )
+
+      val message = MessageToFacebook.textMessage(user.ID, "Great. That's all we need. Is there anything else I can help you with?")
+      Future.successful(updatedUser, List(message))
+    }
+
+  }
 }
