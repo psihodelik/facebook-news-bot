@@ -96,7 +96,7 @@ object OscarsNomsStates {
         MessageToFacebook.Element(
           title = nominee.name,
           image_url = Some(nominee.pictureUrl),
-          buttons = Some(List(MessageToFacebook.Button(`type` = "element_share")))
+          buttons = Some(List(MessageToFacebook.Button(`type` = "postback", title = Some("Vote"), payload = Some(nominee.name))))
         )
       }
 
