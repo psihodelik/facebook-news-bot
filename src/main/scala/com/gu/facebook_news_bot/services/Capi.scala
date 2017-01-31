@@ -94,6 +94,7 @@ object Topic {
     SectionTopic("stage"),
     SectionTopic("fashion"),
     SectionTopic("science"),
+    SectionTopic(List("opinion", "comment"), "commentisfree"),
 
     SectionTagTopic(List("rugby","rugby union"), "sport", "rugby-union"),
     SectionTagTopic(List("formula 1","formula one","f1"), "sport", "formulaone"),

@@ -55,8 +55,6 @@ object FootballTransferStates {
     */
   case object EnterTeamsState extends State {
     val Name = "FOOTBALL_TRANSFER_ENTER_TEAMS"
-    
-    private val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 
     private case class NewSubscriberEvent(id: String, event: String = "football_transfers_subscribe", _eventName: String = "football_transfers_subscribe", isSubscriber: Boolean) extends LogEvent
 
@@ -74,9 +72,9 @@ object FootballTransferStates {
 
     private def parseText(user: User, store: UserStore, text: String): Future[Result] = {
       text.toLowerCase match {
-        case YesOrNoState.YesPattern(_) => question(user)
+        case State.YesPattern(_) => question(user)
 
-        case NoPattern(_) =>
+        case State.NoPattern(_) =>
           val firstSentence = {
             if (user.footballTransfers.contains(true)) "Thanks for signing up. You’ll receive updates throughout the January window.\n"
             else ""

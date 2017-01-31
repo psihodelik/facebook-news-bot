@@ -21,6 +21,8 @@ object ManageMorningBriefingState extends State {
       if (lower.contains("time")) Some(BriefingTimeQuestionState.question(user))
       else if (lower.contains("edition")) Some(EditionQuestionState.question(user))
       else if (lower.contains("unsubscribe")) Some(unsubscribe(user))
+      else if (lower.contains("add")) Some(CustomBriefingQuestionState.question(user))
+      else if (lower.contains("remove")) Some(RemoveCustomBriefingTopicState.question(user))
       else None
     } getOrElse State.unknown(user)
   }
@@ -35,9 +37,14 @@ object ManageMorningBriefingState extends State {
         MessageToFacebook.QuickReply(title = Some("Unsubscribe"), payload = Some("unsubscribe"))
       )
 
+      val topicQuickReplies = List(
+        user.briefingTopic1.map( _ => MessageToFacebook.QuickReply(title = Some("Remove topic"), payload = Some("remove"))),
+        if (user.briefingTopic2.isEmpty) Some(MessageToFacebook.QuickReply(title = Some("Add topic"), payload = Some("add"))) else None
+      ).flatten
+
       val message = MessageToFacebook.quickRepliesMessage(
         user.ID,
-        quickReplies,
+        quickReplies ++ topicQuickReplies,
         ResponseText.manageSubscription(EditionQuestionState.frontToUserFriendly(user.front), user.notificationTime)
       )
 
@@ -51,7 +58,9 @@ object ManageMorningBriefingState extends State {
     val updatedUser = user.copy(
       state = Some(MainState.Name),
       notificationTime = "-",
-      notificationTimeUTC = "-"
+      notificationTimeUTC = "-",
+      briefingTopic1 = None,
+      briefingTopic2 = None
     )
     val response = MessageToFacebook.textMessage(user.ID, ResponseText.unsubscribe)
     Future.successful((updatedUser, List(response)))

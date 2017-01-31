@@ -19,6 +19,16 @@
         "content_type":"text",
         "title":"Unsubscribe",
         "payload":"unsubscribe"
+      },
+      {
+        "content_type":"text",
+        "title":"Remove topic",
+        "payload":"remove"
+      },
+      {
+        "content_type":"text",
+        "title":"Add topic",
+        "payload":"add"
       }
     ]
   }

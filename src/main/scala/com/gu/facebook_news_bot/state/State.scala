@@ -44,4 +44,7 @@ object State {
     logEvent(json)
     FacebookEvents.logEvent(event)
   }
+
+  val YesPattern = """\b(yes|yeah|yep|sure|ok|okay)\b""".r.unanchored
+  val NoPattern = """\b(no|nope|nah|not)\b""".r.unanchored
 }

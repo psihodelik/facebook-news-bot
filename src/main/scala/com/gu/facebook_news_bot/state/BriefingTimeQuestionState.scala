@@ -62,7 +62,7 @@ case object BriefingTimeQuestionState extends State {
           notificationTimeUTC = notifyTimeUTC.toString("HH:mm")
         )
 
-        MainState.menu(updatedUser, ResponseText.subscribed(time))
+        CustomBriefingQuestionState.question(updatedUser)
 
       case other =>
         appLogger.error(s"Failed to get user data for user ${user.ID} while processing briefing time: $other")

@@ -3,7 +3,7 @@
     "id" : "subscription_test"
   },
   "message" : {
-    "text" : "I can personalise your briefing. Do you want to choose a favourite topic?",
+    "text" : "Ok. Do you have another favourite topic?",
     "attachment" : null,
     "quick_replies" : [
       {

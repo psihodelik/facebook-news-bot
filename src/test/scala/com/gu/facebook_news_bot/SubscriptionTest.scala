@@ -48,10 +48,24 @@ class SubscriptionTest extends FunSpec with Matchers with ScalatestRouteTest wit
     )
   }
 
-  it("should respond to time of 6") {
+  it("should respond to briefing time by asking if user wants a customised briefing") {
     routeTest(
       "src/test/resources/facebookRequests/briefingTime.json",
       "src/test/resources/facebookResponses/briefingTime.json"
+    )
+  }
+
+  it("should respond to 1st topic choice by asking if user wants another topic") {
+    routeTest(
+      "src/test/resources/facebookRequests/customBriefingTopic.json",
+      "src/test/resources/facebookResponses/customBriefingTopic.json"
+    )
+  }
+
+  it("should respond to no with confirmation of subscription") {
+    routeTest(
+      "src/test/resources/facebookRequests/noCustomBriefingTopic.json",
+      "src/test/resources/facebookResponses/noCustomBriefingTopic.json"
     )
   }
 
