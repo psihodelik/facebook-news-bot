@@ -1,0 +1,22 @@
+[
+  {
+    "recipient": {
+      "id": "oscars_noms_test"
+    },
+    "message": {
+      "text": "Hi, I'm the Guardian chatbot. Welcome to the Guardian Academy. Choose your favourite Oscar contenders and we'll let you know how your picks do on the night.",
+      "quick_replies": [
+        {
+          "content_type": "text",
+          "title": "Yes",
+          "payload": "yes"
+        },
+        {
+          "content_type": "text",
+          "title": "No",
+          "payload": "no"
+        }
+      ]
+    }
+  }
+]

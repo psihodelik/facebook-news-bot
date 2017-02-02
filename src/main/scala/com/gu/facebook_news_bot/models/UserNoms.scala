@@ -10,7 +10,7 @@ case class IndividualNominee(name: String, pictureUrl: String)
 
 object Nominees {
 
-  val defaultPictureUrl = "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpgq"
+  val defaultPictureUrl = "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg"
 
   val bestPictureNominees = List(
     IndividualNominee("Arrival",defaultPictureUrl),
@@ -49,5 +49,3 @@ object Nominees {
   )
 
 }
-
-

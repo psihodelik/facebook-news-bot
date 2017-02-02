@@ -1,0 +1,163 @@
+[
+  {
+    "recipient" : {
+      "id" : "oscars_noms_test"
+    },
+    "message" : {
+      "text" : "Great. Let’s start with Best Picture. Which of these deserves the Oscar?",
+      "attachment" : null,
+      "quick_replies" : null,
+      "metadata" : null
+    },
+    "sender_action" : null,
+    "notification_type" : null
+  },
+  {
+    "recipient" : {
+      "id" : "oscars_noms_test"
+    },
+    "message" : {
+      "text" : null,
+      "attachment" : {
+        "type" : "template",
+        "payload" : {
+          "template_type" : "generic",
+          "text" : null,
+          "elements" : [
+            {
+              "title" : "Arrival",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Arrival\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Fences",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Fences\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Hacksaw Ridge",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Hacksaw Ridge\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Hell or High Water",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Hell or High Water\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Hidden Figures",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Hidden Figures\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "La La Land",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"La La Land\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Lion",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Lion\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Manchester by the Sea",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Manchester by the Sea\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Moonlight",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Moonlight\",\"category\":\"Best Picture\"}"
+                }
+              ]
+            }
+          ],
+          "buttons" : null
+        }
+      },
+      "quick_replies" : null,
+      "metadata" : null
+    },
+    "sender_action" : null,
+    "notification_type" : null
+  }
+]

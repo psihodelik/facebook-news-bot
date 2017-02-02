@@ -73,7 +73,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
     }
 
     def putUserNominations(nominations: UserNoms): Unit = {
-      Table[UserNoms](userNomsTableName).put(nominations)
+      ScanamoAsync.exec(client)(userNomsTable.put(nominations))
     }
 
   }

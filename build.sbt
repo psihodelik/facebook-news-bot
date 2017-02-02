@@ -52,6 +52,7 @@ libraryDependencies ++= Seq(
 startDynamoDBLocal <<= startDynamoDBLocal.dependsOn(compile in Test)
 test in Test <<= (test in Test).dependsOn(startDynamoDBLocal)
 testOptions in Test <+= dynamoDBLocalTestCleanup
+dynamoDBLocalDownloadUrl := Some("https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_latest.tar.gz")
 
 topLevelDirectory in Universal := None
 packageName in Universal := normalizedName.value

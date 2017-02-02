@@ -1,0 +1,107 @@
+[
+  {
+    "recipient" : {
+      "id" : "oscars_noms_test"
+    },
+    "message" : {
+      "text" : "Great. I got La La Land for Best Picture. Who do you think will win Best Director?",
+      "attachment" : null,
+      "quick_replies" : null,
+      "metadata" : null
+    },
+    "sender_action" : null,
+    "notification_type" : null
+  },
+  {
+    "recipient" : {
+      "id" : "oscars_noms_test"
+    },
+    "message" : {
+      "text" : null,
+      "attachment" : {
+        "type" : "template",
+        "payload" : {
+          "template_type" : "generic",
+          "text" : null,
+          "elements" : [
+            {
+              "title" : "Damien Chazelle for La La Land",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Damien Chazelle for La La Land\",\"category\":\"Best Director\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Mel Gibson for Hacksaw Ridge",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Mel Gibson for Hacksaw Ridge\",\"category\":\"Best Director\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Barry Jenkins for Moonlight",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Barry Jenkins for Moonlight\",\"category\":\"Best Director\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Kenneth Lonergan for Manchester by the Sea",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Kenneth Lonergan for Manchester by the Sea\",\"category\":\"Best Director\"}"
+                }
+              ]
+            },
+            {
+              "title" : "Denis Villeneuve for Arrival",
+              "item_url" : null,
+              "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
+              "subtitle" : null,
+              "buttons" : [
+                {
+                  "type" : "postback",
+                  "title" : "Vote",
+                  "url" : null,
+                  "payload" : "{\"name\":\"Denis Villeneuve for Arrival\",\"category\":\"Best Director\"}"
+                }
+              ]
+            }
+          ],
+          "buttons" : null
+        }
+      },
+      "quick_replies" : null,
+      "metadata" : null
+    },
+    "sender_action" : null,
+    "notification_type" : null
+  }
+]
