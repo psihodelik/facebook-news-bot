@@ -25,11 +25,11 @@ object Nominees {
   )
 
   val bestDirectorNominees = List(
-    IndividualNominee("Damien Chazelle for La La Land", defaultPictureUrl),
-    IndividualNominee("Mel Gibson for Hacksaw Ridge", defaultPictureUrl),
-    IndividualNominee("Barry Jenkins for Moonlight", defaultPictureUrl),
-    IndividualNominee("Kenneth Lonergan for Manchester by the Sea", defaultPictureUrl),
-    IndividualNominee("Denis Villeneuve for Arrival", defaultPictureUrl)
+    IndividualNominee("Damien Chazelle with La La Land", defaultPictureUrl),
+    IndividualNominee("Mel Gibson with Hacksaw Ridge", defaultPictureUrl),
+    IndividualNominee("Barry Jenkins with Moonlight", defaultPictureUrl),
+    IndividualNominee("Kenneth Lonergan with Manchester by the Sea", defaultPictureUrl),
+    IndividualNominee("Denis Villeneuve with Arrival", defaultPictureUrl)
   )
 
   val bestActressNominees = List(

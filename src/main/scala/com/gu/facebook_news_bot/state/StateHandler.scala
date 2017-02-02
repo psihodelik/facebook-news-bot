@@ -34,6 +34,7 @@ object StateHandler {
     FootballTransferStates.FootballTransfersFeedbackState,
     OscarsNomsStates.InitialQuestionState,
     OscarsNomsStates.EnterNomsState,
+    OscarsNomsStates.UpdateTypeState,
     UnsubscribeState)
     .map((state: State) => (state.Name, state))
     .toMap + (StateHandler.NewUserStateName -> SubscribeQuestionState)
@@ -98,6 +99,7 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
     referral.ref match {
       case "football_transfers" => Some(FootballTransferStates.InitialQuestionState.question(user))
       case "oscars_noms" => Some(OscarsNomsStates.InitialQuestionState.question(user))
+      case "oscars_noms_share" => Some(OscarsNomsStates.InitialQuestionState.question(user))
       case _ => None
     }
   }

@@ -200,7 +200,10 @@ case object MainState extends State {
     }
   }
 
-  def menu(user: User, text: String): Future[Result] = {
+  def menu(user: User, text: String): Future[Result] =
+    Future.successful((State.changeState(user, MainState.Name), List(buildMenu(user, text))))
+
+  def buildMenu(user: User, text: String): MessageToFacebook = {
     val quickReplies = Seq(
       MessageToFacebook.QuickReply(title = Some("Headlines"), payload = Some("headlines")),
       MessageToFacebook.QuickReply(title = Some("Most popular"),payload = Some("popular")),
@@ -210,9 +213,7 @@ case object MainState extends State {
       FacebookMessageBuilder.supportUsQuickReply
     )
 
-    val message = MessageToFacebook.quickRepliesMessage(user.ID, quickReplies, text)
-
-    Future.successful((State.changeState(user, MainState.Name), List(message)))
+    MessageToFacebook.quickRepliesMessage(user.ID, quickReplies, text)
   }
 
   private def manageSubscriptions(user: User): Future[Result] = {

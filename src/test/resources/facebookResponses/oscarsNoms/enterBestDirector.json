@@ -4,7 +4,7 @@
       "id" : "oscars_noms_test"
     },
     "message" : {
-      "text" : "Great. I got La La Land for Best Picture. Who do you think will win Best Director?",
+      "text" : "I got La La Land for Best Picture. Fingers crossed! Who of the following should pick up Best Director?",
       "attachment" : null,
       "quick_replies" : null,
       "metadata" : null
@@ -25,7 +25,7 @@
           "text" : null,
           "elements" : [
             {
-              "title" : "Damien Chazelle for La La Land",
+              "title" : "Damien Chazelle with La La Land",
               "item_url" : null,
               "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
               "subtitle" : null,
@@ -34,12 +34,12 @@
                   "type" : "postback",
                   "title" : "Vote",
                   "url" : null,
-                  "payload" : "{\"name\":\"Damien Chazelle for La La Land\",\"category\":\"Best Director\"}"
+                  "payload" : "{\"name\":\"Damien Chazelle with La La Land\",\"category\":\"Best Director\"}"
                 }
               ]
             },
             {
-              "title" : "Mel Gibson for Hacksaw Ridge",
+              "title" : "Mel Gibson with Hacksaw Ridge",
               "item_url" : null,
               "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
               "subtitle" : null,
@@ -48,12 +48,12 @@
                   "type" : "postback",
                   "title" : "Vote",
                   "url" : null,
-                  "payload" : "{\"name\":\"Mel Gibson for Hacksaw Ridge\",\"category\":\"Best Director\"}"
+                  "payload" : "{\"name\":\"Mel Gibson with Hacksaw Ridge\",\"category\":\"Best Director\"}"
                 }
               ]
             },
             {
-              "title" : "Barry Jenkins for Moonlight",
+              "title" : "Barry Jenkins with Moonlight",
               "item_url" : null,
               "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
               "subtitle" : null,
@@ -62,12 +62,12 @@
                   "type" : "postback",
                   "title" : "Vote",
                   "url" : null,
-                  "payload" : "{\"name\":\"Barry Jenkins for Moonlight\",\"category\":\"Best Director\"}"
+                  "payload" : "{\"name\":\"Barry Jenkins with Moonlight\",\"category\":\"Best Director\"}"
                 }
               ]
             },
             {
-              "title" : "Kenneth Lonergan for Manchester by the Sea",
+              "title" : "Kenneth Lonergan with Manchester by the Sea",
               "item_url" : null,
               "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
               "subtitle" : null,
@@ -76,12 +76,12 @@
                   "type" : "postback",
                   "title" : "Vote",
                   "url" : null,
-                  "payload" : "{\"name\":\"Kenneth Lonergan for Manchester by the Sea\",\"category\":\"Best Director\"}"
+                  "payload" : "{\"name\":\"Kenneth Lonergan with Manchester by the Sea\",\"category\":\"Best Director\"}"
                 }
               ]
             },
             {
-              "title" : "Denis Villeneuve for Arrival",
+              "title" : "Denis Villeneuve with Arrival",
               "item_url" : null,
               "image_url" : "https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg",
               "subtitle" : null,
@@ -90,7 +90,7 @@
                   "type" : "postback",
                   "title" : "Vote",
                   "url" : null,
-                  "payload" : "{\"name\":\"Denis Villeneuve for Arrival\",\"category\":\"Best Director\"}"
+                  "payload" : "{\"name\":\"Denis Villeneuve with Arrival\",\"category\":\"Best Director\"}"
                 }
               ]
             }

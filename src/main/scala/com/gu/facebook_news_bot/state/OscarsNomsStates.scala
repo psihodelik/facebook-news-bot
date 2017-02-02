@@ -23,7 +23,7 @@ object OscarsNomsStates {
 
     val Name = "OSCARS_NOMS_INITIAL_QUESTION"
 
-    val Question = "Welcome to the Guardian Academy. Choose your favourite Oscar contenders and we'll let you know how your picks do on the night."
+    val Question = "Welcome to the Guardian Academy. Choose your favourite Oscar contenders and we'll let you know how your picks do on the night. Ready to vote?"
 
     protected def getQuestionText(user: User) = {
       if (user.version.contains(0)) s"Hi, I'm the Guardian chatbot. $Question"
@@ -49,7 +49,6 @@ object OscarsNomsStates {
 
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging) match {
-
         case Some(text) => store.OscarsStore.getUserNominations(user.ID).map { maybeUserNoms =>
           val userNoms = maybeUserNoms.getOrElse(UserNoms(user.ID))
           categoryAwaitingPrediction(userNoms) match {
@@ -69,11 +68,11 @@ object OscarsNomsStates {
     }
 
     private def requestBestPicture(user: User): Future[Result] = {
-      val message = MessageToFacebook.textMessage(user.ID, "Great. Let’s start with Best Picture. Which of these deserves the Oscar?")
+      val message = MessageToFacebook.textMessage(user.ID, "Let’s start with Best Picture. Which of these deserves the Oscar?")
       val categoryNominees = buildNominationCarousel(BestPicture, user)
-      Future.successful(State.changeState(user, Name), List(message,categoryNominees))
+      Future.successful(State.changeState(user, Name), List(message, categoryNominees))
     }
-    
+
     override def onPostback(user: User, postback: MessageFromFacebook.Postback, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       val userChoice = postback.payload
       JsonHelpers.decodeJson[Prediction](userChoice) match {
@@ -137,16 +136,16 @@ object OscarsNomsStates {
       val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
 
       val message = MessageToFacebook.Message(
-        text =  None,
+        text = None,
         attachment = Some(attachment),
         quick_replies = None,
         metadata = None)
 
-      MessageToFacebook( Id(user.ID), Some(message) )
+      MessageToFacebook(Id(user.ID), Some(message))
 
     }
 
-    private def categoryAwaitingPrediction(userNoms : UserNoms): Option[NominationCategory] = {
+    private def categoryAwaitingPrediction(userNoms: UserNoms): Option[NominationCategory] = {
       if (userNoms.bestPicture.isEmpty) Some(BestPicture)
       else if (userNoms.bestDirector.isEmpty) Some(BestDirector)
       else if (userNoms.bestActress.isEmpty) Some(BestActress)
@@ -185,21 +184,96 @@ object OscarsNomsStates {
     private def requestFollowUpPrediction(user: User, userNoms: UserNoms, prediction: Prediction): Result = {
       categoryAwaitingPrediction(userNoms) match {
         case Some(category) => {
-          val message = MessageToFacebook.textMessage(user.ID, s"Great. I got ${prediction.name} for ${prediction.category}. Who do you think will win ${category.name}?")
+
+          val message = MessageToFacebook.textMessage(user.ID, s"I got ${prediction.name} for ${prediction.category}. ${generateText(category)}")
           val categoryNominees = buildNominationCarousel(category, user)
 
-          (State.changeState(user, Name), List(message,categoryNominees))
+          (State.changeState(user, Name), List(message, categoryNominees))
         }
         case None => finishedPlaying(user)
       }
 
     }
 
+    def generateText(category: NominationCategory): String = {
+      category match {
+        case BestDirector => "Fingers crossed! Who of the following should pick up Best Director?"
+        case BestActress => "Interesting choice...Now which leading actress gave the best performance?"
+        case BestActor => "Mmm...Ok! If you're sure...Now who should the Best Actor Oscar go to?"
+        case _ => ""
+      }
+      // there should never be an error, or nothing returned for the question copy.
+    }
+
     private def finishedPlaying(user: User): Result = {
-      val message = MessageToFacebook.textMessage(user.ID, "Great. That's the game completed.")
+      UpdateTypeState.question(user)
+    }
+  }
+
+  case object UpdateTypeState extends State {
+
+    val Name = "OSCARS_UPDATE_TYPE_QUESTION"
+
+    private case class YesEvent(id: String, event: String = "oscars_noms_subscribe_yes", _eventName: String = "oscars_noms_subscribe_yes", isSubscriber: Boolean) extends LogEvent
+
+    def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
+      State.getUserInput(messaging).flatMap { text =>
+        val lower = text.toLowerCase
+        if (lower.contains("rolling-updates")) Some(updateUserUpdateType(user, true))
+        else if (lower.contains("morning-briefing")) Some(updateUserUpdateType(user, false))
+        else None
+      } getOrElse State.unknown(user)
+    }
+
+    def question(user: User, text: Option[String] = None): Result = {
+
+      val quickReplies = Seq(
+        MessageToFacebook.QuickReply(title = Some("Rolling updates"), payload = Some("rolling-updates")),
+        MessageToFacebook.QuickReply(title = Some("Morning briefing"), payload = Some("morning-briefing"))
+      )
+
+      val message = MessageToFacebook.quickRepliesMessage(
+        user.ID,
+        quickReplies,
+        "Thanks for your votes. We’ll be in touch with stats, news and results. Would you like your Oscar winner updates as they come in on the night, or with your morning briefing?"
+      )
+
       (State.changeState(user, Name), List(message))
     }
 
-  }
+    def updateUserUpdateType(user: User, rollingUpdates: Boolean): Future[Result] = {
+      val updatedUser = user.copy(
+        state = Some(MainState.Name),
+        oscarsNoms = Some(true),
+        oscarsNomsUpdateType = Some(rollingUpdates)
+      )
 
+      State.log(YesEvent(user.ID, isSubscriber = user.notificationTimeUTC != "-"))
+
+      val shareButton = getSocialShareElement(updatedUser)
+      val attachment = MessageToFacebook.Attachment.genericAttachment(Seq(shareButton))
+      val closingRemarks = MessageToFacebook.textMessage(user.ID, "Know another film fan? Share the next message with a friend by clicking the button below and see how they get on.")
+
+      val socialShare = MessageToFacebook(
+        Id(user.ID),
+        Some(MessageToFacebook.Message(attachment = Some(attachment)))
+      )
+
+      val menuMessage = MainState.buildMenu(updatedUser, "Great, thanks for playing! Is there anything else I can help you with?")
+
+      Future.successful(updatedUser, List(closingRemarks, socialShare, menuMessage))
+    }
+
+    def getSocialShareElement(user: User): MessageToFacebook.Element = {
+      MessageToFacebook.Element(
+        title = "Share",
+        item_url = Some("http://m.me/979106075541023?ref=oscars_noms_share"),
+        image_url = Some("https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg"),
+        subtitle = Some("Please click the button below to share with your friends!"),
+        buttons = Some(List(
+          MessageToFacebook.Button(`type` = "element_share")
+        ))
+      )
+    }
+  }
 }
