@@ -219,8 +219,7 @@ case object MainState extends State {
     val message = MessageToFacebook.buttonsMessage(
       user.ID,
       Seq(
-        MessageToFacebook.Button("postback", Some("Morning briefing"), payload = Some("manage_morning_briefing")),
-        MessageToFacebook.Button("postback", Some("Football transfers"), payload = Some("manage_football_transfers"))
+        MessageToFacebook.Button("postback", Some("Morning briefing"), payload = Some("manage_morning_briefing"))
       ),
       "Which subscription would you like to manage?"
     )
