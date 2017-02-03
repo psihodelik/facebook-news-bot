@@ -31,6 +31,7 @@ object StateHandler {
     FootballTransferStates.EnterTeamsState,
     FootballTransferStates.ManageFootballTransfersState,
     FootballTransferStates.RemoveTeamState,
+    FootballTransferStates.FootballTransfersFeedbackState,
     OscarsNomsStates.InitialQuestionState,
     OscarsNomsStates.EnterNomsState,
     UnsubscribeState)

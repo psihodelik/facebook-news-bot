@@ -203,6 +203,11 @@ object FootballTransferStates {
       Future.successful((State.changeState(user, MainState.Name), List(message)))
     }
   }
+
+  case object FootballTransfersFeedbackState extends FeedbackState {
+    val Name = "FOOTBALL_TRANSFERS_FEEDBACK"
+    val message = "Hi. The January transfer window has now closed. The teams in the top five European leagues were involved in 547 transfers for a total value of £651,638,639.\n\nDid you find these notifications useful? Type your feedback here, and I'll pass it onto the Guardian."
+  }
 }
 
 /**
