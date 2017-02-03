@@ -10,6 +10,7 @@ import com.gu.facebook_news_bot.services._
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.SQSPoller.Poll
 import io.circe.generic.auto._
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,6 +19,17 @@ import scala.util.{Failure, Success, Try}
 
 object SQSPoller {
   case object Poll
+
+  //Given the UTC offset, is it currently this date?
+  def isDate(offset: Double, date: DateTime): Boolean = {
+    val hours = math.floor(offset).toInt
+    val mins = ((offset * 60) % 60).toInt
+    val now = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
+
+    now.getDayOfMonth == date.getDayOfMonth &&
+      now.getMonthOfYear == date.getMonthOfYear &&
+      now.getYear == date.getYear
+  }
 }
 
 trait SQSPoller extends Actor {

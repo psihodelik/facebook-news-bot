@@ -10,10 +10,10 @@ import io.circe.generic.auto._
 
 import scala.concurrent.Future
 
-object FeedbackState extends State {
-  val Name = "FEEDBACK"
+trait FeedbackState extends State {
+  val message: String
 
-  private case class LogFeedback(id: String, event: String = "feedback", _eventName: String = "feedback", feedback: String) extends LogEvent
+  private case class LogFeedback(id: String, event: String = Name.toLowerCase, _eventName: String = Name.toLowerCase, feedback: String) extends LogEvent
 
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     val result = for {
@@ -28,6 +28,12 @@ object FeedbackState extends State {
   }
 
   def question(user: User): Future[Result] = {
-    Future.successful(State.changeState(user, Name), List(MessageToFacebook.textMessage(user.ID, "How can we improve this service? Type here, and I'll pass it onto the Guardian")))
+    Future.successful(State.changeState(user, Name), List(MessageToFacebook.textMessage(user.ID, message)))
   }
+}
+
+object FeedbackState extends FeedbackState {
+  val Name = "FEEDBACK"
+
+  val message = "How can we improve this service? Type here, and I'll pass it onto the Guardian."
 }
