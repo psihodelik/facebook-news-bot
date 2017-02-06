@@ -65,18 +65,16 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
   private def getMessages(user: User): Future[Result] = {
     appLogger.debug(s"Getting morning briefing for User: $user")
 
-    CollectionsBriefing.getBriefing(user).flatMap { maybeBriefing: Option[Result] =>
-      maybeBriefing.map { briefing =>
-        logBriefing(user.ID, CollectionsBriefing.getVariant(user.front))
-        Future.successful(briefing)
-      }.getOrElse {
-        //Fall back on editors-picks briefing
-        val variant = s"editors-picks-${user.front}"
-        logBriefing(user.ID, variant)
+    CustomBriefing.getBriefing(user, capi).map { futureBriefing =>
+      logBriefing(user.ID, CustomBriefing.getVariant(user.front))
+      futureBriefing
+    }.getOrElse {
+      //Fall back on editors-picks briefing
+      val variant = s"editors-picks-${user.front}"
+      logBriefing(user.ID, variant)
 
-        MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-          (updatedUser, morningMessage(updatedUser) :: messages)
-        }
+      MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
+        (updatedUser, morningMessage(updatedUser) :: messages)
       }
     }
   }

@@ -10,7 +10,7 @@ object FacebookMessageBuilder {
   val MaxImageWidth = 1000
   val CarouselSize = 5  //Number of items in a carousel
 
-  def contentToCarousel(contentList: Seq[Content], offset: Int, edition: String, currentTopic: Option[String], variant: Option[String] = None): Option[MessageToFacebook.Message] = {
+  def contentToCarousel(contentList: Seq[Content], offset: Int, edition: String, currentTopic: Option[String], variant: Option[String] = None, includeMoreQuickReply: Boolean = true): Option[MessageToFacebook.Message] = {
     val sliced = contentList.slice(offset, offset + CarouselSize)
     if (sliced.isEmpty) None
     else {
@@ -25,11 +25,21 @@ object FacebookMessageBuilder {
       }
       val attachment = MessageToFacebook.Attachment.genericAttachment(tiles)
 
-      val moreQuickReply = MessageToFacebook.QuickReply(
-        content_type = "text",
-        title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
-        payload = Some("more")
-      )
+      val moreQuickReply = {
+        if (includeMoreQuickReply) {
+          MessageToFacebook.QuickReply(
+            content_type = "text",
+            title = Some(currentTopic.map(topic => s"More $topic").getOrElse("More stories")),
+            payload = Some("more")
+          )
+        } else {
+          MessageToFacebook.QuickReply(
+            content_type = "text",
+            title = Some("Headlines"),
+            payload = Some("headlines")
+          )
+        }
+      }
 
       Some(MessageToFacebook.Message(
         attachment = Some(attachment),
