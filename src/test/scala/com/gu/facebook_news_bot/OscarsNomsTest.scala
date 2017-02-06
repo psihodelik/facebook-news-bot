@@ -48,5 +48,4 @@ class OscarsNomsTest extends FunSpec with Matchers with ScalatestRouteTest with 
       "src/test/resources/facebookResponses/oscarsNoms/enterBestDirector.json"
     )
   }
-
 }

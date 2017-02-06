@@ -4,7 +4,7 @@
       "id" : "oscars_noms_test"
     },
     "message" : {
-      "text" : "Great. Let’s start with Best Picture. Which of these deserves the Oscar?",
+      "text" : "Let’s start with Best Picture. Which of these deserves the Oscar?",
       "attachment" : null,
       "quick_replies" : null,
       "metadata" : null

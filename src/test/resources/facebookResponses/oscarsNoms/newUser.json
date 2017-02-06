@@ -4,7 +4,7 @@
       "id": "oscars_noms_test"
     },
     "message": {
-      "text": "Hi, I'm the Guardian chatbot. Welcome to the Guardian Academy. Choose your favourite Oscar contenders and we'll let you know how your picks do on the night.",
+      "text": "Hi, I'm the Guardian chatbot. Welcome to the Guardian Academy. Choose your favourite Oscar contenders and we'll let you know how your picks do on the night. Ready to vote?",
       "quick_replies": [
         {
           "content_type": "text",
