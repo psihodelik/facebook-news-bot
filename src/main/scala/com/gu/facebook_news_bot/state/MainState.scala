@@ -50,6 +50,7 @@ case object MainState extends State {
   private case object SupportEvent extends Event
   private case object ManageMorningBriefingEvent extends Event
   private case object ManageFootballTransfersEvent extends Event
+  private case object ReadersEditorEvent extends Event
 
   private sealed trait ContentType { val name: String }
   private case object HeadlinesType extends ContentType { val name = "headlines" }
@@ -123,6 +124,7 @@ case object MainState extends State {
       case SupportEvent => Some(supportUsResponse(user))
       case ManageMorningBriefingEvent => Some(ManageMorningBriefingState.question(user))
       case ManageFootballTransfersEvent => Some(FootballTransferStates.ManageFootballTransfersState.question(user, store))
+      case ReadersEditorEvent => Some(readersEditorMessage(user))
     }
 
     result.getOrElse(State.unknown(user))
@@ -151,6 +153,7 @@ case object MainState extends State {
     //Note - each case must reference all capture groups from the regex for the extractor to work
     val text = raw.toLowerCase
     val event = text match {
+      case _ if text.length >= 200 => Some(ReadersEditorEvent)
       case Patterns.more(_,_) => Some(MoreContentEvent)
       case Patterns.headlines(_,_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
       case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(text)))
@@ -246,5 +249,15 @@ case object MainState extends State {
       MessageToFacebook(Id(user.ID), Some(FacebookMessageBuilder.supportUsCarousel(user.front)))
     )
     Future.successful(user, messages)
+  }
+
+  private def readersEditorMessage(user: User): Future[Result] = {
+    Future.successful(
+      user,
+      List(MessageToFacebook.textMessage(
+        user.ID,
+        "It looks like you're trying to tell us something. You might want to get in touch with our readers' editor. You can find contact information here: https://www.theguardian.com/info/2013/sep/23/guardian-readers-editor"
+      ))
+    )
   }
 }
