@@ -36,7 +36,7 @@ object ResponseText {
 
   def subscribeQuestion = "Would you like to subscribe to the daily morning briefing?"
 
-  def subscribed(time: String) = s"Done. You will start receiving the morning briefing at $time.\n\nRemember, you can change your subscription to this at any time from the menu.\n\nWould you like to see the headlines or the most popular stories right now?"
+  def subscribed(time: String) = s"Done. You will receive your morning briefing at $time.\n\nRemember, you can change your subscription to this at any time from the menu.\n\nWould you like to see the headlines or the most popular stories right now?"
 
   def subscribeNo = "No problem, maybe later then. You can subscribe to the morning briefing at any time from the menu.\n\nWould you like the headlines or the most popular stories?"
 

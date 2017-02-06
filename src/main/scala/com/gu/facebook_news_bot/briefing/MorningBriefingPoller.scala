@@ -6,13 +6,14 @@ import com.gu.facebook_news_bot.briefing.MorningBriefingPoller._
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
-import com.gu.facebook_news_bot.state.MainState
+import com.gu.facebook_news_bot.state.{CustomBriefingQuestionState, MainState}
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.{JsonHelpers, Notifier, ResponseText, SQSPoller}
 import org.joda.time.{DateTime, DateTimeZone}
 import io.circe.generic.auto._
+import org.joda.time.format.DateTimeFormat
 
 import scala.concurrent.Future
 
@@ -41,11 +42,13 @@ object MorningBriefingPoller {
     val dateTime = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
     dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
   }
+
+  private val advertiseCustomBriefingDate = DateTime.parse("20170208", DateTimeFormat.forPattern("YYYYMMdd"))
 }
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
   val SQSName = BotConfig.aws.morningBriefingSQSName
-  
+
   override def process(messageBody: SQSMessageBody): Future[List[FacebookMessageResult]] = {
     JsonHelpers.decodeJson[User](messageBody.Message).map { userFromSqs: User =>
       for {
@@ -73,8 +76,16 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
       val variant = s"editors-picks-${user.front}"
       logBriefing(user.ID, variant)
 
-      MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-        (updatedUser, morningMessage(updatedUser) :: messages)
+      //TODO - remove later
+      if (user.briefingTopic1.isEmpty && SQSPoller.isDate(user.offsetHours, advertiseCustomBriefingDate)) {
+        for {
+          (_, headlinesMessages) <- MainState.getHeadlines(user, capi, Some(variant))
+          (updatedUser, transfersMessages) <- CustomBriefingQuestionState.question(user, Some("I can now personalise your briefing. Do you want to choose a favourite topic?"))
+        } yield (updatedUser, morningMessage(updatedUser) :: headlinesMessages ::: transfersMessages)
+      } else {
+        MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
+          (updatedUser, morningMessage(updatedUser) :: messages)
+        }
       }
     }
   }
