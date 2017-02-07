@@ -268,7 +268,7 @@ object OscarsNomsStates {
       MessageToFacebook.Element(
         title = "Share",
         item_url = Some("http://m.me/979106075541023?ref=oscars_noms_share"),
-        image_url = Some("https://media.guim.co.uk/82ef416b00febc774665554973c2965c7f82b819/0_191_2266_1360/140.jpg"),
+        image_url = Some(OscarTile.imageUrl),
         subtitle = Some("Please click the button below to share with your friends!"),
         buttons = Some(List(
           MessageToFacebook.Button(`type` = "element_share")
