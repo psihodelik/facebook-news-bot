@@ -28,7 +28,7 @@ object MorningBriefingPoller {
   }
 
 
-  private def morningMessage(user: User) = {
+  def morningMessage(user: User) = {
     val message = {
       if (isNewYear(user.offsetHours)) "Happy new year! Here are the top stories today"
       else ResponseText.morningBriefing

@@ -44,12 +44,16 @@ object CustomBriefing {
       }
 
       futureMaybeCarousel.map { maybeCarousel =>
-        val messages = maybeCarousel.map(carousel => List(MessageToFacebook(Id(user.ID), Some(carousel))))
-          .getOrElse {
-            //If we didn't get a carousel back then it's probably a CAPI issue
-            appLogger.warn(s"Failed to build custom briefing carousel for user: ${user.ID}")
-            Nil
-          }
+        val messages = maybeCarousel.map { carousel =>
+          List(
+            MorningBriefingPoller.morningMessage(user),
+            MessageToFacebook(Id(user.ID), Some(carousel))
+          )
+        } getOrElse {
+          //If we didn't get a carousel back then it's probably a CAPI issue
+          appLogger.warn(s"Failed to build custom briefing carousel for user: ${user.ID}")
+          Nil
+        }
 
         (user, messages)
       }
