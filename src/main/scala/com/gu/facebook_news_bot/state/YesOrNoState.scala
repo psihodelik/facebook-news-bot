@@ -7,13 +7,9 @@ import com.gu.facebook_news_bot.stores.UserStore
 
 import scala.concurrent.Future
 
-object YesOrNoState {
-  val YesPattern = """\b(yes|yeah|yep|sure|ok|okay)\b""".r.unanchored
-}
-
 trait YesOrNoState extends State {
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
-    if (State.getUserInput(messaging).exists(s => YesOrNoState.YesPattern.findFirstIn(s.toLowerCase).isDefined)) yes(user, facebook)
+    if (State.getUserInput(messaging).exists(s => State.YesPattern.findFirstIn(s.toLowerCase).isDefined)) yes(user, facebook)
     else no(user)
   }
 
