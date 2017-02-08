@@ -24,14 +24,14 @@ object CustomBriefing {
         topic2Headlines <- user.briefingTopic2.map(topic2 => capi.getHeadlines(user.front, Topic.getTopic(topic2))).getOrElse(Future.successful(Nil))
       } yield {
 
-        //Interleave main headlines with topic stories
-        val stories: List[Content] = List(
-          headlines.headOption,
-          topic1Headlines.headOption,
-          headlines.lift(1),
-          topic2Headlines.headOption orElse topic1Headlines.lift(1),
-          headlines.lift(2)
-        ).flatten
+        //Interleave main headlines with topic stories, and deduplicate
+        val ops =
+          appendNextNonDup(topic1Headlines) andThen
+          appendNextNonDup(headlines.drop(1)) andThen
+          appendNextNonDup(if (topic2Headlines.nonEmpty) topic2Headlines else topic1Headlines.drop(1)) andThen
+          appendNextNonDup(headlines.drop(2))
+
+        val stories: Seq[Content] = ops(headlines.take(1))
 
         FacebookMessageBuilder.contentToCarousel(
           contentList = stories,
@@ -58,6 +58,10 @@ object CustomBriefing {
         (user, messages)
       }
     }
+  }
+
+  private def appendNextNonDup(next: Seq[Content]): Seq[Content] => Seq[Content] = { current =>
+    current ++ next.find(content => !current.exists(_.id == content.id))
   }
 
   def getVariant(edition: String) = s"custom-briefing-$edition"
