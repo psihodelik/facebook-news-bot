@@ -17,6 +17,5 @@ case class User(ID: String,
                 footballTransfers: Option[Boolean] = None,
                 footballRumoursTimeUTC: Option[String] = None,
                 oscarsNoms: Option[Boolean] = None,
-                oscarsNomsUpdateType: Option[Boolean] = None,
                 briefingTopic1: Option[String] = None,
                 briefingTopic2: Option[String] = None)

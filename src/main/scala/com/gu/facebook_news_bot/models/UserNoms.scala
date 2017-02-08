@@ -4,10 +4,11 @@ case class UserNoms(ID: String,
                     bestPicture: Option[String] = None,
                     bestDirector: Option[String] = None,
                     bestActor: Option[String] = None,
-                    bestActress: Option[String] = None)
+                    bestActress: Option[String] = None,
+                    oscarsNomsUpdateType: Option[String] = None)
 
 object OscarTile {
-  val imageUrl = "https://media.guim.co.uk/2277a8a91906af69ef1a83c8f29aff1b9d1776be/0_0_1200_565/1200.jpg"
+  val imageUrl = "https://media.guim.co.uk/76c5179cd03699f56f66f46dad557063cb26f567/0_0_1200_565/1200.png"
 }
 
 case class IndividualNominee(name: String, pictureUrl: String = OscarTile.imageUrl)

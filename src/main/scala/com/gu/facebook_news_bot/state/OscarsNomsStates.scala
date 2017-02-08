@@ -219,8 +219,8 @@ object OscarsNomsStates {
     def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
       State.getUserInput(messaging).flatMap { text =>
         val lower = text.toLowerCase
-        if (lower.contains("rolling-updates")) Some(updateUserUpdateType(user, true))
-        else if (lower.contains("morning-briefing")) Some(updateUserUpdateType(user, false))
+        if (lower.contains("rolling-updates")) Some(updateUserUpdateType(user, "rolling-updates", store))
+        else if (lower.contains("morning-briefing")) Some(updateUserUpdateType(user, "morning-briefing", store))
         else None
       } getOrElse State.unknown(user)
     }
@@ -241,32 +241,43 @@ object OscarsNomsStates {
       (State.changeState(user, Name), List(message))
     }
 
-    def updateUserUpdateType(user: User, rollingUpdates: Boolean): Future[Result] = {
-      val updatedUser = user.copy(
-        state = Some(MainState.Name),
-        oscarsNoms = Some(true),
-        oscarsNomsUpdateType = Some(rollingUpdates)
-      )
+    def updateUserUpdateType(user: User, rollingUpdates: String, store: UserStore): Future[Result] = {
 
-      State.log(YesEvent(user.ID, isSubscriber = user.notificationTimeUTC != "-"))
+      store.OscarsStore.getUserNominations(user.ID).flatMap {
+        case Some(noms) => {
+          val updatedNoms = noms.copy(oscarsNomsUpdateType = Some(rollingUpdates))
 
-      val shareButton = getSocialShareElement(updatedUser)
-      val attachment = MessageToFacebook.Attachment.genericAttachment(Seq(shareButton))
-      val closingRemarks = MessageToFacebook.textMessage(user.ID, "Know another film fan? Share the next message with a friend by clicking the button below and see how they get on.")
+          store.OscarsStore.putUserNominations(updatedNoms)
 
-      val socialShare = MessageToFacebook(
-        Id(user.ID),
-        Some(MessageToFacebook.Message(attachment = Some(attachment)))
-      )
+          val updatedUser = user.copy(
+            state = Some(MainState.Name),
+            oscarsNoms = Some(true)
+          )
 
-      val menuMessage = MainState.buildMenu(updatedUser, "Great, thanks for playing! Is there anything else I can help you with?")
+          State.log(YesEvent(user.ID, isSubscriber = user.notificationTimeUTC != "-"))
 
-      Future.successful(updatedUser, List(closingRemarks, socialShare, menuMessage))
+          val shareButton = getSocialShareElement(updatedUser)
+          val attachment = MessageToFacebook.Attachment.genericAttachment(Seq(shareButton))
+          val closingRemarks = MessageToFacebook.textMessage(user.ID, "Know another film fan? Share the next message with a friend by clicking the button below and see how they get on.")
+
+          val socialShare = MessageToFacebook(
+            Id(user.ID),
+            Some(MessageToFacebook.Message(
+              attachment = Some(attachment),
+              quick_replies = Some(List(MessageToFacebook.QuickReply(title = Some("Get Morning Briefing"),payload = Some("subscription"))))
+            ))
+          )
+
+          Future.successful(updatedUser, List(closingRemarks, socialShare))
+
+        }
+        case None => State.unknown(user)
+      }
     }
 
     def getSocialShareElement(user: User): MessageToFacebook.Element = {
       MessageToFacebook.Element(
-        title = "Share",
+        title = "Challenge your friends",
         item_url = Some("http://m.me/979106075541023?ref=oscars_noms_share"),
         image_url = Some(OscarTile.imageUrl),
         subtitle = Some("Please click the button below to share with your friends!"),
