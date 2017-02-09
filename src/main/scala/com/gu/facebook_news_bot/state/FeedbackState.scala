@@ -35,5 +35,5 @@ trait FeedbackState extends State {
 object FeedbackState extends FeedbackState {
   val Name = "FEEDBACK"
 
-  val message = "How can we improve this service? Type here, and I'll pass it onto the Guardian."
+  val message = "How can we improve this service? Type here, and I'll pass it onto the Messenger developers."
 }
