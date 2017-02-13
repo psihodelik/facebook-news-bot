@@ -6,7 +6,7 @@ scalacOptions in doc in Compile := Nil
 
 scalaVersion := "2.11.8"
 
-val CirceVersion = "0.5.0-M2"
+val CirceVersion = "0.7.0"
 
 val akkaVersion = "2.4.10"
 
@@ -14,7 +14,7 @@ resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 
 enablePlugins(RiffRaffArtifact, JavaAppPackaging)
 
-val CapiVersion = "10.5"
+val CapiVersion = "11.2"
 val AwsVersion = "1.11.8"
 
 libraryDependencies ++= Seq(
@@ -37,11 +37,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion,
   "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
   "com.github.ben-manes.caffeine" % "caffeine" % "2.3.3",
-  "de.heikoseeberger" %% "akka-http-circe" % "1.10.0",
+  "de.heikoseeberger" %% "akka-http-circe" % "1.12.0",
   "com.amazonaws" % "aws-java-sdk-sqs" % AwsVersion,
   "com.amazonaws" % "aws-java-sdk-dynamodb" % AwsVersion,
   "com.amazonaws" % "aws-java-sdk-ec2" % AwsVersion,
-  "com.gu" %% "scanamo" % "0.7.0",
+  "com.gu" %% "scanamo" % "0.9.1",
   "com.gu" % "kinesis-logback-appender" % "1.3.0",
   "net.logstash.logback" % "logstash-logback-encoder" % "4.6",
   "com.typesafe.akka" %% "akka-http-testkit" % akkaVersion,

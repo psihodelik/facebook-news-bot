@@ -107,7 +107,7 @@ object Notifier {
 
   private def updateUser(user: User, userStore: UserStore, retry: Int = 0): Unit = {
     userStore.updateUser(user) foreach { updateResult =>
-      updateResult.swap.toOption.foreach { error =>
+      updateResult.left.toOption.foreach { error =>
         //User has since been updated in dynamo, get the latest version and try again
         if (retry < 3) {
           userStore.getUser(user.ID).foreach {
