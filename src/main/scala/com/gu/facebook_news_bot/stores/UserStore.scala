@@ -1,18 +1,17 @@
 package com.gu.facebook_news_bot.stores
 
-import cats.data.Xor
-import cats.data.OptionT
+import cats.data.{OptionT, Xor}
 import cats.instances.future._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, PutItemResult}
 import com.gu.facebook_news_bot.models.{User, UserNoms, UserTeam}
-import com.gu.scanamo.query.Not
-import com.gu.scanamo.{ScanamoAsync, Table}
-import com.gu.scanamo.syntax._
 import com.gu.facebook_news_bot.utils.Loggers._
+import com.gu.scanamo.query.Not
+import com.gu.scanamo.syntax._
+import com.gu.scanamo.{ScanamoAsync, Table}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * TODO -
@@ -54,6 +53,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
     }
 
     def addTeam(id: String, team: String): Unit = ScanamoAsync.exec(client)(userTeamTable.put(UserTeam(id, team)))
+
     def removeTeam(id: String, team: String): Unit = ScanamoAsync.exec(client)(userTeamTable.delete('ID -> id and 'team -> team))
 
   }
@@ -77,5 +77,4 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
     }
 
   }
-
 }
