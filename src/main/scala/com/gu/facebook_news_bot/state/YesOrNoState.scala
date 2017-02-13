@@ -9,8 +9,14 @@ import scala.concurrent.Future
 
 trait YesOrNoState extends State {
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
-    if (State.getUserInput(messaging).exists(s => State.YesPattern.findFirstIn(s.toLowerCase).isDefined)) yes(user, facebook)
-    else no(user)
+    State.getUserInput(messaging).map(_.toLowerCase) match {
+      case Some(text) =>
+        if (State.YesPattern.findFirstIn(text).isDefined) yes(user, facebook)
+        else if (State.NoPattern.findFirstIn(text).isDefined) no(user)
+        else unrecognised(user, messaging, capi, facebook, store)
+
+      case None => unrecognised(user, messaging, capi, facebook, store)
+    }
   }
 
   def question(user: User, text: Option[String] = None): Future[Result] = {
@@ -28,4 +34,7 @@ trait YesOrNoState extends State {
   protected def yes(user: User, facebook: Facebook): Future[Result]
 
   protected def no(user: User): Future[Result]
+
+  //By default, if they haven't said yes then it's a no
+  protected def unrecognised(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = no(user)
 }

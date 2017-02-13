@@ -14,13 +14,12 @@ import com.gu.cm.Mode
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller
 import com.gu.facebook_news_bot.football_transfers.{FootballTransferRumoursPoller, FootballTransfersPoller, FootballTransfersFeedbackPoller}
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.{Capi, CapiImpl, Facebook, FacebookImpl}
+import com.gu.facebook_news_bot.services._
 import de.heikoseeberger.akkahttpcirce.CirceSupport
 import io.circe.generic.auto._
 import com.gu.facebook_news_bot.state.StateHandler
 import com.gu.facebook_news_bot.stores.UserStore
-import com.gu.facebook_news_bot.utils.{JsonHelpers, Verification}
-import com.gu.facebook_news_bot.utils.{KinesisAppenderConfig, LogStash}
+import com.gu.facebook_news_bot.utils._
 import com.gu.facebook_news_bot.utils.Loggers._
 
 import scala.concurrent.duration._
@@ -192,6 +191,8 @@ object Bot extends App with BotService {
   val footballFeedbackPoller = PartialFunction.condOpt(BotConfig.football.feedbackEnabled) {
     case true => system.actorOf(FootballTransfersFeedbackPoller.props(facebook, capi, userStore))
   }
+
+  Parser.warmUp
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
 }

@@ -1,7 +1,7 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models.{Id, MessageFromFacebook, MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
+import com.gu.facebook_news_bot.services.{Capi, Facebook, SearchTopic, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.{FacebookMessageBuilder, ResponseText}
@@ -155,8 +155,8 @@ case object MainState extends State {
     val event = text match {
       case _ if text.length >= 200 => Some(ReadersEditorEvent)
       case Patterns.more(_,_) => Some(MoreContentEvent)
-      case Patterns.headlines(_,_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(text)))
-      case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(text)))
+      case Patterns.headlines(_,_,_) => Some(NewContentEvent(contentType = Some(HeadlinesType), topic = Topic.getTopic(raw)))
+      case Patterns.popular(_,_) => Some(NewContentEvent(contentType = Some(MostViewedType), topic = Topic.getTopic(raw)))
       case Patterns.greeting(_,_,_) => Some(GreetingEvent)
       case Patterns.thanks(_,_,_) => Some(ThanksEvent)
       case Patterns.goodbye(_,_,_) => Some(GoodbyeEvent)
@@ -172,19 +172,25 @@ case object MainState extends State {
 
     event.orElse(
       //Does it contain a topic?
-      Topic.getTopic(text).map { topic =>
+      Topic.getTopic(raw).map { topic =>
         NewContentEvent(contentType = Some(HeadlinesType), topic = Some(topic))
       }
     )
   }
 
   private def carousel(user: User, contentType: ContentType, topic: Option[Topic], offset: Int, capi: Capi, variant: Option[String] = None): Future[Result] = {
-    val futureCarousel = contentType match {
-      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant))
-      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant))
+    //Do not include quick replies if it's a search
+    val quickReplies = topic match {
+      case Some(SearchTopic(_)) => false
+      case _ => true
     }
 
-    futureCarousel map {
+    val futureCarousel = contentType match {
+      case MostViewedType => capi.getMostViewed(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant, quickReplies))
+      case HeadlinesType => capi.getHeadlines(user.front, topic) map (contentToCarousel(_, offset, user.front, topic.map(_.name), variant, quickReplies))
+    }
+
+    futureCarousel flatMap {
       case Some(carousel) =>
         val updatedUser = user.copy(
           state = Some(Name),
@@ -193,13 +199,31 @@ case object MainState extends State {
           contentOffset = Some(offset)
         )
 
-        val response = MessageToFacebook(
+        val carouselMessage = MessageToFacebook(
           recipient = Id(user.ID),
           message = Some(carousel)
         )
-        (updatedUser, List(response))
 
-      case None => (user, List(MessageToFacebook.textMessage(user.ID, ResponseText.noResults)))
+        topic match {
+          //Send some extra text for searches
+          case Some(SearchTopic(terms)) =>
+            val confirmationMessage = MessageToFacebook.textMessage(
+              user.ID,
+              s"I think you're asking me about ${
+                if (terms.length <= 1) terms.mkString("")
+                else terms.take(terms.length-1).mkString(", ") + s" and ${terms.last}"
+              }. Here are some articles that could be of interest:"
+            )
+
+            SearchFeedbackState.question(updatedUser).map {
+              case (questionedUser, feedbackMessage) =>
+                (questionedUser, List(confirmationMessage, carouselMessage) ++ feedbackMessage)
+            }
+
+          case _ => Future.successful(updatedUser, List(carouselMessage))
+        }
+
+      case None => Future.successful(user, List(MessageToFacebook.textMessage(user.ID, ResponseText.noResults)))
     }
   }
 

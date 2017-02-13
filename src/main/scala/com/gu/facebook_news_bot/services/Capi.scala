@@ -4,9 +4,11 @@ import java.util.concurrent.TimeUnit
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.gu.contentapi.client.GuardianContentClient
-import com.gu.contentapi.client.model.ItemQuery
-import com.gu.contentapi.client.model.v1.{Content, ItemResponse}
+import com.gu.contentapi.client.model._
+import com.gu.contentapi.client.model.v1.{Content, ItemResponse, SearchResponse}
 import com.gu.facebook_news_bot.BotConfig
+import com.gu.facebook_news_bot.utils.Loggers.appLogger
+import com.gu.facebook_news_bot.utils.Parser
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,10 +27,23 @@ object CapiImpl extends Capi {
   private lazy val client = new GuardianContentClient(BotConfig.capi.key)
 
   def getHeadlines(edition: String, topic: Option[Topic]): Future[Seq[Content]] =
-    doQuery(basicItemQuery(topic.map(_.getPath(edition)).getOrElse(edition)).showEditorsPicks(), _.editorsPicks)
+    doQuery(edition, topic, _.showEditorsPicks(), _.editorsPicks)
 
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]] =
-    doQuery(basicItemQuery(topic.map(_.getPath(edition)).getOrElse(edition)).showMostViewed(), _.mostViewed)
+    doQuery(edition, topic, _.showMostViewed(), _.mostViewed)
+
+  def doQuery(edition: String, topic: Option[Topic], itemQueryModifier: ItemQuery => ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
+    val query: ContentApiQuery = topic.map(_.getQuery(edition)).getOrElse(ItemQuery(edition))
+    query match {
+      case itemQuery @ ItemQuery(_,_) =>
+        val ops = itemQueryModifier andThen commonItemQueryParams
+        doItemQuery(ops(itemQuery), getResults)
+      case searchQuery @ SearchQuery(_) => doSearchQuery(commonSearchQueryParams(searchQuery))
+      case other =>
+        appLogger.error(s"Unexpected ContentApiQuery type: $other")
+        Future.successful(Nil)
+    }
+  }
 
   def getArticle(id: String): Future[Option[Content]] = {
     val query = ItemQuery(id).showFields("standfirst").showElements("image")
@@ -37,7 +52,7 @@ object CapiImpl extends Capi {
     }
   }
 
-  private def doQuery(query: ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
+  private def doItemQuery(query: ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
     CapiCache.get(query.toString).map(cached => Future.successful(cached)).getOrElse {
       client.getResponse(query) map { response: ItemResponse =>
 
@@ -51,11 +66,37 @@ object CapiImpl extends Capi {
     }
   }
 
-  private def basicItemQuery(item: String) = ItemQuery(item)
-    .showFields("standfirst")
+  private def doSearchQuery(query: SearchQuery): Future[Seq[Content]] = {
+    CapiCache.get(query.toString).map(cached => Future.successful(cached)).getOrElse {
+      client.getResponse(query) map { response: SearchResponse =>
+        val results = response.results
+        //These are the most relevant results according to CAPI, now sort by date
+        val sorted = results.sortWith { (a, b) =>
+          val result = for {
+            dateA <- a.webPublicationDate
+            dateB <- b.webPublicationDate
+          } yield dateA.dateTime > dateB.dateTime
+          result.getOrElse(false)
+        }
+
+        CapiCache.put(query.toString, sorted)
+        sorted
+      }
+    }
+  }
+
+  private def commonItemQueryParams: ItemQuery => ItemQuery =
+    _.showFields("standfirst")
     .tag("type/article")
     .showElements("image")
     .pageSize(25)   //Matches the number of editors-picks/most-viewed, in case they aren't available
+
+  private def commonSearchQueryParams: SearchQuery => SearchQuery =
+    _.showFields("standfirst")
+    .tag("type/article")
+    .showElements("image")
+    .pageSize(25)
+
 }
 
 object CapiCache {
@@ -70,7 +111,8 @@ object CapiCache {
 
 object Topic {
   def getTopic(text: String): Option[Topic] = {
-    TopicList.find(topic => topic.pattern.findFirstIn(text).isDefined)
+    val topic = TopicList.find(topic => topic.pattern.findFirstIn(text.toLowerCase).isDefined)
+    topic.orElse(SearchTopic(text)) //Uppercase chars can help with finding proper nouns
   }
 
   private val TopicList: List[Topic] = List(
@@ -118,29 +160,29 @@ object Topic {
 sealed trait Topic {
   val terms: List[String]
   lazy val pattern: Regex = ("""(^|\W)(""" + terms.mkString("|") + """)($|\W)""").r.unanchored
-  def getPath(edition: String): String
+  def getQuery(edition: String): ContentApiQuery
   def name: String = terms.headOption.getOrElse("")
 }
 
 case class SectionTopic(terms: List[String], section: String) extends Topic {
-  def getPath(edition: String) = section
+  def getQuery(edition: String) = ItemQuery(section)
 }
 object SectionTopic {
   def apply(section: String): SectionTopic = SectionTopic(List(section), section)
 }
 
 case class EditionSectionTopic(terms: List[String], section: String) extends Topic {
-  def getPath(edition: String) = {
+  def getQuery(edition: String) = ItemQuery({
     if (List("us","au").contains(edition.toLowerCase)) s"$edition/$section"
     else s"uk/$section"   //uk edition by default
-  }
+  })
 }
 object EditionSectionTopic {
   def apply(section: String): EditionSectionTopic = EditionSectionTopic(List(section), section)
 }
 
 case class SectionTagTopic(terms: List[String], section: String, tag: String) extends Topic {
-  def getPath(edition: String) = s"$section/$tag"
+  def getQuery(edition: String) = ItemQuery(s"$section/$tag")
 }
 object SectionTagTopic {
   def apply(section: String, tag: String): SectionTagTopic = SectionTagTopic(List(tag), section, tag)
@@ -149,11 +191,28 @@ object SectionTagTopic {
 case object PoliticsTopic extends Topic {
   val terms = List("politics")
 
-  def getPath(edition: String): String = {
+  def getQuery(edition: String): ItemQuery = ItemQuery({
     edition.toLowerCase match {
       case "us" => "us-news/us-politics"
       case "au" => "australia-news/australian-politics"
       case _ => "politics"
     }
+  })
+}
+
+//Special topic for searching CAPI for a set of terms, for when we can't match any topics
+case class SearchTopic(terms: List[String]) extends Topic {
+  def getQuery(edition: String) = {
+    val quoted = terms.map(term => if (term.contains(" ")) "\"" + term + "\"" else term)
+    SearchQuery().q(quoted.mkString(" AND "))
+  }
+
+  override def name: String = terms.mkString(", ")
+}
+object SearchTopic {
+  def apply(text: String): Option[SearchTopic] = {
+    val filtered = text.replaceAll("([hH]+eadlines|[nN]+ews|[sS]+tories|[pP]+opular)","")
+    val nouns = Parser.getNouns(filtered)
+    if (nouns.nonEmpty) Some(SearchTopic(nouns.distinct)) else None
   }
 }
