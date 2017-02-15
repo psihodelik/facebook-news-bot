@@ -37,6 +37,7 @@ object BotConfig {
     )
 
     val morningBriefingSQSName = getMandatoryString("aws.sqs.morningBriefingSQSName")
+    val oscarsNotificationsSQSName = getMandatoryString("aws.sqs.oscarsNotificationsSQSName")
   }
 
   object facebook {
@@ -63,6 +64,10 @@ object BotConfig {
     val defaultImageUrl = getMandatoryString("football.defaultImageUrl")
     val rumoursSQSName = getMandatoryString("football.rumoursSQSName")
     val feedbackEnabled = getBoolOrDefault("football.feedbackEnabled", false)
+  }
+
+  object oscarsNight {
+    val enabled = getBoolOrDefault("oscarsNight.enabled", false)
   }
 
   val nextGenApiUrl = {
