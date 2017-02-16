@@ -259,12 +259,16 @@ object OscarsNomsStates {
           val shareButton = getSocialShareElement(updatedUser)
           val attachment = MessageToFacebook.Attachment.genericAttachment(Seq(shareButton))
           val closingRemarks = MessageToFacebook.textMessage(user.ID, "Know another film fan? Share the next message with a friend by clicking the button below and see how they get on.")
+          val quickReplies = Seq(
+            MessageToFacebook.QuickReply(title = Some("Get Morning Briefing"),payload = Some("subscription")),
+            MessageToFacebook.QuickReply(title = Some("Headlines"), payload = Some("headlines"))
+          )
 
           val socialShare = MessageToFacebook(
             Id(user.ID),
             Some(MessageToFacebook.Message(
               attachment = Some(attachment),
-              quick_replies = Some(List(MessageToFacebook.QuickReply(title = Some("Get Morning Briefing"),payload = Some("subscription"))))
+              quick_replies = Some(quickReplies)
             ))
           )
 
