@@ -6,14 +6,12 @@ import com.gu.facebook_news_bot.briefing.MorningBriefingPoller._
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
-import com.gu.facebook_news_bot.state.{MainState, OscarsNomsStates}
+import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.{JsonHelpers, Notifier, ResponseText, SQSPoller}
 import io.circe.generic.auto._
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.concurrent.Future
 
@@ -28,15 +26,6 @@ object MorningBriefingPoller {
   }
 
   def morningMessage(user: User) = MessageToFacebook.textMessage(user.ID, ResponseText.morningBriefing)
-
-  def isNewYear(offset: Double): Boolean = {
-    val hours = math.floor(offset).toInt
-    val mins = ((offset * 60) % 60).toInt
-    val dateTime = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
-    dateTime.getDayOfMonth == 1 && dateTime.getMonthOfYear == 1
-  }
-
-  private val advertiseOscarNomsDate = DateTime.parse("20170215", DateTimeFormat.forPattern("YYYYMMdd"))
 }
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
@@ -61,11 +50,10 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
   private def getMessages(user: User): Future[Result] = {
     appLogger.debug(s"Getting morning briefing for User: $user")
 
-    val futureResult = CustomBriefing.getBriefing(user, capi).map { futureBriefing =>
+    CustomBriefing.getBriefing(user, capi).map { futureBriefing =>
       logBriefing(user.ID, CustomBriefing.getVariant(user.front))
       futureBriefing
     }.getOrElse {
-      //Fall back on editors-picks briefing
       val variant = s"editors-picks-${user.front}"
       logBriefing(user.ID, variant)
 
@@ -74,15 +62,5 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
       }
     }
 
-    futureResult.flatMap {
-      case (briefingUser, message) =>
-        if (user.oscarsNoms.isEmpty && SQSPoller.isDate(user.offsetHours, advertiseOscarNomsDate)) {
-          for {
-            (updatedUser, oscarsInvite) <- OscarsNomsStates.InitialQuestionState.question(user, Some("Excited for the Oscars? Choose your favourite contenders and we'll let you know how your picks do on the night. Ready to vote?"))
-          } yield(updatedUser, message ::: oscarsInvite)
-        } else {
-          Future.successful(briefingUser, message)
-        }
-    }
   }
 }
