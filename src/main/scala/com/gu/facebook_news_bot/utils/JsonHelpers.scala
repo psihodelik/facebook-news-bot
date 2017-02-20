@@ -49,7 +49,7 @@ object JsonHelpers {
   def recursivelyRemoveNulls(json: Json): Json = {
     json.arrayOrObject(
       json,
-      (array: List[Json]) => Json.fromValues(array.map(recursivelyRemoveNulls)),
+      (array: Vector[Json]) => Json.fromValues(array.map(recursivelyRemoveNulls)),
       (obj: JsonObject) =>
         Json.fromJsonObject(obj.toMap.foldLeft(obj) {
           case (acc: JsonObject, (k, v)) => if (!v.isNull) acc.add(k, recursivelyRemoveNulls(v)) else acc.remove(k)

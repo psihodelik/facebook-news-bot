@@ -33,7 +33,7 @@ object BotConfig {
     val CredentialsProvider = new AWSCredentialsProviderChain(
       new ProfileCredentialsProvider("capi"),
       new ProfileCredentialsProvider(),
-      new InstanceProfileCredentialsProvider()
+      InstanceProfileCredentialsProvider.getInstance()
     )
 
     val morningBriefingSQSName = getMandatoryString("aws.sqs.morningBriefingSQSName")

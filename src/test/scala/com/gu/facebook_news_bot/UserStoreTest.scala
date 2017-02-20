@@ -41,7 +41,7 @@ class UserStoreTest extends FunSpec with Matchers with ScalaFutures {
   it("should not update user if version has changed") {
     val futureResult = userStore.updateUser(User("1", "au", 0, "-", "-", Some("MAIN"), Some(1)))  //version is now 2 in dynamo
     whenReady(futureResult) { result =>
-      result.toOption should be(None)
+      result.right.toOption should be(None)
 
       val user = userStore.getUser("1").futureValue
       user should not be None

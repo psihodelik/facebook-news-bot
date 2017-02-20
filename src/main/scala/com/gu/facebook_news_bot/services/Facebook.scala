@@ -27,8 +27,7 @@ import com.gu.facebook_news_bot.services.Facebook._
 import com.gu.facebook_news_bot.utils.Loggers._
 import com.gu.facebook_news_bot.utils.JsonHelpers._
 import io.circe.generic.auto._
-import io.circe._
-import io.circe.ObjectEncoder
+import io.circe.{ObjectEncoder, Decoder}
 
 import scala.util.{Failure, Success}
 
@@ -41,7 +40,7 @@ object Facebook {
   sealed trait FacebookResponse
   object FacebookResponse {
     implicit val decodeFacebookResponse: Decoder[FacebookResponse] = Decoder.instance(cursor =>
-      cursor.as[FacebookSuccessResponse].orElse(cursor.as[FacebookErrorResponse])
+      cursor.as[FacebookSuccessResponse].left.flatMap(_ => cursor.as[FacebookErrorResponse])
     )
   }
   case class FacebookSuccessResponse(recipient_id: String, message_id: String) extends FacebookResponse

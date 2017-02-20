@@ -1,6 +1,6 @@
 package com.gu.facebook_news_bot.stores
 
-import cats.data.{OptionT, Xor}
+import cats.data.OptionT
 import cats.instances.future._
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.dynamodbv2.model.{ConditionalCheckFailedException, PutItemResult}
@@ -35,7 +35,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
     }.value.map(_.flatten)
   }
 
-  def updateUser(user: User): Future[Xor[ConditionalCheckFailedException, PutItemResult]] = {
+  def updateUser(user: User): Future[Either[ConditionalCheckFailedException, PutItemResult]] = {
     //Conditional update - if user already exists and its version has changed, do not update
     val currentVersion = user.version.getOrElse(0l)
     val newUser = user.copy(version = Some(currentVersion + 1))
@@ -47,7 +47,7 @@ class UserStore(client: AmazonDynamoDBAsyncClient, usersTableName: String, userT
     def getTeams(id: String): Future[Seq[String]] = {
       ScanamoAsync.exec(client)(userTeamTable.query('ID -> id)) map { results =>
         results.flatMap { result =>
-          result.toOption.map(_.team)
+          result.right.toOption.map(_.team)
         }
       }
     }
