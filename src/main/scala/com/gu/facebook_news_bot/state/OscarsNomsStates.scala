@@ -282,7 +282,7 @@ object OscarsNomsStates {
     def getSocialShareElement(user: User): MessageToFacebook.Element = {
       MessageToFacebook.Element(
         title = "Challenge your friends",
-        item_url = Some("http://m.me/979106075541023?ref=oscars_noms_share"),
+        item_url = Some("http://m.me/theguardian?ref=oscars_noms_share"),
         image_url = Some(OscarTile.imageUrl),
         subtitle = Some("Please click the button below to share with your friends!"),
         buttons = Some(List(
