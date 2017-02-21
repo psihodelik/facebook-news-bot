@@ -21,6 +21,7 @@ import com.gu.facebook_news_bot.state.StateHandler
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils._
 import com.gu.facebook_news_bot.utils.Loggers._
+import com.gu.facebook_news_bot.oscars_night.OscarsNightPoller
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -190,6 +191,10 @@ object Bot extends App with BotService {
 
   val footballFeedbackPoller = PartialFunction.condOpt(BotConfig.football.feedbackEnabled) {
     case true => system.actorOf(FootballTransfersFeedbackPoller.props(facebook, capi, userStore))
+  }
+
+  val oscarsNightPoller = PartialFunction.condOpt(BotConfig.oscarsNight.enabled) {
+    case true => system.actorOf(OscarsNightPoller.props(facebook, capi, userStore))
   }
 
   Parser.warmUp
