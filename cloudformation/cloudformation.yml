@@ -60,6 +60,9 @@ Parameters:
     FootballRumoursSnsTopicArn:
         Description: ARN of the football transfer rumours SNS topic
         Type: String
+    OscarsNotificationsSnsTopicArn:
+        Description: ARN of the oscars notification SNS topic
+        Type: String
 
 Mappings:
     StageMap:
@@ -230,6 +233,7 @@ Resources:
                           - !GetAtt MorningBriefingSQS.Arn
                           - !GetAtt FootballTransfersSQS.Arn
                           - !GetAtt FootballRumoursSQS.Arn
+                          - !GetAtt OscarsNotificationSQS.Arn
             Roles:
                 - !Ref FacebookNewsBotRole
 
@@ -283,6 +287,23 @@ Resources:
                       Condition:
                           ArnEquals:
                               aws:SourceArn: !Ref FootballRumoursSnsTopicArn
+
+    OscarsNotificationSQSPolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            Queues:
+                - !Ref OscarsNotificationSQS
+            PolicyDocument:
+                Statement:
+                  - Sid: allow-sqs-sendmessage
+                    Effect: Allow
+                    Principal:
+                        AWS: "*"
+                    Action: SQS:SendMessage
+                    Resource: !GetAtt OscarsNotificationSQS.Arn
+                    Condition:
+                          ArnEquals:
+                              aws:SourceArn: !Ref OscarsNotificationsSnsTopicArn
 
     InstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -436,6 +457,11 @@ Resources:
         Type: AWS::SQS::Queue
         Properties:
             QueueName: !Sub facebook-news-bot-football-rumours-${Stage}
+
+    OscarsNotificationSQS:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub facebook-news-bot-oscars-notifications-${Stage}
 
     LaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
