@@ -17,7 +17,7 @@ object SearchFeedbackState extends YesOrNoState {
 
   protected def getQuestionText(user: User) = "Was this helpful?"
 
-  protected def yes(user: User, facebook: Facebook): Future[Result] = {
+  protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result] = {
     State.log(YesEvent(id = user.ID, topic = user.contentTopic.getOrElse("")))
     val message = MessageToFacebook.textMessage(user.ID, "Great!")
     Future.successful(State.changeState(user, MainState.Name), List(message))

@@ -11,7 +11,7 @@ trait YesOrNoState extends State {
   def transition(user: User, messaging: MessageFromFacebook.Messaging, capi: Capi, facebook: Facebook, store: UserStore): Future[Result] = {
     State.getUserInput(messaging).map(_.toLowerCase) match {
       case Some(text) =>
-        if (State.YesPattern.findFirstIn(text).isDefined) yes(user, facebook)
+        if (State.YesPattern.findFirstIn(text).isDefined) yes(user, facebook, store)
         else if (State.NoPattern.findFirstIn(text).isDefined) no(user)
         else unrecognised(user, messaging, capi, facebook, store)
 
@@ -31,7 +31,7 @@ trait YesOrNoState extends State {
 
   protected def getQuestionText(user: User): String
 
-  protected def yes(user: User, facebook: Facebook): Future[Result]
+  protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result]
 
   protected def no(user: User): Future[Result]
 

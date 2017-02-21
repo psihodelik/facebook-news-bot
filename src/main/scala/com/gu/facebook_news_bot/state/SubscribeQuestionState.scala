@@ -3,6 +3,7 @@ package com.gu.facebook_news_bot.state
 import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook
 import com.gu.facebook_news_bot.state.StateHandler.Result
+import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import com.gu.facebook_news_bot.utils.ResponseText
 import io.circe.generic.auto._
@@ -22,7 +23,7 @@ case object SubscribeQuestionState extends YesOrNoState {
   protected def getQuestionText(user: User): String =
     if (user.state.contains(StateHandler.NewUserStateName)) ResponseText.welcome else ResponseText.subscribeQuestion
 
-  protected def yes(user: User, facebook: Facebook): Future[Result] = {
+  protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result] = {
     State.log(SubscribeYesEvent(user.ID))
     EditionQuestionState.question(user)
   }

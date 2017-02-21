@@ -22,13 +22,24 @@ object SQSPoller {
 
   //Given the UTC offset, is it currently this date?
   def isDate(offset: Double, date: DateTime): Boolean = {
-    val hours = math.floor(offset).toInt
-    val mins = ((offset * 60) % 60).toInt
-    val now = DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
+    val now = getLocalDateTime(offset)
 
     now.getDayOfMonth == date.getDayOfMonth &&
       now.getMonthOfYear == date.getMonthOfYear &&
       now.getYear == date.getYear
+  }
+
+  def isAfterTime(offset: Double, afterHours: Int, afterMins: Int): Boolean = {
+    val now = getLocalDateTime(offset)
+
+    val compareTo = now.withTime(afterHours, afterMins, 0, 0)
+    compareTo.isBefore(now.getMillis)
+  }
+
+  def getLocalDateTime(offset: Double) = {
+    val hours = math.floor(offset).toInt
+    val mins = ((offset * 60) % 60).toInt
+    DateTime.now(DateTimeZone.forOffsetHoursMinutes(hours, mins))
   }
 }
 

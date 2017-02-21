@@ -5,7 +5,8 @@ case class UserNoms(ID: String,
                     bestDirector: Option[String] = None,
                     bestActor: Option[String] = None,
                     bestActress: Option[String] = None,
-                    oscarsNomsUpdateType: Option[String] = None)
+                    oscarsNomsUpdateType: Option[String] = None,
+                    briefingSent: Option[Boolean] = None)
 
 object OscarTile {
   val imageUrl = "https://media.guim.co.uk/76c5179cd03699f56f66f46dad557063cb26f567/0_0_1200_565/1200.png"
