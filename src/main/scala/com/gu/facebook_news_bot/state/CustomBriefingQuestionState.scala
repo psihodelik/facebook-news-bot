@@ -1,7 +1,7 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
-import com.gu.facebook_news_bot.services.{Capi, Facebook, Topic}
+import com.gu.facebook_news_bot.services.{Capi, Facebook, SearchTopic, Topic}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
@@ -48,7 +48,10 @@ case object CustomBriefingQuestionState extends State {
       case State.NoPattern(_) => finish(user)
 
       case other =>
-        Topic.getTopic(other).map { topic =>
+        Topic.getTopic(other).filter {
+          case SearchTopic(_) => false
+          case _ => true
+        } map { topic =>
           if (user.briefingTopic1.isEmpty) {
             State.log(YesEvent(user.ID))
 
