@@ -33,6 +33,9 @@ Parameters:
         Description: S3 buckets where RiffRaff deploys artifacts
         Type: String
         Default: content-api-dist/content-api
+    OscarsBucket:
+        Description: S3 bucket where we store the list of Oscar award winners
+        Type: String
     VPC:
         Description: VPC to run EC2 within
         Type: AWS::EC2::VPC::Id
@@ -104,6 +107,20 @@ Resources:
                         !Sub arn:aws:s3:::${DeployBucket}/*
             Roles:
                 - !Ref FacebookNewsBotRole
+
+    OscarWinnersS3Policy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: OscarWinnersS3Policy
+            PolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Action:
+                        - s3:GetObject
+                      Resource:
+                        !Sub arn:aws:s3:::${OscarsBucket}/${Stage}/*
+            Roles:
+                 - !Ref FacebookNewsBotRole
 
     Ec2DescribeInstancesPolicy:
         Type: AWS::IAM::Policy
@@ -233,7 +250,7 @@ Resources:
                           - !GetAtt MorningBriefingSQS.Arn
                           - !GetAtt FootballTransfersSQS.Arn
                           - !GetAtt FootballRumoursSQS.Arn
-                          - !GetAtt OscarsNotificationSQS.Arn
+                          - !GetAtt OscarsNotificationsSQS.Arn
             Roles:
                 - !Ref FacebookNewsBotRole
 
@@ -288,11 +305,11 @@ Resources:
                           ArnEquals:
                               aws:SourceArn: !Ref FootballRumoursSnsTopicArn
 
-    OscarsNotificationSQSPolicy:
+    OscarsNotificationsSQSPolicy:
         Type: AWS::SQS::QueuePolicy
         Properties:
             Queues:
-                - !Ref OscarsNotificationSQS
+                - !Ref OscarsNotificationsSQS
             PolicyDocument:
                 Statement:
                   - Sid: allow-sqs-sendmessage
@@ -300,7 +317,7 @@ Resources:
                     Principal:
                         AWS: "*"
                     Action: SQS:SendMessage
-                    Resource: !GetAtt OscarsNotificationSQS.Arn
+                    Resource: !GetAtt OscarsNotificationsSQS.Arn
                     Condition:
                           ArnEquals:
                               aws:SourceArn: !Ref OscarsNotificationsSnsTopicArn
@@ -458,7 +475,7 @@ Resources:
         Properties:
             QueueName: !Sub facebook-news-bot-football-rumours-${Stage}
 
-    OscarsNotificationSQS:
+    OscarsNotificationsSQS:
         Type: AWS::SQS::Queue
         Properties:
             QueueName: !Sub facebook-news-bot-oscars-notifications-${Stage}
