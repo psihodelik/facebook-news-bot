@@ -1,10 +1,11 @@
 package com.gu.facebook_news_bot.state
 
 import com.gu.facebook_news_bot.models._
+import com.gu.facebook_news_bot.oscars_night.{AwardWinners, OscarsWinnersCache}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
 import com.gu.facebook_news_bot.state.StateHandler.Result
 import com.gu.facebook_news_bot.stores.UserStore
-import com.gu.facebook_news_bot.utils.JsonHelpers
+import com.gu.facebook_news_bot.utils.{JsonHelpers, Loggers, ResponseText}
 import com.gu.facebook_news_bot.utils.Loggers.LogEvent
 import io.circe.generic.auto._
 
@@ -30,7 +31,7 @@ object OscarsNomsStates {
       else Question
     }
 
-    protected def yes(user: User, facebook: Facebook): Future[Result] = EnterNomsState.question(user)
+    protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result] = EnterNomsState.question(user)
 
     private case class NoEvent(id: String, event: String = "oscars_noms_subscribe_no", _eventName: String = "oscars_noms_subscribe_no") extends LogEvent
 
@@ -291,4 +292,105 @@ object OscarsNomsStates {
       )
     }
   }
+
+  case object MorningNotificationState extends YesOrNoState {
+
+    val Name = "OSCARS_NOMS_MORNING_NOTIFICATION"
+
+    protected def getQuestionText(user: User) = "Would you like to see how your predictions performed?"
+
+    protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result] = {
+      val result = OscarsWinnersCache.get("Oscar Winners").map {
+        case (_, winners) =>
+          buildUserResult(user, store, winners)
+      }
+
+      result.getOrElse(State.unknown(user))
+
+    }
+
+    def buildUserResult(user: User, store: UserStore, a: AwardWinners): Future[Result] = {
+
+      val userPredictions: Future[Option[UserNoms]] = store.OscarsStore.getUserNominations(user.ID)
+
+      userPredictions.flatMap {
+        case Some(pred) =>
+          val result = for {
+            bestPicture <- pred.bestPicture
+            bestDirector <- pred.bestDirector
+            bestActress <- pred.bestActress
+            bestActor <- pred.bestActor
+          } yield {
+            val wrongGuesses = List(
+              if (bestPicture != a.bestPicture) Some((BestPicture.name, bestPicture)) else None,
+              if (bestDirector != a.bestDirector) Some((BestDirector.name, bestDirector)) else None,
+              if (bestActress != a.bestActress) Some((BestActress.name, bestActress)) else None,
+              if (bestActor != a.bestActor) Some((BestActor.name, bestActor)) else None
+            ).flatten
+
+            Loggers.appLogger.info(s"wrongGessues: $wrongGuesses")
+
+            val userScore = 4 - wrongGuesses.length
+
+            if (userScore == 4) {
+              val predictionPerformance = "You're an Oscars genius! You correctly predicted all Oscar winners. Is there anything else I can help you with?"
+              MainState.menu(user, predictionPerformance)
+            } else {
+              Future.successful(buildCarousel(user, userScore, wrongGuesses))
+            }
+          }
+
+          result.getOrElse(MainState.menu(user, ResponseText.unknown))
+
+        case None => Future.successful(user, Nil)
+      }
+    }
+
+    private def buildCarousel(user: User, userScore: Int, wrongGuesses: List[(String, String)]): Result = {
+      val predictionPerformance = MessageToFacebook.textMessage(user.ID, s"Hard luck! You correctly predicted ${userScore} out of 4 Oscar winners. Here are your incorrect predictions:")
+
+      val incorrectPreds = wrongGuesses.flatMap {
+        case (category, pred) => {
+          val wrongNominee: Option[IndividualNominee] = category match {
+            case "Best Picture" => Nominees.bestPictureNominees.find(_.name == pred)
+            case "Best Director" => Nominees.bestDirectorNominees.find(_.name == pred)
+            case "Best Actress" => Nominees.bestActressNominees.find(_.name == pred)
+            case "Best Actor" => Nominees.bestActorNominees.find(_.name == pred)
+            case _ => None
+          }
+
+          Loggers.appLogger.info(s"wrongNominee: $wrongNominee")
+
+          wrongNominee.map { nominee =>
+            MessageToFacebook.Element(
+              title = category,
+              image_url = Some(nominee.pictureUrl),
+              subtitle = Some(nominee.name)
+            )
+          }
+        }
+      }
+
+      val attachment = MessageToFacebook.Attachment.genericAttachment(incorrectPreds)
+
+      val carousel = MessageToFacebook(
+        Id(user.ID),
+        message = Some(MessageToFacebook.Message(
+          text = None,
+          attachment = Some(attachment),
+          quick_replies = None,
+          metadata = None)
+        )
+      )
+
+      val menu = MainState.buildMenu(user, "Is there anything else I can help you with?")
+      (State.changeState(user, MainState.Name), List(predictionPerformance, carousel, menu))
+    }
+
+    protected def no(user: User): Future[Result] = {
+      MainState.menu(user, "Ok. Is there anything else I can help you with?")
+    }
+  }
+
+
 }

@@ -38,7 +38,7 @@ object FootballTransferStates {
       else Question
     }
 
-    protected def yes(user: User, facebook: Facebook): Future[Result] = EnterTeamsState.question(user)
+    protected def yes(user: User, facebook: Facebook, store: UserStore): Future[Result] = EnterTeamsState.question(user)
 
     protected def no(user: User): Future[Result] = {
       State.log(NoEvent(id = user.ID, isSubscriber = user.notificationTimeUTC != "-"))

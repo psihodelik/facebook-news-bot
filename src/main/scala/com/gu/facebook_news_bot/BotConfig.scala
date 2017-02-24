@@ -68,6 +68,8 @@ object BotConfig {
 
   object oscarsNight {
     val enabled = getBoolOrDefault("oscarsNight.enabled", false)
+    val s3Path = getMandatoryString("oscarsNight.s3Path")
+    val subscriptionEnabled = getBoolOrDefault("oscarsNight.subscriptionEnabled", true)
   }
 
   val nextGenApiUrl = {

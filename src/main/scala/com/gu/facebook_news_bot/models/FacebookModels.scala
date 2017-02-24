@@ -61,6 +61,16 @@ object MessageToFacebook {
         buttons = Some(buttons)
       )
     )
+
+    // the list attachment differs in style depending on whether prominence is given to top element
+    def plainListAttachment(elements: Seq[Element]): Attachment = Attachment(
+      `type` = "template",
+      payload = Payload(
+        template_type = "list",
+        top_element_style = Some("compact"),
+        elements = Some(elements.toList)
+      )
+    )
   }
 
   case class QuickReply(content_type: String = "text",
@@ -68,8 +78,7 @@ object MessageToFacebook {
                         payload: Option[String] = None,
                         image_url: Option[String] = None)
 
-  case class Payload(template_type: String, text: Option[String] = None, elements: Option[Seq[Element]] = None, buttons: Option[Seq[Button]] = None)
-
+  case class Payload(template_type: String, text: Option[String] = None, elements: Option[Seq[Element]] = None, buttons: Option[Seq[Button]] = None, top_element_style: Option[String] = None)
   case class Element(title: String, item_url: Option[String] = None, image_url: Option[String] = None, subtitle: Option[String] = None, buttons: Option[Seq[Button]] = None)
   case class Button(`type`: String, title: Option[String] = None, url: Option[String] = None, payload: Option[String] = None)
 }

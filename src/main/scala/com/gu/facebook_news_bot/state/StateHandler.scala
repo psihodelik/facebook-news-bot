@@ -1,5 +1,6 @@
 package com.gu.facebook_news_bot.state
 
+import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.models.{MessageFromFacebook, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.{GetUserResult, GetUserSuccessResponse}
 import com.gu.facebook_news_bot.services.{Capi, Facebook}
@@ -35,6 +36,7 @@ object StateHandler {
     OscarsNomsStates.InitialQuestionState,
     OscarsNomsStates.EnterNomsState,
     OscarsNomsStates.UpdateTypeState,
+    OscarsNomsStates.MorningNotificationState,
     CustomBriefingQuestionState,
     RemoveCustomBriefingTopicState,
     SearchFeedbackState,
@@ -101,8 +103,8 @@ class StateHandler(facebook: Facebook, capi: Capi, store: UserStore) {
     State.log(ReferralEvent(id = user.ID, referrer = referral.ref))
     referral.ref match {
       case "football_transfers" => Some(FootballTransferStates.InitialQuestionState.question(user))
-      case "oscars_noms" => Some(OscarsNomsStates.InitialQuestionState.question(user))
-      case "oscars_noms_share" => Some(OscarsNomsStates.InitialQuestionState.question(user))
+      case "oscars_noms" => if (BotConfig.oscarsNight.subscriptionEnabled) Some(OscarsNomsStates.InitialQuestionState.question(user)) else None
+      case "oscars_noms_share" => if (BotConfig.oscarsNight.subscriptionEnabled) Some(OscarsNomsStates.InitialQuestionState.question(user)) else None
       case _ => None
     }
   }
