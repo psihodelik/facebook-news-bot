@@ -250,7 +250,7 @@ Resources:
                           - !GetAtt MorningBriefingSQS.Arn
                           - !GetAtt FootballTransfersSQS.Arn
                           - !GetAtt FootballRumoursSQS.Arn
-                          - !GetAtt OscarsNotificationsSQS.Arn
+                          - !GetAtt OscarsNotificationSQS.Arn
             Roles:
                 - !Ref FacebookNewsBotRole
 
@@ -305,11 +305,11 @@ Resources:
                           ArnEquals:
                               aws:SourceArn: !Ref FootballRumoursSnsTopicArn
 
-    OscarsNotificationsSQSPolicy:
+    OscarsNotificationSQSPolicy:
         Type: AWS::SQS::QueuePolicy
         Properties:
             Queues:
-                - !Ref OscarsNotificationsSQS
+                - !Ref OscarsNotificationSQS
             PolicyDocument:
                 Statement:
                   - Sid: allow-sqs-sendmessage
@@ -317,7 +317,7 @@ Resources:
                     Principal:
                         AWS: "*"
                     Action: SQS:SendMessage
-                    Resource: !GetAtt OscarsNotificationsSQS.Arn
+                    Resource: !GetAtt OscarsNotificationSQS.Arn
                     Condition:
                           ArnEquals:
                               aws:SourceArn: !Ref OscarsNotificationsSnsTopicArn
@@ -475,7 +475,7 @@ Resources:
         Properties:
             QueueName: !Sub facebook-news-bot-football-rumours-${Stage}
 
-    OscarsNotificationsSQS:
+    OscarsNotificationSQS:
         Type: AWS::SQS::Queue
         Properties:
             QueueName: !Sub facebook-news-bot-oscars-notifications-${Stage}
