@@ -6,6 +6,7 @@ import com.gu.facebook_news_bot.services.{Capi, Topic}
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder
 import com.gu.facebook_news_bot.utils.Loggers._
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -61,7 +62,14 @@ object CustomBriefing {
   }
 
   private def appendNextNonDup(next: Seq[Content]): Seq[Content] => Seq[Content] = { current =>
-    current ++ next.find(content => !current.exists(_.id == content.id))
+    current ++ next.find(content => isFresh(content) && !current.exists(_.id == content.id))
+  }
+
+  private def isFresh(content: Content): Boolean = {
+    content.webPublicationDate.exists { date =>
+      val pubDate = new DateTime(date.dateTime, DateTimeZone.UTC)
+      DateTime.now(DateTimeZone.UTC).minusHours(24).isBefore(pubDate)
+    }
   }
 
   def getVariant(edition: String) = s"custom-briefing-$edition"
