@@ -198,6 +198,7 @@ object Bot extends App with BotService {
   }
 
   Parser.warmUp
+  BadWords.warmUp
 
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", BotConfig.port)
 }

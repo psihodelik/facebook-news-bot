@@ -80,6 +80,9 @@ object BotConfig {
   //Proportion of users in test variant B
   val variantBProportion = getDoubleOrDefault("variantBProportion", 0.5)
 
+  val badWordsBucket = getMandatoryString("badWordsBucket")
+  val badWordsFile = getMandatoryString("badWordsFile")
+
   private def getMandatoryString(name: String): String = {
     Try(config.getString(name)).getOrElse(if (stage == Mode.Dev) "" else sys.error(s"Error - missing mandatory config item, $name"))
   }

@@ -8,7 +8,7 @@ import com.gu.contentapi.client.model._
 import com.gu.contentapi.client.model.v1.{Content, ItemResponse, SearchResponse}
 import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.utils.Loggers.appLogger
-import com.gu.facebook_news_bot.utils.Parser
+import com.gu.facebook_news_bot.utils.{BadWords, Parser}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -212,7 +212,7 @@ case class SearchTopic(terms: List[String]) extends Topic {
 object SearchTopic {
   def apply(text: String): Option[SearchTopic] = {
     val filtered = text.replaceAll("([hH]+eadlines|[nN]+ews|[sS]+tories|[pP]+opular)","")
-    val nouns = Parser.getNouns(filtered)
+    val nouns = Parser.getNouns(filtered).filterNot(BadWords.isBad)
     if (nouns.nonEmpty) Some(SearchTopic(nouns.distinct)) else None
   }
 }
