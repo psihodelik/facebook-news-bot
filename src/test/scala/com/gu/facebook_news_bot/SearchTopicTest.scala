@@ -43,4 +43,14 @@ class SearchTopicTest extends FunSpec with Matchers {
     val topic = SearchTopic("boris")
     topic.get.terms should be(List("boris"))
   }
+
+  it("should exclude sausage") {
+    val topic = SearchTopic("A capybara will be most offended if you shout sausage at it")
+    topic.get.terms should be(List("capybara"))
+  }
+
+  it("should not exclude bacon") {
+    val topic = SearchTopic("A capybara will not be offended if you shout bacon at it")
+    topic.get.terms should be(List("capybara", "bacon"))
+  }
 }
