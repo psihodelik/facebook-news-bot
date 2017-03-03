@@ -32,6 +32,10 @@ object CapiImpl extends Capi {
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]] =
     doQuery(edition, topic, _.showMostViewed(), _.mostViewed)
 
+  def getArticlesByTag(tag: String) = Future[Seq[Content]] = {
+    doSearchQuery(SearchQuery().tag(tag))
+  }
+
   def doQuery(edition: String, topic: Option[Topic], itemQueryModifier: ItemQuery => ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
     val query: ContentApiQuery = topic.map(_.getQuery(edition)).getOrElse(ItemQuery(edition))
     query match {

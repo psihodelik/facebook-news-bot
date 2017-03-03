@@ -16,7 +16,7 @@ object CustomBriefing {
   /**
     * Returns a morning briefing only if the user has signed up for custom briefings
     */
-  def getBriefing(user: User, capi: Capi): Option[Future[Result]] = {
+  def getBriefing(user: User, capi: Capi): Future[Option[MessageToFacebook.Message]] = {
     user.briefingTopic1.map { topic1 =>
       val futureMaybeCarousel = for {
         headlines <- capi.getHeadlines(user.front, None)
@@ -44,21 +44,8 @@ object CustomBriefing {
         )
       }
 
-      futureMaybeCarousel.map { maybeCarousel =>
-        val messages = maybeCarousel.map { carousel =>
-          List(
-            MorningBriefingPoller.morningMessage(user),
-            MessageToFacebook(Id(user.ID), Some(carousel))
-          )
-        } getOrElse {
-          //If we didn't get a carousel back then it's probably a CAPI issue
-          appLogger.warn(s"Failed to build custom briefing carousel for user: ${user.ID}")
-          Nil
-        }
-
-        (user, messages)
-      }
-    }
+      futureMaybeCarousel
+    }.getOrElse(Future.successful(None))
   }
 
   private def appendNextNonDup(next: Seq[Content]): Seq[Content] => Seq[Content] = { current =>

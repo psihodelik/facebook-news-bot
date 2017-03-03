@@ -3,14 +3,14 @@ package com.gu.facebook_news_bot.briefing
 import akka.actor.Props
 import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller._
-import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
+import com.gu.facebook_news_bot.models.{Id, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
-import com.gu.facebook_news_bot.utils.{JsonHelpers, Notifier, ResponseText, SQSPoller}
+import com.gu.facebook_news_bot.utils._
 import io.circe.generic.auto._
 
 import scala.concurrent.Future
@@ -50,17 +50,41 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
   private def getMessages(user: User): Future[Result] = {
     appLogger.debug(s"Getting morning briefing for User: $user")
 
-    CustomBriefing.getBriefing(user, capi).map { futureBriefing =>
-      logBriefing(user.ID, CustomBriefing.getVariant(user.front))
-      futureBriefing
-    }.getOrElse {
-      val variant = s"editors-picks-${user.front}"
-      logBriefing(user.ID, variant)
+    val futureMaybeCarousel: Future[Option[MessageToFacebook.Message]] = {
+      if (user.briefingTopic1.nonEmpty) {
+        logBriefing(user.ID, CustomBriefing.getVariant(user.front))
 
-      MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-        (updatedUser, morningMessage(updatedUser) :: messages)
+        CustomBriefing.getBriefing(user, capi)
+      } else {
+        val variant = s"editors-picks-${user.front}"
+        logBriefing(user.ID, variant)
+
+        capi.getHeadlines(user.front, None).map { contentList =>
+          FacebookMessageBuilder.contentToCarousel(
+            contentList = contentList,
+            offset = 0,
+            edition = user.front,
+            currentTopic = None,
+            variant = Some(variant))
+        }
       }
     }
 
+    futureMaybeCarousel map {
+      case Some(carousel) =>
+        val updatedCarousel = carousel //TODO - add special tile to start of carousel
+        val carouselMessage = MessageToFacebook(Id(user.ID), Some(updatedCarousel))
+
+        val messages = List(morningMessage(user), carouselMessage)
+
+        val updatedUser = user.copy(
+          state = Some(MainState.Name),
+          contentTopic = None
+        )
+
+        (updatedUser, messages)
+
+      case None => (user, Nil)
+    }
   }
 }
