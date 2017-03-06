@@ -20,6 +20,8 @@ trait Capi {
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]]
 
   def getArticle(id: String): Future[Option[Content]]
+
+  def getArticlesByTag(tag: String): Future[Seq[Content]]
 }
 
 object CapiImpl extends Capi {
@@ -32,8 +34,8 @@ object CapiImpl extends Capi {
   def getMostViewed(edition: String, topic: Option[Topic]): Future[Seq[Content]] =
     doQuery(edition, topic, _.showMostViewed(), _.mostViewed)
 
-  def getArticlesByTag(tag: String) = Future[Seq[Content]] = {
-    doSearchQuery(SearchQuery().tag(tag))
+  def getArticlesByTag(tag: String): Future[Seq[Content]] = {
+    doSearchQuery(SearchQuery().tag(tag), false)
   }
 
   def doQuery(edition: String, topic: Option[Topic], itemQueryModifier: ItemQuery => ItemQuery, getResults: (ItemResponse => Option[Seq[Content]])): Future[Seq[Content]] = {
@@ -42,7 +44,7 @@ object CapiImpl extends Capi {
       case itemQuery @ ItemQuery(_,_) =>
         val ops = itemQueryModifier andThen commonItemQueryParams
         doItemQuery(ops(itemQuery), getResults)
-      case searchQuery @ SearchQuery(_) => doSearchQuery(commonSearchQueryParams(searchQuery))
+      case searchQuery @ SearchQuery(_) => doSearchQuery(commonSearchQueryParams(searchQuery), true)
       case other =>
         appLogger.error(s"Unexpected ContentApiQuery type: $other")
         Future.successful(Nil)
@@ -70,21 +72,25 @@ object CapiImpl extends Capi {
     }
   }
 
-  private def doSearchQuery(query: SearchQuery): Future[Seq[Content]] = {
+  private def doSearchQuery(query: SearchQuery, sortByDate: Boolean): Future[Seq[Content]] = {
     CapiCache.get(query.toString).map(cached => Future.successful(cached)).getOrElse {
       client.getResponse(query) map { response: SearchResponse =>
         val results = response.results
-        //These are the most relevant results according to CAPI, now sort by date
-        val sorted = results.sortWith { (a, b) =>
-          val result = for {
-            dateA <- a.webPublicationDate
-            dateB <- b.webPublicationDate
-          } yield dateA.dateTime > dateB.dateTime
-          result.getOrElse(false)
-        }
+        appLogger.info(s"${results}")
 
-        CapiCache.put(query.toString, sorted)
-        sorted
+        val capiContent = if (sortByDate) {
+          //These are the most relevant results according to CAPI, now sort by date
+          results.sortWith { (a, b) =>
+            val result = for {
+              dateA <- a.webPublicationDate
+              dateB <- b.webPublicationDate
+            } yield dateA.dateTime > dateB.dateTime
+            result.getOrElse(false)
+          }
+        } else results
+
+        CapiCache.put(query.toString, capiContent)
+        capiContent
       }
     }
   }

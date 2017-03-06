@@ -1,15 +1,13 @@
 package com.gu.facebook_news_bot.briefing
 
 import com.gu.contentapi.client.model.v1.Content
-import com.gu.facebook_news_bot.models.{Id, MessageToFacebook, User}
+import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.{Capi, Topic}
-import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.utils.FacebookMessageBuilder
-import com.gu.facebook_news_bot.utils.Loggers._
 import org.joda.time.{DateTime, DateTimeZone}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object CustomBriefing {
 
@@ -45,6 +43,7 @@ object CustomBriefing {
       }
 
       futureMaybeCarousel
+
     }.getOrElse(Future.successful(None))
   }
 
