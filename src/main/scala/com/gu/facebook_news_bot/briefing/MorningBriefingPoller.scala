@@ -1,17 +1,22 @@
 package com.gu.facebook_news_bot.briefing
 
 import akka.actor.Props
+import cats.data.OptionT
+import cats.implicits._
+import com.gu.contentapi.client.model.v1.Content
 import com.gu.facebook_news_bot.BotConfig
 import com.gu.facebook_news_bot.briefing.MorningBriefingPoller._
-import com.gu.facebook_news_bot.models.{MessageToFacebook, User}
+import com.gu.facebook_news_bot.models.MessageToFacebook.Payload
+import com.gu.facebook_news_bot.models.{Id, MessageToFacebook, User}
 import com.gu.facebook_news_bot.services.Facebook.FacebookMessageResult
 import com.gu.facebook_news_bot.services.{Capi, Facebook, FacebookEvents, SQSMessageBody}
 import com.gu.facebook_news_bot.state.MainState
 import com.gu.facebook_news_bot.state.StateHandler._
 import com.gu.facebook_news_bot.stores.UserStore
 import com.gu.facebook_news_bot.utils.Loggers._
-import com.gu.facebook_news_bot.utils.{JsonHelpers, Notifier, ResponseText, SQSPoller}
+import com.gu.facebook_news_bot.utils._
 import io.circe.generic.auto._
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.concurrent.Future
 
@@ -26,6 +31,13 @@ object MorningBriefingPoller {
   }
 
   def morningMessage(user: User) = MessageToFacebook.textMessage(user.ID, ResponseText.morningBriefing)
+
+  def checkDateContent(today: DateTime, content: Seq[Content]): Option[Content] = {
+    content.headOption flatMap { head =>
+      head.webPublicationDate.map(date => new DateTime(date.dateTime, DateTimeZone.UTC))
+        .collect { case date if today.withTimeAtStartOfDay().isEqual(date.withTimeAtStartOfDay()) => head }
+    }
+  }
 }
 
 class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebook: Facebook) extends SQSPoller {
@@ -50,17 +62,83 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
   private def getMessages(user: User): Future[Result] = {
     appLogger.debug(s"Getting morning briefing for User: $user")
 
-    CustomBriefing.getBriefing(user, capi).map { futureBriefing =>
-      logBriefing(user.ID, CustomBriefing.getVariant(user.front))
-      futureBriefing
-    }.getOrElse {
-      val variant = s"editors-picks-${user.front}"
-      logBriefing(user.ID, variant)
+    val futureMaybeCarousel: Future[Option[MessageToFacebook.Message]] = {
+      if (user.briefingTopic1.nonEmpty) {
+        logBriefing(user.ID, CustomBriefing.getVariant(user.front))
 
-      MainState.getHeadlines(user, capi, Some(variant)) map { case (updatedUser, messages) =>
-        (updatedUser, morningMessage(updatedUser) :: messages)
+        CustomBriefing.getBriefing(user, capi)
+      } else {
+        val variant = s"editors-picks-${user.front}"
+        logBriefing(user.ID, variant)
+
+        capi.getHeadlines(user.front, None).map { contentList =>
+          FacebookMessageBuilder.contentToCarousel(
+            contentList = contentList,
+            offset = 0,
+            edition = user.front,
+            currentTopic = None,
+            variant = Some(variant))
+        }
       }
     }
 
+    futureMaybeCarousel flatMap {
+      case Some(carousel) =>
+        addMorningDigest(carousel, user).map { updatedCarousel =>
+          val carouselMessage = MessageToFacebook(Id(user.ID), Some(updatedCarousel))
+          val messages = List(morningMessage(user), carouselMessage)
+
+          val updatedUser = user.copy(
+            state = Some(MainState.Name),
+            contentTopic = None
+          )
+
+          (updatedUser, messages)
+        }
+
+      case None => Future.successful(user, Nil)
+    }
   }
+
+  private def addMorningDigest(carousel: MessageToFacebook.Message, user: User): Future[MessageToFacebook.Message] = {
+    if (user.front == "uk") {
+      val futureMorningDigest: Future[Seq[Content]] = capi.getArticlesByTag("world/series/guardian-morning-briefing")
+
+      val today = DateTime.now(DateTimeZone.UTC)
+
+      val futureMaybeDigest: Future[Option[Content]] = futureMorningDigest.map(digest => checkDateContent(today, digest))
+
+      val updatedCarousel = for (digestContent <- OptionT(futureMaybeDigest)) yield {
+
+        val morningDigestTile = MessageToFacebook.Element(
+          title = "Morning Digest",
+          item_url = Some(digestContent.webUrl),
+          image_url = Some(BotConfig.defaultImageUrl),
+          subtitle = Some("Click here for all the news you need to start your day.")
+        )
+
+        val updatedAttachment = for {
+          attachment <- carousel.attachment
+          elements <- attachment.payload.elements
+        } yield {
+          attachment.copy(
+            payload = Payload(
+              template_type = attachment.payload.template_type,
+              elements = Some(morningDigestTile +: elements)
+            )
+          )
+        }
+
+        carousel.copy(attachment = updatedAttachment)
+      }
+
+      val futureMessage = updatedCarousel.value map (carouselMessage => carouselMessage.getOrElse(carousel))
+      futureMessage
+
+    } else {
+      Future.successful(carousel)
+
+    }
+  }
+
 }

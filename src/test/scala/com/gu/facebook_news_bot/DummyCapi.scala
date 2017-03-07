@@ -25,4 +25,8 @@ object DummyCapi extends Capi {
 
     Future.successful(result)
   }
+
+  def getArticlesByTag(tag: String): Future[Seq[Content]] = {
+    Future.successful(Nil)
+  }
 }
