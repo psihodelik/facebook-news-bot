@@ -101,7 +101,7 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
   }
 
   private def addMorningDigest(carousel: MessageToFacebook.Message, user: User): Future[MessageToFacebook.Message] = {
-    if (user.front == "uk") {
+    if (BotConfig.morningDigestEnabled && user.front == "uk") {
       val futureMorningDigest: Future[Seq[Content]] = capi.getArticlesByTag("world/series/guardian-morning-briefing")
 
       val today = DateTime.now(DateTimeZone.UTC)
@@ -137,7 +137,6 @@ class MorningBriefingPoller(val userStore: UserStore, val capi: Capi, val facebo
 
     } else {
       Future.successful(carousel)
-
     }
   }
 

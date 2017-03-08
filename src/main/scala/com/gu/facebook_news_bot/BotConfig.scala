@@ -83,6 +83,8 @@ object BotConfig {
   val badWordsBucket = getMandatoryString("badWordsBucket")
   val badWordsFile = getMandatoryString("badWordsFile")
 
+  val morningDigestEnabled = getBoolOrDefault("morningDigestEnabled", false)
+
   private def getMandatoryString(name: String): String = {
     Try(config.getString(name)).getOrElse(if (stage == Mode.Dev) "" else sys.error(s"Error - missing mandatory config item, $name"))
   }
